@@ -1,0 +1,21 @@
+import 'package:flutter/material.dart';
+
+class UKUniversitiesPage extends StatelessWidget {
+  const UKUniversitiesPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("UK Universities"),
+        backgroundColor: Colors.blueAccent,
+      ),
+      body: const Center(
+        child: Text(
+          "List of 108 Universities will be displayed here.",
+          style: TextStyle(fontSize: 18),
+        ),
+      ),
+    );
+  }
+}
