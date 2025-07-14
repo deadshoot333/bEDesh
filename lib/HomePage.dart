@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'AustraliaScholarPage.dart';
+import 'OxfordPage.dart';
+import 'SwanseaUni.dart';
 import 'UKDetailsPage.dart';
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -65,12 +68,34 @@ class HomePage extends StatelessWidget {
                 child: PageView(
                   controller: PageController(viewportFraction: 0.9),
                   children: [
-                    bannerCard("assets/abroad11.png", "Swansea University", "83% employability", "High satisfaction"),
-                    bannerImage("assets/usa.jpg"),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const SwanseaUniPage()),
+                        );
+                      },
+                      child: bannerCard(
+                          "assets/abroad11.png",
+                          "Swansea University",
+                          "83% employability",
+                          "High satisfaction"
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const AustraliaScholarPage()),
+                        );
+                      },
+                      child: bannerImage("assets/australliascolar.jpg"),
+                    ),
 
                   ],
                 ),
               ),
+
 
               // Popular Destinations
               sectionTitle("Popular Destinations"),
@@ -120,7 +145,7 @@ class HomePage extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   children: const [
                     DestinationCard(
-                      title: "Oxford University",
+                      title: "Oxford",
                       imageAsset: "assets/oxford.jpg",
                       label: "United Kingdom",
                     ),
@@ -130,7 +155,7 @@ class HomePage extends StatelessWidget {
                       label: "United States",
                     ),
                     DestinationCard(
-                      title: "Toronto University",
+                      title: "Toronto",
                       imageAsset: "assets/canadauni.jpg",
                       label: "Canada",
                     ),
@@ -275,8 +300,14 @@ class DestinationCard extends StatelessWidget {
             context,
             MaterialPageRoute(builder: (context) => const UKDetailsPage()),
           );
+        } else if (title == "Oxford") {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const OxfordPage()),
+          );
         }
       },
+
       child: Container(
         width: 120,
         margin: const EdgeInsets.only(right: 10),

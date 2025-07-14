@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:share_plus/share_plus.dart';
 import 'UKUniversitiesPage';
 
 class UKDetailsPage extends StatelessWidget {
@@ -287,6 +288,10 @@ class UKDetailsPage extends StatelessWidget {
             temperatureSection(),
             const SizedBox(height: 24),
 
+            faqSection(),
+            const SizedBox(height: 24),
+
+            exploreAndShareRow(context),
 
             const SizedBox(height: 40),
           ],
@@ -420,7 +425,18 @@ class UKDetailsPage extends StatelessWidget {
   }
 
   // Temperature Section Widget
+  // Temperature Section Widget
   Widget temperatureSection() {
+    final List<Map<String, String>> cities = [
+      {"city": "London", "temp": "2°C to 22°C"},
+      {"city": "Manchester", "temp": "1°C to 19°C"},
+      {"city": "Edinburgh", "temp": "-1°C to 18°C"},
+      {"city": "Birmingham", "temp": "0°C to 20°C"},
+      {"city": "Glasgow", "temp": "1°C to 17°C"},
+      {"city": "Leeds", "temp": "0°C to 18°C"},
+      {"city": "Cardiff", "temp": "3°C to 21°C"},
+    ];
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: Column(
@@ -437,30 +453,151 @@ class UKDetailsPage extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.blue.shade50,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.blueAccent),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
-                Text("London", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                Text("2°C to 22°C"),
-                SizedBox(height: 12),
-                Text("Manchester", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                Text("1°C to 19°C"),
-                SizedBox(height: 12),
-                Text("Edinburgh", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                Text("-1°C to 18°C"),
-              ],
+          SizedBox(
+            height: 80,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: cities.length,
+              itemBuilder: (context, index) {
+                final city = cities[index];
+                return Container(
+                  width: 120,
+                  margin: const EdgeInsets.only(right: 12),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.shade50,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.blueAccent),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        city['city']!,
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 16),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(city['temp']!),
+                    ],
+                  ),
+                );
+              },
             ),
           ),
         ],
       ),
     );
   }
+
+
+  // FAQ Section Widget
+  Widget faqSection() {
+    final List<Map<String, String>> faqs = [
+      {
+        "question": "How much study gap is acceptable in UK for a Master's?",
+        "answer": "Generally, a study gap of up to 5 years is acceptable for Master's programs in the UK, provided you have valid reasons such as work experience, medical issues, or personal circumstances."
+      },
+      {
+        "question": "How much money is required to study in UK?",
+        "answer": "The total cost varies by university and city, but typically ranges from £10,000 to £38,000 per year for tuition. Additionally, you need at least £1,023 per month for living expenses outside London and £1,334 per month in London."
+      },
+      {
+        "question": "Can I get a permanent residency in UK after my studies?",
+        "answer": "Yes, after completing your studies, you can apply for a 2-year Graduate Route visa (3 years for PhD graduates). With skilled employment, you may later qualify for a Skilled Worker visa and eventually permanent residency (Indefinite Leave to Remain) after 5 years of continuous residence."
+      },
+    ];
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: const [
+              Icon(Icons.question_answer, color: Colors.blueAccent),
+              SizedBox(width: 8),
+              Text(
+                "Frequently Asked Questions",
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ...faqs.map((faq) {
+            return Container(
+              margin: const EdgeInsets.only(bottom: 8),
+              decoration: BoxDecoration(
+                color: Colors.blue.shade50,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.blueAccent),
+              ),
+              child: ExpansionTile(
+                title: Text(
+                  faq["question"]!,
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, color: Colors.black),
+                ),
+                children: [
+                  Padding(
+                    padding:
+                    const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8),
+                    child: Text(
+                      faq["answer"]!,
+                      style: const TextStyle(fontSize: 14, height: 1.6),
+                    ),
+                  )
+                ],
+              ),
+            );
+          }).toList(),
+        ],
+      ),
+    );
+  }
+
+  // Explore and Share Buttons Row
+  Widget exploreAndShareRow(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          // Explore Universities Button
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.blueAccent,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const UKUniversitiesPage()),
+              );
+            },
+            child: const Text(
+              "Explore Universities",
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
+
+          // Share Icon Button
+          IconButton(
+            icon: const Icon(Icons.share, color: Colors.blueAccent),
+            onPressed: () {
+              Share.share(
+                'Check out top universities in the United Kingdom 🇬🇧 and exciting study opportunities!',
+                subject: 'Study in UK',
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+
 }
