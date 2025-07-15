@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'core/theme/app_colors.dart';
-import 'core/theme/app_text_styles.dart';
-import 'core/constants/app_constants.dart';
-import 'core/constants/asset_paths.dart';
-import 'shared/widgets/buttons/modern_buttons.dart';
-import 'MainNavigationPage.dart';
-import 'features/auth/presentation/pages/signup_page.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/constants/app_constants.dart';
+import '../../../../core/constants/asset_paths.dart';
+import '../../../../shared/widgets/buttons/modern_buttons.dart';
+import '../../../../MainNavigationPage.dart';
+import 'signup_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
