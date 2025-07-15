@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'core/theme/app_colors.dart';
 import 'features/home/presentation/pages/modern_home_page.dart';
 import 'features/community/presentation/pages/community_feed_page.dart';
+import 'features/accommodation/presentation/pages/accommodation_page.dart';
 import 'features/profile/presentation/pages/profile_page.dart';
-import 'PeerConnectPage.dart';
+import 'features/community/presentation/pages/peer_connect_page.dart';
 
 class MainNavigationPage extends StatefulWidget {
   const MainNavigationPage({super.key});
@@ -19,6 +20,7 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
   final List<Widget> _pages = [
     const ModernHomePage(),
     const CommunityFeedPage(),
+    const AccommodationPage(),
     const PeerConnectPage(),
     const ProfilePage(),
   ];
@@ -57,6 +59,11 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
             icon: Icon(Icons.chat_outlined),
             activeIcon: Icon(Icons.chat),
             label: 'Community',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.apartment_outlined),
+            activeIcon: Icon(Icons.apartment),
+            label: 'Housing',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person_search),
