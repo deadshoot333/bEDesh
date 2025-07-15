@@ -4,6 +4,7 @@ import 'OxfordPage.dart';
 import 'SwanseaUni.dart';
 import 'UKDetailsPage.dart';
 import 'CommunityFeedPage.dart';
+import 'ProfilePage.dart';
 
 class MainNavigationPage extends StatefulWidget {
   const MainNavigationPage({super.key});
@@ -16,7 +17,7 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
   int _currentIndex = 0;
 
   // List of pages for navigation
-  final List<Widget> _pages = [const HomePage(), const CommunityFeedPage()];
+  final List<Widget> _pages = [const HomePage(), const CommunityFeedPage(), const ProfilePage()];
 
   @override
   Widget build(BuildContext context) {
@@ -47,6 +48,8 @@ Widget _getPage(int index) {
         return const HomePage();
       case 1:
         return const CommunityFeedPage();
+      case 2:
+        return const ProfilePage();
       default:
         return const HomePage();
     }
@@ -58,16 +61,16 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 0,
-        selectedItemColor: Colors.blue, // Changed from deepPurple to blue
-        unselectedItemColor: Colors.blue,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.chat), label: 'Community'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
-        ],
-      ),
+      // bottomNavigationBar: BottomNavigationBar(
+      //   currentIndex: 0,
+      //   selectedItemColor: Colors.blue, // Changed from deepPurple to blue
+      //   unselectedItemColor: Colors.blue,
+      //   items: const [
+      //     BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+      //     BottomNavigationBarItem(icon: Icon(Icons.chat), label: 'Community'),
+      //     BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+      //   ],
+      // ),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(
