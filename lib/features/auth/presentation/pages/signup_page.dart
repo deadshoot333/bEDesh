@@ -1,25 +1,29 @@
 import 'package:flutter/material.dart';
-import 'core/theme/app_colors.dart';
-import 'core/theme/app_text_styles.dart';
-import 'core/constants/app_constants.dart';
-import 'core/constants/asset_paths.dart';
-import 'shared/widgets/buttons/modern_buttons.dart';
-import 'MainNavigationPage.dart';
-import 'features/auth/presentation/pages/signup_page.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/constants/app_constants.dart';
+import '../../../../core/constants/asset_paths.dart';
+import '../../../../shared/widgets/buttons/modern_buttons.dart';
+import '../../../../MainNavigationPage.dart';
+import 'login_page.dart';
 
-class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+class ModernSignupPage extends StatefulWidget {
+  const ModernSignupPage({super.key});
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
+  State<ModernSignupPage> createState() => _ModernSignupPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _ModernSignupPageState extends State<ModernSignupPage> {
   final _formKey = GlobalKey<FormState>();
+  final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController(text: '+880');
   final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPasswordController = TextEditingController();
 
   bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +36,7 @@ class _LoginPageState extends State<LoginPage> {
             width: double.infinity,
             height: double.infinity,
             child: Image.asset(
-              AssetPaths.loginBanner,
+              AssetPaths.signupBanner,
               fit: BoxFit.cover,
               errorBuilder: (context, error, stackTrace) {
                 return Container(
@@ -62,7 +66,25 @@ class _LoginPageState extends State<LoginPage> {
             ),
           ),
 
-          // Login Form
+          // Back Button
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(AppConstants.spaceM),
+              child: IconButton(
+                onPressed: () => Navigator.pop(context),
+                icon: const Icon(
+                  Icons.arrow_back_ios,
+                  color: AppColors.textOnPrimary,
+                ),
+                style: IconButton.styleFrom(
+                  backgroundColor: Colors.black.withOpacity(0.3),
+                  padding: const EdgeInsets.all(AppConstants.spaceS),
+                ),
+              ),
+            ),
+          ),
+
+          // Sign Up Form
           SafeArea(
             child: Center(
               child: SingleChildScrollView(
@@ -89,7 +111,7 @@ class _LoginPageState extends State<LoginPage> {
                         children: [
                           // Logo/Title
                           Text(
-                            AppConstants.appName,
+                            'Create Account',
                             style: AppTextStyles.h2.copyWith(
                               color: AppColors.primary,
                               fontWeight: FontWeight.w800,
@@ -97,12 +119,30 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                           const SizedBox(height: AppConstants.spaceXS),
                           Text(
-                            'Welcome Back',
+                            'Join ${AppConstants.appName} today',
                             style: AppTextStyles.bodyLarge.copyWith(
                               color: AppColors.textSecondary,
                             ),
                           ),
                           const SizedBox(height: AppConstants.spaceXL),
+
+                          // Full Name Field
+                          TextFormField(
+                            controller: _nameController,
+                            textCapitalization: TextCapitalization.words,
+                            style: AppTextStyles.bodyMedium.copyWith(
+                              color: AppColors.textPrimary,
+                            ),
+                            decoration: _modernInputDecoration(
+                              'Full Name',
+                              Icons.person_outline,
+                            ),
+                            validator: (value) =>
+                                value == null || value.trim().isEmpty
+                                    ? 'Enter your full name'
+                                    : null,
+                          ),
+                          const SizedBox(height: AppConstants.spaceL),
 
                           // Email Field
                           TextFormField(
@@ -115,10 +155,38 @@ class _LoginPageState extends State<LoginPage> {
                               'Email Address',
                               Icons.email_outlined,
                             ),
-                            validator: (value) =>
-                                value == null || !value.contains('@')
-                                    ? 'Enter valid email'
-                                    : null,
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return 'Enter your email address';
+                              }
+                              if (!value.contains('@') || !value.contains('.')) {
+                                return 'Enter a valid email address';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: AppConstants.spaceL),
+
+                          // Phone Number Field
+                          TextFormField(
+                            controller: _phoneController,
+                            keyboardType: TextInputType.phone,
+                            style: AppTextStyles.bodyMedium.copyWith(
+                              color: AppColors.textPrimary,
+                            ),
+                            decoration: _modernInputDecoration(
+                              'Phone Number',
+                              Icons.phone_outlined,
+                            ),
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return 'Enter your phone number';
+                              }
+                              if (!value.startsWith('+880') || value.length < 14) {
+                                return 'Enter valid +880 phone number';
+                              }
+                              return null;
+                            },
                           ),
                           const SizedBox(height: AppConstants.spaceL),
 
@@ -146,34 +214,58 @@ class _LoginPageState extends State<LoginPage> {
                                 },
                               ),
                             ),
-                            validator: (value) =>
-                                value!.length < 6 ? 'Password too short' : null,
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Enter a password';
+                              }
+                              if (value.length < 6) {
+                                return 'Password must be at least 6 characters';
+                              }
+                              return null;
+                            },
                           ),
-                          
                           const SizedBox(height: AppConstants.spaceL),
 
-                          // Forgot Password
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: TextButton(
-                              onPressed: () {
-                                // Handle forgot password
-                              },
-                              child: Text(
-                                'Forgot Password?',
-                                style: AppTextStyles.labelMedium.copyWith(
-                                  color: AppColors.primary,
-                                  fontWeight: FontWeight.w600,
+                          // Confirm Password Field
+                          TextFormField(
+                            controller: _confirmPasswordController,
+                            obscureText: _obscureConfirmPassword,
+                            style: AppTextStyles.bodyMedium.copyWith(
+                              color: AppColors.textPrimary,
+                            ),
+                            decoration: _modernInputDecoration(
+                              'Confirm Password',
+                              Icons.lock_outline,
+                              suffixIcon: IconButton(
+                                icon: Icon(
+                                  _obscureConfirmPassword
+                                      ? Icons.visibility_off_outlined
+                                      : Icons.visibility_outlined,
+                                  color: AppColors.textSecondary,
                                 ),
+                                onPressed: () {
+                                  setState(() {
+                                    _obscureConfirmPassword = !_obscureConfirmPassword;
+                                  });
+                                },
                               ),
                             ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Confirm your password';
+                              }
+                              if (value != _passwordController.text) {
+                                return 'Passwords do not match';
+                              }
+                              return null;
+                            },
                           ),
 
-                          const SizedBox(height: AppConstants.spaceL),
+                          const SizedBox(height: AppConstants.spaceXL),
 
-                          // Login Button
+                          // Sign Up Button
                           PrimaryButton(
-                            text: 'Login',
+                            text: 'Create Account',
                             isExpanded: true,
                             size: ButtonSize.large,
                             onPressed: () {
@@ -197,6 +289,18 @@ class _LoginPageState extends State<LoginPage> {
                                 );
                               }
                             },
+                          ),
+
+                          const SizedBox(height: AppConstants.spaceL),
+
+                          // Terms and Privacy
+                          Text(
+                            'By creating an account, you agree to our Terms of Service and Privacy Policy',
+                            textAlign: TextAlign.center,
+                            style: AppTextStyles.bodySmall.copyWith(
+                              color: AppColors.textTertiary,
+                              height: 1.4,
+                            ),
                           ),
 
                           const SizedBox(height: AppConstants.spaceL),
@@ -232,32 +336,30 @@ class _LoginPageState extends State<LoginPage> {
 
                           const SizedBox(height: AppConstants.spaceL),
 
-                          // Sign Up Link
+                          // Login Link
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Text(
-                                "Don't have an account? ",
+                                'Already have an account? ',
                                 style: AppTextStyles.bodyMedium.copyWith(
                                   color: AppColors.textSecondary,
                                 ),
                               ),
                               TextButton(
-                                onPressed: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => const ModernSignupPage(),
-                                    ),
-                                  );
-                                },
+                                onPressed: () => Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const LoginPage(),
+                                  ),
+                                ),
                                 style: TextButton.styleFrom(
                                   padding: EdgeInsets.zero,
                                   minimumSize: Size.zero,
                                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                                 ),
                                 child: Text(
-                                  'Sign Up',
+                                  'Login',
                                   style: AppTextStyles.bodyMedium.copyWith(
                                     color: AppColors.primary,
                                     fontWeight: FontWeight.w600,
@@ -303,13 +405,16 @@ class _LoginPageState extends State<LoginPage> {
       ),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppConstants.radiusM),
-        borderSide: BorderSide.none,
+        borderSide: const BorderSide(
+          color: AppColors.borderLight,
+          width: 1.5,
+        ),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppConstants.radiusM),
-        borderSide: BorderSide(
-          color: AppColors.borderLight.withOpacity(0.3),
-          width: 1,
+        borderSide: const BorderSide(
+          color: AppColors.borderLight,
+          width: 1.5,
         ),
       ),
       focusedBorder: OutlineInputBorder(
@@ -323,7 +428,7 @@ class _LoginPageState extends State<LoginPage> {
         borderRadius: BorderRadius.circular(AppConstants.radiusM),
         borderSide: const BorderSide(
           color: AppColors.error,
-          width: 1,
+          width: 1.5,
         ),
       ),
       focusedErrorBorder: OutlineInputBorder(
@@ -338,8 +443,11 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   void dispose() {
+    _nameController.dispose();
     _emailController.dispose();
+    _phoneController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 }
