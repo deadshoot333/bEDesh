@@ -5,6 +5,7 @@ import 'SwanseaUni.dart';
 import 'UKDetailsPage.dart';
 import 'CommunityFeedPage.dart';
 import 'ProfilePage.dart';
+import 'PeerConnectPage.dart';
 
 class MainNavigationPage extends StatefulWidget {
   const MainNavigationPage({super.key});
@@ -17,7 +18,12 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
   int _currentIndex = 0;
 
   // List of pages for navigation
-  final List<Widget> _pages = [const HomePage(), const CommunityFeedPage(), const ProfilePage()];
+  final List<Widget> _pages = [
+    const HomePage(),
+    const CommunityFeedPage(),
+    const PeerConnectPage(),
+    const ProfilePage(),
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +40,14 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
         unselectedItemColor: Colors.grey,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.chat), label: 'Community'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.featured_play_list_outlined),
+            label: 'Community',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person_search),
+            label: 'Peer Connect',
+          ),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         ],
       ),
@@ -42,18 +55,20 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
   }
 }
 
-Widget _getPage(int index) {
-    switch (index) {
-      case 0:
-        return const HomePage();
-      case 1:
-        return const CommunityFeedPage();
-      case 2:
-        return const ProfilePage();
-      default:
-        return const HomePage();
-    }
-  }
+// Widget _getPage(int index) {
+//   switch (index) {
+//     case 0:
+//       return const HomePage();
+//     case 1:
+//       return const CommunityFeedPage();
+//     case 2:
+//       return const ProfilePage();
+//     case 3:
+//       return const PeerConnectPage();
+//     default:
+//       return const HomePage();
+//   }
+// }
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
