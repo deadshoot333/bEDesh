@@ -71,7 +71,6 @@ class ProfilePage extends StatelessWidget {
                 children: const [
                   ProfileStat(label: "Applications", value: "4"),
                   ProfileStat(label: "Saved", value: "12"),
-                  ProfileStat(label: "Documents", value: "8"),
                 ],
               ),
             ),
@@ -81,7 +80,6 @@ class ProfilePage extends StatelessWidget {
             // Options List
             profileOption(icon: Icons.school, title: "My Applications"),
             profileOption(icon: Icons.bookmark, title: "Saved Courses"),
-            profileOption(icon: Icons.description, title: "Uploaded Documents"),
             profileOption(icon: Icons.notifications, title: "Notifications"),
             profileOption(icon: Icons.settings, title: "Account Settings"),
             profileOption(icon: Icons.support, title: "Help & Support"),
