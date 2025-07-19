@@ -59,7 +59,7 @@ class AppTheme {
       ),
 
       // Card Theme
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: AppColors.backgroundCard,
         shadowColor: AppColors.shadowLight,
         elevation: 2,
@@ -224,7 +224,7 @@ class AppTheme {
       ),
 
       // Tab Bar Theme
-      tabBarTheme: TabBarTheme(
+      tabBarTheme: TabBarThemeData(
         labelColor: AppColors.primary,
         unselectedLabelColor: AppColors.textSecondary,
         labelStyle: AppTextStyles.labelLarge,
