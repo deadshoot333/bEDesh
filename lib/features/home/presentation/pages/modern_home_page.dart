@@ -1,4 +1,7 @@
+import 'package:bedesh/features/accommodation/presentation/pages/accommodation_page.dart';
+import 'package:bedesh/features/community/presentation/pages/community_feed_page.dart';
 import 'package:bedesh/features/destination/presentation/pages/uk_details_page.dart';
+import 'package:bedesh/features/university/presentation/pages/Cambridge_University_Page.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -535,7 +538,10 @@ class _ModernHomePageState extends State<ModernHomePage>
       'rating': 4.8,
       'subtitle': 'Excellence in research and education',
       'onTap': () {
-        // Navigate to Cambridge page when implemented
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) =>  CambridgeUniversityPage()),
+        );
       },
     },
     {
@@ -565,7 +571,12 @@ class _ModernHomePageState extends State<ModernHomePage>
               subtitle: 'Connect with Students',
               color: AppColors.secondary,
               onTap: () {
-                // Navigate to community
+                 Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const CommunityFeedPage()
+                  ),
+                );
               },
             ),
           ),
@@ -578,6 +589,12 @@ class _ModernHomePageState extends State<ModernHomePage>
               color: AppColors.cta,
               onTap: () {
                 // Navigate to accommodation
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const AccommodationPage()
+                  ),
+                );
               },
             ),
           ),
