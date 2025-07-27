@@ -1,3 +1,6 @@
+import 'package:bedesh/features/university/presentation/pages/Cambridge_University_Page.dart';
+import 'package:bedesh/features/university/presentation/pages/oxford_university_page.dart';
+import 'package:bedesh/features/university/presentation/pages/university_list_page.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -10,6 +13,8 @@ import '../../../../shared/widgets/common/section_header.dart';
 import '../widgets/destination_stat_card.dart';
 import '../widgets/start_date_card.dart';
 import '../widgets/faq_section.dart';
+import 'package:share_plus/share_plus.dart';
+
 
 class UKDetailsPage extends StatefulWidget {
   const UKDetailsPage({super.key});
@@ -31,24 +36,78 @@ class _UKDetailsPageState extends State<UKDetailsPage>
     {'name': 'UCL', 'image': AssetPaths.ucl},
   ];
 
-  final List<String> popularPrograms = [
-    'Law',
-    'Finance', 
-    'Education',
-    'Business',
-    'Computer Sciences',
-    'Medicine',
-    'Engineering',
-  ];
+  
+  Widget _buildDocumentItem(String title, IconData icon, Color color) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        children: [
+          Icon(icon, color: color, size: 24),
+          const SizedBox(width: 12),
+          Text(
+            title,
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: AppColors.textPrimary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-  final List<String> requiredDocuments = [
-    'Academic Transcripts',
-    'IELTS/TOEFL Scores',
-    'Statement of Purpose',
-    'Letters of Recommendation',
-    'Passport Copy',
-    'Financial Statements',
-  ];
+  Widget _buildIntakePeriod(String title, String dates, IconData icon, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: color, size: 32),
+          const SizedBox(height: 8),
+          Text(
+            title,
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            dates,
+            style: AppTextStyles.bodySmall.copyWith(
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFAQItem(String question, String answer) {
+    return ExpansionTile(
+      title: Text(
+        question,
+        style: AppTextStyles.bodyMedium.copyWith(
+          color: AppColors.textPrimary,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          child: Text(
+            answer,
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: AppColors.textSecondary,
+              height: 1.5,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 
   @override
   void initState() {
@@ -284,19 +343,80 @@ class _UKDetailsPageState extends State<UKDetailsPage>
                             ),
                           ],
                         ),
-                        child: Text(
-                          'The UK is a globally renowned study destination with over 758,000 international students. Graduates enjoy strong job prospects, with a 75% employment rate, and can work for two years post-study. PhD students can stay for three years. The UK has a rich history, diverse culture, and is home to some of the world\'s best universities like Oxford and Cambridge.',
-                          style: AppTextStyles.bodyMedium.copyWith(
-                            color: AppColors.textPrimary,
-                            height: 1.6,
-                          ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'The United Kingdom stands as a beacon of academic excellence, offering a world-class education system that has shaped global leaders for centuries. Home to some of the world\'s most prestigious institutions, including Oxford, Cambridge, and Imperial College, the UK provides an unparalleled blend of traditional academic rigor and cutting-edge research opportunities. The British education system emphasizes critical thinking, creativity, and independent research, preparing students for successful careers in an increasingly competitive global marketplace.',
+                              style: AppTextStyles.bodyMedium.copyWith(
+                                color: AppColors.textPrimary,
+                                height: 1.6,
+                              ),
+                            ),
+                            const SizedBox(height: AppConstants.spaceM),
+                            Text(
+                              'Beyond academics, studying in the UK offers invaluable practical benefits. International students can work part-time during their studies and take advantage of the Graduate Route visa, allowing them to work for two years post-graduation (three years for PhD graduates). With a diverse multicultural environment, strong industry connections, and shorter program durations compared to many other countries, the UK provides an efficient path to achieving your academic and career goals while immersing yourself in a rich cultural heritage.',
+                              style: AppTextStyles.bodyMedium.copyWith(
+                                color: AppColors.textPrimary,
+                                height: 1.6,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
 
                       const SizedBox(height: AppConstants.spaceXL),
 
-                      // Start Dates Section
-                      const StartDateCard(),
+                      // Intake Periods Section
+                      const SectionHeader(
+                        title: 'Intake Periods',
+                        icon: Icons.calendar_today_outlined,
+                      ),
+                      const SizedBox(height: AppConstants.spaceM),
+                      Container(
+                        padding: const EdgeInsets.all(AppConstants.spaceL),
+                        decoration: BoxDecoration(
+                          color: AppColors.backgroundCard,
+                          borderRadius: BorderRadius.circular(AppConstants.radiusL),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: AppColors.shadowLight,
+                              offset: Offset(0, 2),
+                              blurRadius: 8,
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              children: [
+                                _buildIntakePeriod(
+                                  'Spring Intake',
+                                  'January - March',
+                                  Icons.sunny,
+                                  Colors.orange,
+                                ),
+                                _buildIntakePeriod(
+                                  'Fall Intake',
+                                  'September - October',
+                                  Icons.eco,
+                                  Colors.green,
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'Application deadlines are typically 3-6 months before the intake period.',
+                              style: AppTextStyles.bodySmall.copyWith(
+                                color: AppColors.textSecondary,
+                                fontStyle: FontStyle.italic,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
+                      ),
 
                       const SizedBox(height: AppConstants.spaceXL),
 
@@ -330,84 +450,57 @@ class _UKDetailsPageState extends State<UKDetailsPage>
                       const SizedBox(height: AppConstants.spaceXL),
 
                       // Popular Programs Section
-                      const SectionHeader(
-                        title: 'Popular Programs',
-                        icon: Icons.gavel_outlined,
-                      ),
-                      const SizedBox(height: AppConstants.spaceM),
-                      Wrap(
-                        spacing: AppConstants.spaceS,
-                        runSpacing: AppConstants.spaceS,
-                        children: popularPrograms
-                            .map((program) => ModernChip(
-                                  label: program,
-                                  onTap: () => _searchProgram(program),
-                                ))
-                            .toList(),
-                      ),
+                     
+
+                      // Required Documents Section
+                      
+                      
 
                       const SizedBox(height: AppConstants.spaceXL),
 
-                      // Required Documents Section
+                      // FAQ Section
                       const SectionHeader(
-                        title: 'Required Documents',
-                        icon: Icons.description_outlined,
+                        title: 'Frequently Asked Questions',
+                        icon: Icons.question_answer_outlined,
                       ),
                       const SizedBox(height: AppConstants.spaceM),
                       Container(
-                        padding: const EdgeInsets.all(AppConstants.spaceL),
                         decoration: BoxDecoration(
                           color: AppColors.backgroundCard,
                           borderRadius: BorderRadius.circular(AppConstants.radiusL),
                           boxShadow: const [
                             BoxShadow(
                               color: AppColors.shadowLight,
-                              offset: Offset(0, 2),
                               blurRadius: 8,
-                              spreadRadius: 0,
+                              offset: Offset(0, 2),
                             ),
                           ],
                         ),
                         child: Column(
-                          children: requiredDocuments
-                              .map((document) => Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: AppConstants.spaceXS,
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        Container(
-                                          padding: const EdgeInsets.all(AppConstants.spaceXS),
-                                          decoration: BoxDecoration(
-                                            color: AppColors.primary.withOpacity(0.1),
-                                            shape: BoxShape.circle,
-                                          ),
-                                          child: Icon(
-                                            Icons.check,
-                                            size: 16,
-                                            color: AppColors.primary,
-                                          ),
-                                        ),
-                                        const SizedBox(width: AppConstants.spaceM),
-                                        Expanded(
-                                          child: Text(
-                                            document,
-                                            style: AppTextStyles.bodyMedium.copyWith(
-                                              color: AppColors.textPrimary,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ))
-                              .toList(),
+                          children: [
+                            _buildFAQItem(
+                              'What is the process to study in UK?',
+                              'The process involves choosing a university and program, submitting required documents, getting an acceptance letter, applying for a student visa, and arranging accommodation.',
+                            ),
+                            _buildFAQItem(
+                              'How much money is required to study in UK?',
+                              'Tuition fees range from £12,000 to £35,000 per year depending on the course and university. Living costs average £12,000-£15,000 per year.',
+                            ),
+                            _buildFAQItem(
+                              'Can I get a permanent residency in UK after my studies?',
+                              'After completing your studies, you can apply for a Graduate Route visa for 2 years (3 years for PhD). After working in the UK, you may be eligible for permanent residency.',
+                            ),
+                            _buildFAQItem(
+                              'What are the English language requirements?',
+                              'Most universities require IELTS scores of 6.0-7.0 overall, with no component below 5.5-6.0. Some universities also accept TOEFL, PTE, or other equivalent tests.',
+                            ),
+                            _buildFAQItem(
+                              'Can I work while studying in the UK?',
+                              'Yes, international students can work up to 20 hours per week during term time and full-time during holidays.',
+                            ),
+                          ],
                         ),
                       ),
-
-                      const SizedBox(height: AppConstants.spaceXL),
-
-                      // FAQ Section
-                      const FaqSection(),
 
                       const SizedBox(height: AppConstants.spaceXL),
 
@@ -423,7 +516,7 @@ class _UKDetailsPageState extends State<UKDetailsPage>
                           ),
                           const SizedBox(width: AppConstants.spaceM),
                           SecondaryButton(
-                            text: 'Share',
+                            text: '',
                             icon: Icons.share_outlined,
                             onPressed: _shareDestination,
                           ),
@@ -443,25 +536,30 @@ class _UKDetailsPageState extends State<UKDetailsPage>
   }
 
   void _navigateToUniversities() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Universities listing coming soon!',
-          style: AppTextStyles.bodyMedium.copyWith(
-            color: AppColors.textOnPrimary,
-          ),
-        ),
-        backgroundColor: AppColors.info,
-        action: SnackBarAction(
-          label: 'OK',
-          textColor: AppColors.textOnPrimary,
-          onPressed: () {},
-        ),
-      ),
-    );
-  }
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => const UniversityListPage(country: '', title: '',),
+    ),
+  );
+}
+
 
   void _navigateToUniversity(String universityName) {
+  if (universityName == 'Oxford University') {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => OxfordUniversityPage()),
+    );
+  }
+  else if (universityName == 'Cambridge University') {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const CambridgeUniversityPage()),
+    );
+  }
+   else {
+    // You can later add more conditions for other universities here
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
@@ -479,6 +577,8 @@ class _UKDetailsPageState extends State<UKDetailsPage>
       ),
     );
   }
+}
+
 
   void _searchProgram(String program) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -495,22 +595,13 @@ class _UKDetailsPageState extends State<UKDetailsPage>
     );
   }
 
-  void _shareDestination() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Shared: Study in UK 🇬🇧',
-          style: AppTextStyles.bodyMedium.copyWith(
-            color: AppColors.textOnPrimary,
-          ),
-        ),
-        backgroundColor: AppColors.success,
-        action: SnackBarAction(
-          label: 'View',
-          textColor: AppColors.textOnPrimary,
-          onPressed: () {},
-        ),
-      ),
-    );
-  }
+  void _shareDestination() async {
+  const message = 'Explore study opportunities in the UK 🇬🇧:\nhttps://yourdomain.com/study-in-uk';
+
+  await Share.share(
+    message,
+    subject: 'Study in the UK',
+  );
+}
+
 }

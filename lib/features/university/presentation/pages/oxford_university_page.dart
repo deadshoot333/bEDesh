@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/app_constants.dart';
@@ -9,35 +11,140 @@ import '../widgets/university_stat_card.dart';
 import '../widgets/scholarship_card.dart';
 import '../widgets/course_card.dart';
 
-class OxfordUniversityPage extends StatefulWidget {
-  const OxfordUniversityPage({super.key});
 
+class OxfordUniversityPage extends StatefulWidget {
+ 
   @override
-  State<OxfordUniversityPage> createState() => _OxfordUniversityPageState();
+  
+  State<OxfordUniversityPage> createState() => _OxfordUniversityPageState(
+    
+  );
+
+  
 }
+
+
+
+Widget _infoText(String label, String? value) {
+  return Padding(
+    padding: const EdgeInsets.only(bottom: 6),
+    child: RichText(
+      text: TextSpan(
+        text: '$label: ',
+        style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textPrimary),
+        children: [
+          TextSpan(
+            text: value ?? '-',
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: AppColors.textSecondary,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+
+final Map<String, Map<String, String>> scholarshipDetails = {
+  'Rhodes Scholarship': {
+    'description': 'Covers all university and living expenses for international students. Extremely competitive and prestigious.',
+    'url': 'https://www.rhodeshouse.ox.ac.uk/scholarships/the-rhodes-scholarship/',
+  },
+  'Clarendon Fund': {
+    'description': 'Provides full tuition and generous living stipends for academically excellent graduate students.',
+    'url': 'https://www.ox.ac.uk/clarendon',
+  },
+  'Reach Oxford Scholarship': {
+    'description': 'For students from low-income countries, covers tuition, living, and return airfare.',
+    'url': 'https://www.ox.ac.uk/admissions/undergraduate/fees-and-funding/oxford-support/reach-oxford-scholarship',
+  },
+  'Weidenfeld-Hoffmann': {
+    'description': 'Targets emerging leaders and covers full tuition and living costs for graduate programs.',
+    'url': 'https://www.ox.ac.uk/admissions/graduate/fees-and-funding/fees-funding-and-scholarship-search/weidenfeld-hoffmann-scholarships-and-leadership-programme',
+  },
+  'Simon & June Li Scholarship': {
+    'description': 'Supports students from developing countries based on financial need and academic merit.',
+    'url': 'https://governance.admin.ox.ac.uk/legislation/simon-and-june-li-scholarship-fund',
+  },
+};
 
 class _OxfordUniversityPageState extends State<OxfordUniversityPage>
     with TickerProviderStateMixin {
+
+      void _launchURL(String url) async {
+  final uri = Uri.parse(url);
+  if (await canLaunchUrl(uri)) {
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  } else {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Could not open the link',
+          style: AppTextStyles.bodyMedium.copyWith(
+            color: AppColors.textOnPrimary,
+          ),
+        ),
+        backgroundColor: AppColors.error,
+      ),
+    );
+  }
+}
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
 
-  final List<String> scholarships = [
-    'Rhodes Scholarship',
-    'Clarendon Fund',
-    'Reach Oxford Scholarship',
-    'Weidenfeld-Hoffmann',
-    'Simon & June Li Scholarship',
-  ];
+  final Map<String, Map<String, String>> scholarshipDetails = {
+  'Rhodes Scholarship': {
+    'description': 'Covers all university and living expenses for international students. Extremely competitive and prestigious.',
+    'url': 'https://www.rhodeshouse.ox.ac.uk/scholarships/the-rhodes-scholarship/',
+  },
+  'Clarendon Fund': {
+    'description': 'Provides full tuition and generous living stipends for academically excellent graduate students.',
+    'url': 'https://www.ox.ac.uk/clarendon',
+  },
+  'Reach Oxford Scholarship': {
+    'description': 'For students from low-income countries, covers tuition, living, and return airfare.',
+    'url': 'https://www.ox.ac.uk/admissions/undergraduate/fees-and-funding/oxford-support/reach-oxford-scholarship',
+  },
+  'Weidenfeld-Hoffmann': {
+    'description': 'Targets emerging leaders and covers full tuition and living costs for graduate programs.',
+    'url': 'https://www.ox.ac.uk/admissions/graduate/fees-and-funding/fees-funding-and-scholarship-search/weidenfeld-hoffmann-scholarships-and-leadership-programme',
+  },
+  'Simon & June Li Scholarship': {
+    'description': 'Supports students from developing countries based on financial need and academic merit.',
+    'url': 'https://governance.admin.ox.ac.uk/legislation/simon-and-june-li-scholarship-fund',
+  },
+};
 
   final List<Map<String, String>> courses = [
-    {'name': 'BSc Computer Science', 'level': 'Undergraduate', 'duration': '3 years'},
-    {'name': 'PPE', 'level': 'Undergraduate', 'duration': '3 years'},
-    {'name': 'MSc Data Science', 'level': 'Postgraduate', 'duration': '1 year'},
-    {'name': 'MSc Finance', 'level': 'Postgraduate', 'duration': '1 year'},
-    {'name': 'MBA Business', 'level': 'Postgraduate', 'duration': '2 years'},
-    {'name': 'Law LLB', 'level': 'Undergraduate', 'duration': '3 years'},
-  ];
+  {
+    'name': 'BSc Computer Science',
+    'level': 'Undergraduate',
+    'duration': '3 years',
+    'availability': 'Spring',
+    'popularity': 'High',
+    'url': 'https://www.ox.ac.uk/admissions/undergraduate/courses/course-listing/computer-science',
+  },
+  {
+    'name': 'MBA Business',
+    'level': 'Postgraduate',
+    'duration': '2 years',
+    'availability': 'Fall',
+    'popularity': 'Very High',
+    'url': 'https://www.sbs.ox.ac.uk/programmes/mbas/oxford-executive-mba?utm_source=google&utm_medium=cpc&utm_campaign=PPC_Conversion_EMBA_EMBA_google_PMax_UK-North-America-Africa-MENA-Asia-Pacific-Europe_Custom_Generic&gad_source=1&gad_campaignid=22586827665&gbraid=0AAAAADBiMDqukZ5snmFcFKePGoss__jCa&gclid=Cj0KCQjw-ZHEBhCxARIsAGGN96JShfYbZ8TZRGgM4IkcRbuPLf_fEP8uV0FA9CO4XjFtmYHYk_u29UoaAlCdEALw_wcB',
+  },
+  {
+    'name': 'Law LLB',
+    'level': 'Undergraduate',
+    'duration': '3 years',
+    'availability': 'Fall',
+    'popularity': 'Medium',
+    'url': 'https://www.ox.ac.uk/admissions/undergraduate/courses/course-listing/law-jurisprudence',
+  },
+];
+
 
   @override
   void initState() {
@@ -71,6 +178,7 @@ class _OxfordUniversityPageState extends State<OxfordUniversityPage>
 
   @override
   Widget build(BuildContext context) {
+    final List<String> scholarships = scholarshipDetails.keys.toList();
     return Scaffold(
       backgroundColor: AppColors.backgroundPrimary,
       body: FadeTransition(
@@ -334,7 +442,7 @@ class _OxfordUniversityPageState extends State<OxfordUniversityPage>
                             name: course['name']!,
                             level: course['level']!,
                             duration: course['duration']!,
-                            onTap: () => _viewCourse(course['name']!),
+                            onTap: () => _viewCourse(course['name']!), courseName: '', fee: '',
                           );
                         },
                       ),
@@ -342,25 +450,18 @@ class _OxfordUniversityPageState extends State<OxfordUniversityPage>
                       const SizedBox(height: AppConstants.spaceXL),
 
                       // Action Buttons
-                      Row(
-                        children: [
-                          Expanded(
-                            child: PrimaryButton(
-                              text: 'Apply Now',
-                              icon: Icons.send_outlined,
-                              onPressed: _applyToUniversity,
-                            ),
-                          ),
-                          const SizedBox(width: AppConstants.spaceM),
-                          Expanded(
-                            child: SecondaryButton(
-                              text: 'Learn More',
-                              icon: Icons.info_outline,
-                              onPressed: _learnMore,
-                            ),
-                          ),
-                        ],
-                      ),
+                   
+// New:
+Center(
+  child: SizedBox(
+    width: 200, // adjust width as needed
+    child: PrimaryButton(
+      text: 'Apply Now',
+      icon: Icons.send_outlined,
+      onPressed: _applyToUniversity,
+    ),
+  ),
+),
 
                       const SizedBox(height: AppConstants.spaceXL),
                     ],
@@ -374,24 +475,11 @@ class _OxfordUniversityPageState extends State<OxfordUniversityPage>
     );
   }
 
-  void _shareUniversity() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Shared: Oxford University 🎓',
-          style: AppTextStyles.bodyMedium.copyWith(
-            color: AppColors.textOnPrimary,
-          ),
-        ),
-        backgroundColor: AppColors.success,
-        action: SnackBarAction(
-          label: 'View',
-          textColor: AppColors.textOnPrimary,
-          onPressed: () {},
-        ),
-      ),
-    );
-  }
+ void _shareUniversity() {
+  final String message = 'Check out Oxford University! 🎓 https://www.ox.ac.uk/';
+  Share.share(message);
+}
+
 
   void _toggleFavorite() {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -408,52 +496,160 @@ class _OxfordUniversityPageState extends State<OxfordUniversityPage>
     );
   }
 
-  void _viewScholarship(String scholarship) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          '$scholarship details coming soon!',
-          style: AppTextStyles.bodyMedium.copyWith(
-            color: AppColors.textOnPrimary,
-          ),
-        ),
-        backgroundColor: AppColors.info,
-      ),
-    );
-  }
+void _viewScholarship(String scholarship) {
+  final data = scholarshipDetails[scholarship];
+  final detail = data?['description'] ?? 'Details coming soon.';
+  final url = data?['url'];
 
-  void _viewCourse(String course) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          '$course details coming soon!',
-          style: AppTextStyles.bodyMedium.copyWith(
-            color: AppColors.textOnPrimary,
-          ),
+  showDialog(
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        backgroundColor: AppColors.backgroundCard,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppConstants.radiusM),
         ),
-        backgroundColor: AppColors.info,
-      ),
-    );
-  }
+        title: Text(
+          scholarship,
+          style: AppTextStyles.h4.copyWith(color: AppColors.textPrimary),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              detail,
+              style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary),
+            ),
+            if (url != null && url.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              InkWell(
+                onTap: () async {
+                  final uri = Uri.parse(url);
+                  if (await canLaunchUrl(uri)) {
+                    await launchUrl(uri, mode: LaunchMode.externalApplication);
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Could not open the scholarship link.')),
+                    );
+                  }
+                },
+                child: Text(
+                  'Visit Scholarship Page →',
+                  style: AppTextStyles.labelLarge.copyWith(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.bold,
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(
+              'Close',
+              style: AppTextStyles.labelLarge.copyWith(
+                color: AppColors.primary,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      );
+    },
+  );
+}
 
-  void _applyToUniversity() {
+
+
+void _viewCourse(String courseName) {
+  final course = courses.firstWhere((c) => c['name'] == courseName);
+
+  showDialog(
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        backgroundColor: AppColors.backgroundCard,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppConstants.radiusM),
+        ),
+        title: Text(
+          course['name']!,
+          style: AppTextStyles.h4.copyWith(color: AppColors.textPrimary),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _infoText('Level', course['level']),
+            _infoText('Duration', course['duration']),
+            _infoText('Availability', course['availability']),
+            _infoText('Popularity', course['popularity']),
+            const SizedBox(height: 12),
+           InkWell(
+  onTap: () async {
+    final courseUrl = course['url']!;
+    final uri = Uri.parse(courseUrl);
+
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not open the course link.')),
+      );
+    }
+  },
+  child: Text(
+    'Visit Course Page →',
+    style: AppTextStyles.labelLarge.copyWith(
+      color: AppColors.primary,
+      fontWeight: FontWeight.bold,
+      decoration: TextDecoration.underline,
+    ),
+  ),
+),
+
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(
+              'Close',
+              style: AppTextStyles.labelLarge.copyWith(
+                color: AppColors.primary,
+              ),
+            ),
+          ),
+        ],
+      );
+    },
+  );
+}
+
+
+ void _applyToUniversity() async {
+  final url = 'https://www.ox.ac.uk/admissions/undergraduate/applying-to-oxford'; // Replace with actual apply URL
+
+  final uri = Uri.parse(url);
+  if (await canLaunchUrl(uri)) {
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  } else {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          'Application process starting...',
-          style: AppTextStyles.bodyMedium.copyWith(
-            color: AppColors.textOnPrimary,
-          ),
+          'Could not open the application link.',
+          style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textOnPrimary),
         ),
-        backgroundColor: AppColors.success,
-        action: SnackBarAction(
-          label: 'Continue',
-          textColor: AppColors.textOnPrimary,
-          onPressed: () {},
-        ),
+        backgroundColor: AppColors.error,
       ),
     );
   }
+}
+
 
   void _learnMore() {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -468,4 +664,8 @@ class _OxfordUniversityPageState extends State<OxfordUniversityPage>
       ),
     );
   }
+  
+  
 }
+
+

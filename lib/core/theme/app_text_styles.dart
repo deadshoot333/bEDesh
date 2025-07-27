@@ -122,4 +122,6 @@ class AppTextStyles {
     height: 1.6,
     letterSpacing: 1.5,
   );
+
+  static var body;
 }

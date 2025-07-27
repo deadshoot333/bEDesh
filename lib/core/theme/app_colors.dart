@@ -87,4 +87,6 @@ class AppColors {
       900: Color(0xFF081969),
     },
   );
+
+  static var background;
 }

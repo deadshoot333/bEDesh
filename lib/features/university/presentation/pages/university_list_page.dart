@@ -37,11 +37,8 @@ class _UniversityListPageState extends State<UniversityListPage>
   
   final List<String> _filters = [
     'All',
-    'Top 10',
-    'Top 50',
-    'Top 100',
-    'Scholarships Available',
-    'High Acceptance Rate',
+    'Top 3',
+   
   ];
 
   final List<String> _levels = [
@@ -237,7 +234,7 @@ class _UniversityListPageState extends State<UniversityListPage>
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
-          '$filteredCount Universities Found',
+          '$filteredCount Universities',
           style: AppTextStyles.h4.copyWith(
             color: AppColors.textPrimary,
             fontWeight: FontWeight.w600,
@@ -290,7 +287,7 @@ class _UniversityListPageState extends State<UniversityListPage>
           ranking: university['ranking'],
           rating: university['rating'],
           subtitle: university['subtitle'],
-          showFavoriteButton: true,
+          showFavoriteButton: false,
           onTap: () => _navigateToUniversity(university),
         );
       },
@@ -522,24 +519,7 @@ class _UniversityListPageState extends State<UniversityListPage>
     }
     
     // Apply category filter
-    if (_selectedFilter != 'All') {
-      universities = universities.where((uni) {
-        switch (_selectedFilter) {
-          case 'Top 10':
-            return (uni['ranking'] ?? 999) <= 10;
-          case 'Top 50':
-            return (uni['ranking'] ?? 999) <= 50;
-          case 'Top 100':
-            return (uni['ranking'] ?? 999) <= 100;
-          case 'Scholarships Available':
-            return uni['hasScholarships'] == true;
-          case 'High Acceptance Rate':
-            return (uni['acceptanceRate'] ?? 0) > 50;
-          default:
-            return true;
-        }
-      }).toList();
-    }
+    
     
     // Apply sorting
     universities.sort((a, b) {
@@ -583,7 +563,7 @@ class _UniversityListPageState extends State<UniversityListPage>
     if (university['name'] == 'University of Oxford') {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => const OxfordUniversityPage()),
+        MaterialPageRoute(builder: (context) =>  OxfordUniversityPage()),
       );
     } else {
       // For now, show a coming soon message
@@ -641,82 +621,7 @@ class _UniversityListPageState extends State<UniversityListPage>
       'acceptanceRate': 14,
       'hasScholarships': true,
     },
-    {
-      'name': 'University College London',
-      'location': 'London, England',
-      'image': AssetPaths.ucl,
-      'ranking': 4,
-      'rating': 4.6,
-      'subtitle': 'Global university in the heart of London',
-      'tuition': 28000,
-      'acceptanceRate': 63,
-      'hasScholarships': true,
-    },
-    {
-      'name': 'London School of Economics',
-      'location': 'London, England',
-      'image': AssetPaths.ucl, // Placeholder
-      'ranking': 5,
-      'rating': 4.5,
-      'subtitle': 'Premier institution for social sciences',
-      'tuition': 30000,
-      'acceptanceRate': 8,
-      'hasScholarships': true,
-    },
-    {
-      'name': 'University of Edinburgh',
-      'location': 'Edinburgh, Scotland',
-      'image': AssetPaths.ucl, // Placeholder
-      'ranking': 6,
-      'rating': 4.4,
-      'subtitle': 'Historic Scottish university',
-      'tuition': 26000,
-      'acceptanceRate': 40,
-      'hasScholarships': true,
-    },
-    {
-      'name': 'King\'s College London',
-      'location': 'London, England',
-      'image': AssetPaths.ucl, // Placeholder
-      'ranking': 7,
-      'rating': 4.3,
-      'subtitle': 'Research-intensive university',
-      'tuition': 27000,
-      'acceptanceRate': 13,
-      'hasScholarships': false,
-    },
-    {
-      'name': 'University of Manchester',
-      'location': 'Manchester, England',
-      'image': AssetPaths.ucl, // Placeholder
-      'ranking': 8,
-      'rating': 4.2,
-      'subtitle': 'Leading research university',
-      'tuition': 24000,
-      'acceptanceRate': 56,
-      'hasScholarships': true,
-    },
-    {
-      'name': 'University of Warwick',
-      'location': 'Coventry, England',
-      'image': AssetPaths.ucl, // Placeholder
-      'ranking': 9,
-      'rating': 4.1,
-      'subtitle': 'Modern campus university',
-      'tuition': 25000,
-      'acceptanceRate': 14,
-      'hasScholarships': false,
-    },
-    {
-      'name': 'University of Bristol',
-      'location': 'Bristol, England',
-      'image': AssetPaths.ucl, // Placeholder
-      'ranking': 10,
-      'rating': 4.0,
-      'subtitle': 'Research excellence in a vibrant city',
-      'tuition': 23000,
-      'acceptanceRate': 59,
-      'hasScholarships': true,
-    },
+    
+    
   ];
 }
