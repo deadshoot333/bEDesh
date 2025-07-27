@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/app_constants.dart';
@@ -22,24 +23,50 @@ class _SwanseaUniversityPageState extends State<SwanseaUniversityPage>
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
 
-  final List<String> scholarships = [
-    'Swansea International Scholarship',
-    'Vice-Chancellor\'s Scholarship',
-    'Sports Excellence Scholarship',
-    'Academic Merit Award',
-    'Engineering Excellence Fund',
-  ];
+  final Map<String, Map<String, String>> scholarshipDetails = {
+  'Swansea International Scholarship': {
+    'description': 'Provides financial support for international students demonstrating academic excellence.',
+    'url': 'https://www.swansea.ac.uk/international/fees-and-funding/scholarships/',
+  },
+  'Vice-Chancellor\'s Scholarship': {
+    'description': 'Awarded to high-achieving students across various disciplines at Swansea University.',
+    'url': 'https://www.swansea.ac.uk/undergraduate/fees-and-funding/scholarships/',
+  },
+  'Sports Excellence Scholarship': {
+    'description': 'Supports talented athletes combining sport and study.',
+    'url': 'https://www.swansea.ac.uk/sports-performance/scholarships/',
+  },
+};
+late final List<String> scholarships = scholarshipDetails.keys.toList();
+
+
 
   final List<Map<String, String>> courses = [
-    {'name': 'BSc Computer Science', 'level': 'Undergraduate', 'duration': '3 years'},
-    {'name': 'MEng Aerospace Engineering', 'level': 'Undergraduate', 'duration': '4 years'},
-    {'name': 'MSc Data Science', 'level': 'Postgraduate', 'duration': '1 year'},
-    {'name': 'MSc Sustainable Energy Systems', 'level': 'Postgraduate', 'duration': '1 year'},
-    {'name': 'MBA Business Administration', 'level': 'Postgraduate', 'duration': '1 year'},
-    {'name': 'LLB Law', 'level': 'Undergraduate', 'duration': '3 years'},
-    {'name': 'BSc Marine Biology', 'level': 'Undergraduate', 'duration': '3 years'},
-    {'name': 'MSc Cybersecurity', 'level': 'Postgraduate', 'duration': '1 year'},
-  ];
+  {
+    'name': 'BSc Computer Science',
+    'level': 'Undergraduate',
+    'duration': '3 years',
+    'availability': 'September',
+    'popularity': 'High',
+    'url': 'https://www.swansea.ac.uk/course/computer-science/',
+  },
+  {
+    'name': 'MSc Data Science',
+    'level': 'Postgraduate',
+    'duration': '1 year',
+    'availability': 'September',
+    'popularity': 'High',
+    'url': 'https://www.swansea.ac.uk/course/data-science-msc/',
+  },
+  {
+    'name': 'MBA Business Administration',
+    'level': 'Postgraduate',
+    'duration': '1 year',
+    'availability': 'January',
+    'popularity': 'Medium',
+    'url': 'https://www.swansea.ac.uk/course/mba/',
+  },
+];
 
   final List<String> highlights = [
     'High student satisfaction with 83% employability rate',
@@ -360,22 +387,21 @@ class _SwanseaUniversityPageState extends State<SwanseaUniversityPage>
         ),
         const SizedBox(height: AppConstants.spaceM),
         SizedBox(
-          height: 140,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: AppConstants.spaceS),
-            itemCount: scholarships.length,
-            separatorBuilder: (context, index) => const SizedBox(
-              width: AppConstants.spaceM,
-            ),
-            itemBuilder: (context, index) {
-              return ScholarshipCard(
-                title: scholarships[index],
-                onTap: () => _viewScholarship(scholarships[index]),
-              );
-            },
-          ),
-        ),
+  height: 140,
+  child: ListView.separated(
+    scrollDirection: Axis.horizontal,
+    padding: const EdgeInsets.symmetric(horizontal: AppConstants.spaceS),
+    itemCount: scholarships.length,
+    separatorBuilder: (context, index) => const SizedBox(width: AppConstants.spaceM),
+    itemBuilder: (context, index) {
+      return ScholarshipCard(
+        title: scholarships[index],
+        onTap: () => _viewScholarship(scholarships[index]),
+      );
+    },
+  ),
+)
+
       ],
     );
   }
@@ -389,23 +415,22 @@ class _SwanseaUniversityPageState extends State<SwanseaUniversityPage>
           icon: Icons.menu_book_outlined,
         ),
         const SizedBox(height: AppConstants.spaceM),
-        ListView.separated(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: courses.length,
-          separatorBuilder: (context, index) => const SizedBox(
-            height: AppConstants.spaceM,
-          ),
-          itemBuilder: (context, index) {
-            final course = courses[index];
-            return CourseCard(
-              name: course['name']!,
-              level: course['level']!,
-              duration: course['duration']!,
-              onTap: () => _viewCourse(course),
-            );
-          },
-        ),
+      ListView.separated(
+  shrinkWrap: true,
+  physics: const NeverScrollableScrollPhysics(),
+  itemCount: courses.length,
+  separatorBuilder: (context, index) => const SizedBox(height: AppConstants.spaceM),
+  itemBuilder: (context, index) {
+    final course = courses[index];
+    return CourseCard(
+      name: course['name']!,
+      level: course['level']!,
+      duration: course['duration']!,
+      onTap: () => _viewCourse(course), courseName: '', fee: '',
+    );
+  },
+)
+
       ],
     );
   }
@@ -423,150 +448,143 @@ class _SwanseaUniversityPageState extends State<SwanseaUniversityPage>
               ),
             ),
             const SizedBox(width: AppConstants.spaceM),
-            Expanded(
-              child: OutlinedButton(
-                onPressed: _learnMore,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.info_outline,
-                      size: 16,
-                      color: AppColors.primary,
-                    ),
-                    const SizedBox(width: AppConstants.spaceS),
-                    Text(
-                      'Learn More',
-                      style: AppTextStyles.labelMedium.copyWith(
-                        color: AppColors.primary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+           
           ],
         ),
-        const SizedBox(height: AppConstants.spaceM),
-        Row(
-          children: [
-            Expanded(
-              child: OutlinedButton(
-                onPressed: _shareUniversity,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.share_outlined,
-                      size: 16,
-                      color: AppColors.primary,
-                    ),
-                    const SizedBox(width: AppConstants.spaceS),
-                    Text(
-                      'Share',
-                      style: AppTextStyles.labelMedium.copyWith(
-                        color: AppColors.primary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(width: AppConstants.spaceM),
-            Expanded(
-              child: OutlinedButton(
-                onPressed: _addToFavorites,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.favorite_border_outlined,
-                      size: 16,
-                      color: AppColors.primary,
-                    ),
-                    const SizedBox(width: AppConstants.spaceS),
-                    Text(
-                      'Save',
-                      style: AppTextStyles.labelMedium.copyWith(
-                        color: AppColors.primary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
+       
       ],
     );
   }
 
-  void _viewScholarship(String scholarshipName) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'More details about $scholarshipName coming soon!',
-          style: AppTextStyles.bodyMedium.copyWith(
-            color: AppColors.textOnPrimary,
-          ),
-        ),
-        backgroundColor: AppColors.info,
-        behavior: SnackBarBehavior.floating,
-        margin: const EdgeInsets.all(AppConstants.spaceM),
+  void _viewScholarship(String scholarship) {
+  final data = scholarshipDetails[scholarship];
+  final detail = data?['description'] ?? 'Details coming soon.';
+  final url = data?['url'];
+
+  showDialog(
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        backgroundColor: AppColors.backgroundCard,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppConstants.radiusM),
         ),
-      ),
-    );
-  }
-
-  void _viewCourse(Map<String, String> course) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.backgroundCard,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppConstants.radiusL),
-        ),
         title: Text(
-          course['name']!,
-          style: AppTextStyles.h4.copyWith(
-            color: AppColors.textPrimary,
-            fontWeight: FontWeight.bold,
-          ),
+          scholarship,
+          style: AppTextStyles.h4.copyWith(color: AppColors.textPrimary),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildCourseDetail('Level', course['level']!),
-            _buildCourseDetail('Duration', course['duration']!),
-            _buildCourseDetail('Campus', 'Bay Campus'),
-            _buildCourseDetail('Start Date', 'September 2024'),
+            Text(
+              detail,
+              style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary),
+            ),
+            if (url != null && url.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              InkWell(
+                onTap: () async {
+                  final uri = Uri.parse(url);
+                  if (await canLaunchUrl(uri)) {
+                    await launchUrl(uri, mode: LaunchMode.externalApplication);
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Could not open the scholarship link.')),
+                    );
+                  }
+                },
+                child: Text(
+                  'Visit Scholarship Page →',
+                  style: AppTextStyles.labelLarge.copyWith(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.bold,
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.of(context).pop(),
             child: Text(
               'Close',
-              style: AppTextStyles.labelMedium.copyWith(
-                color: AppColors.textSecondary,
+              style: AppTextStyles.labelLarge.copyWith(
+                color: AppColors.primary,
+                fontWeight: FontWeight.bold,
               ),
             ),
           ),
-          PrimaryButton(
-            text: 'Apply',
-            size: ButtonSize.small,
-            onPressed: () {
-              Navigator.pop(context);
-              _applyToUniversity();
-            },
+        ],
+      );
+    },
+  );
+}
+
+
+ void _viewCourse(Map<String, String> course) {
+  showDialog(
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        backgroundColor: AppColors.backgroundCard,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppConstants.radiusM),
+        ),
+        title: Text(
+          course['name']!,
+          style: AppTextStyles.h4.copyWith(color: AppColors.textPrimary),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _infoText('Level', course['level']),
+            _infoText('Duration', course['duration']),
+            _infoText('Availability', course['availability']),
+            _infoText('Popularity', course['popularity']),
+            const SizedBox(height: 12),
+            if (course['url'] != null)
+              InkWell(
+                onTap: () async {
+                  final uri = Uri.parse(course['url']!);
+                  if (await canLaunchUrl(uri)) {
+                    await launchUrl(uri, mode: LaunchMode.externalApplication);
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Could not open the course link.')),
+                    );
+                  }
+                },
+                child: Text(
+                  'Visit Course Page →',
+                  style: AppTextStyles.labelLarge.copyWith(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.bold,
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
+              ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(
+              'Close',
+              style: AppTextStyles.labelLarge.copyWith(
+                color: AppColors.primary,
+              ),
+            ),
           ),
         ],
-      ),
-    );
-  }
+      );
+    },
+  );
+}
+
 
   Widget _buildCourseDetail(String label, String value) {
     return Padding(
@@ -596,24 +614,24 @@ class _SwanseaUniversityPageState extends State<SwanseaUniversityPage>
     );
   }
 
-  void _applyToUniversity() {
+ void _applyToUniversity() async {
+  final url = 'https://www.swansea.ac.uk/apply/'; // Replace with actual apply URL
+
+  final uri = Uri.parse(url);
+  if (await canLaunchUrl(uri)) {
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  } else {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          'Application process will be available soon!',
-          style: AppTextStyles.bodyMedium.copyWith(
-            color: AppColors.textOnPrimary,
-          ),
+          'Could not open the application link.',
+          style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textOnPrimary),
         ),
-        backgroundColor: AppColors.success,
-        behavior: SnackBarBehavior.floating,
-        margin: const EdgeInsets.all(AppConstants.spaceM),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppConstants.radiusM),
-        ),
+        backgroundColor: AppColors.error,
       ),
     );
   }
+}
 
   void _learnMore() {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -634,41 +652,26 @@ class _SwanseaUniversityPageState extends State<SwanseaUniversityPage>
     );
   }
 
-  void _shareUniversity() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Share functionality coming soon!',
-          style: AppTextStyles.bodyMedium.copyWith(
-            color: AppColors.textOnPrimary,
+  
+  Widget _infoText(String label, String? value) {
+  return Padding(
+    padding: const EdgeInsets.only(bottom: 6),
+    child: RichText(
+      text: TextSpan(
+        text: '$label: ',
+        style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textPrimary),
+        children: [
+          TextSpan(
+            text: value ?? '-',
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: AppColors.textSecondary,
+              fontWeight: FontWeight.w500,
+            ),
           ),
-        ),
-        backgroundColor: AppColors.info,
-        behavior: SnackBarBehavior.floating,
-        margin: const EdgeInsets.all(AppConstants.spaceM),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppConstants.radiusM),
-        ),
+        ],
       ),
-    );
-  }
+    ),
+  );
+}
 
-  void _addToFavorites() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Added to favorites!',
-          style: AppTextStyles.bodyMedium.copyWith(
-            color: AppColors.textOnPrimary,
-          ),
-        ),
-        backgroundColor: AppColors.success,
-        behavior: SnackBarBehavior.floating,
-        margin: const EdgeInsets.all(AppConstants.spaceM),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppConstants.radiusM),
-        ),
-      ),
-    );
-  }
 }

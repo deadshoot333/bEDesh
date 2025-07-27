@@ -1,3 +1,4 @@
+import 'package:bedesh/features/destination/presentation/pages/uk_details_page.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -8,15 +9,14 @@ import '../../../../shared/widgets/inputs/modern_search_bar.dart';
 import '../../../../shared/widgets/cards/circular_destination_card.dart';
 import '../../../../shared/widgets/cards/course_card.dart';
 import '../../../../shared/widgets/cards/circular_university_card.dart';
-import '../../../../shared/widgets/chips/modern_chip.dart';
 import '../../../../shared/widgets/buttons/modern_buttons.dart';
 
 // Import the existing pages for navigation
 import '../../../university/presentation/pages/oxford_university_page.dart';
-import '../../../destination/presentation/pages/uk_details_page.dart';
 import '../../../university/presentation/pages/swansea_university_page.dart';
 import '../../../destination/presentation/pages/australia_details_page.dart';
 import '../../../university/presentation/pages/university_list_page.dart';
+import '../../../profile/presentation/pages/profile_page.dart';
 
 class ModernHomePage extends StatefulWidget {
   const ModernHomePage({super.key});
@@ -32,6 +32,10 @@ class _ModernHomePageState extends State<ModernHomePage>
   
   late Animation<double> _heroFadeAnimation;
   late Animation<Offset> _heroSlideAnimation;
+
+  void _navigateToOnboarding() {
+    Navigator.of(context).pushReplacementNamed('/onboarding');
+  }
 
   final PageController _bannerController = PageController(viewportFraction: 0.85);
   final TextEditingController _searchController = TextEditingController();
@@ -89,9 +93,33 @@ class _ModernHomePageState extends State<ModernHomePage>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.backgroundPrimary,
-      body: AnimatedBuilder(
+    return WillPopScope(
+      onWillPop: () async {
+        _navigateToOnboarding();
+        return false;
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.backgroundPrimary,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          leading: Container(
+            margin: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppColors.backgroundCard,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: IconButton(
+              icon: Icon(
+                Icons.arrow_back_ios_new,
+                color: AppColors.textPrimary,
+                size: 20,
+              ),
+              onPressed: _navigateToOnboarding,
+            ),
+          ),
+        ),
+        body: AnimatedBuilder(
         animation: Listenable.merge([
           _heroAnimationController,
           _sectionsAnimationController,
@@ -162,14 +190,6 @@ class _ModernHomePageState extends State<ModernHomePage>
                       ),
                       _buildUniversitiesSection(),
 
-                      // Trending Subjects
-                      SectionHeader(
-                        title: 'Trending Subjects',
-                        subtitle: 'Popular study fields',
-                        icon: Icons.auto_awesome,
-                      ),
-                      _buildSubjectsSection(),
-
                       // Quick Actions
                       SectionHeader(
                         title: 'Quick Actions',
@@ -189,7 +209,8 @@ class _ModernHomePageState extends State<ModernHomePage>
           );
         },
       ),
-    );
+    ),
+  );
   }
 
   Widget _buildModernHeader() {
@@ -230,13 +251,18 @@ class _ModernHomePageState extends State<ModernHomePage>
                     ],
                   ),
                   ModernIconButton(
-                    icon: Icons.notifications_outlined,
+                    icon: Icons.person_outline,
                     backgroundColor: AppColors.textOnPrimary.withOpacity(0.2),
                     iconColor: AppColors.textOnPrimary,
                     onPressed: () {
-                      // Handle notifications
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ProfilePage(),
+                        ),
+                      );
                     },
-                    tooltip: 'Notifications',
+                    tooltip: 'Profile',
                   ),
                 ],
               ),
@@ -393,10 +419,10 @@ class _ModernHomePageState extends State<ModernHomePage>
       'count': 108,
       'imageAsset': AssetPaths.ukFlag,
       'onTap': () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const UKDetailsPage()),
-        );
+   Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const UKDetailsPage()),
+      );
       },
     },
     {
@@ -427,47 +453,34 @@ class _ModernHomePageState extends State<ModernHomePage>
 
   Widget _buildCoursesSection() {
     return SizedBox(
-      height: 320,
+      height: 220,
       child: ListView(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: AppConstants.spaceM),
         children: [
           CourseCard(
             courseName: 'MSc Future Vehicle Technologies',
-            universityName: 'Aston University',
-            price: 'GBP 21,500',
+            universityName: '',
             duration: '1 Year',
             level: 'Masters',
-            rating: 4.5,
-            tags: ['Engineering', 'Technology', 'Innovation'],
             imageUrl: AssetPaths.aston,
+            price: '',
           ),
           CourseCard(
             courseName: 'MSc Computer Science',
-            universityName: 'University of Glasgow',
-            price: 'GBP 19,000',
+            universityName: '',
             duration: '1 Year',
             level: 'Masters',
-            rating: 4.3,
-            tags: ['Computer Science', 'AI', 'Software'],
+            imageUrl: AssetPaths.cambridge,
+            price: '',
           ),
           CourseCard(
             courseName: 'MSc International Business',
-            universityName: 'University of Leeds',
-            price: 'GBP 18,500',
+            universityName: '',
             duration: '1 Year',
             level: 'Masters',
-            rating: 4.4,
-            tags: ['Business', 'Management', 'International'],
-          ),
-          CourseCard(
-            courseName: 'MBA in Finance',
-            universityName: 'University of Warwick',
-            price: 'GBP 22,000',
-            duration: '2 Years',
-            level: 'MBA',
-            rating: 4.7,
-            tags: ['Finance', 'Business', 'Leadership'],
+            imageUrl: AssetPaths.imperial,
+            price: '',
           ),
         ],
       ),
@@ -510,74 +523,35 @@ class _ModernHomePageState extends State<ModernHomePage>
       'onTap': () {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => const OxfordUniversityPage()),
+          MaterialPageRoute(builder: (context) =>  OxfordUniversityPage()),
         );
       },
-    },
-    {
-      'title': 'Massachusetts Institute of Technology',
-      'location': 'Cambridge, United States',
-      'imageUrl': AssetPaths.mit,
-      'ranking': 2,
-      'rating': 4.9,
-      'subtitle': 'Leading in technology and innovation',
-      'onTap': null,
     },
     {
       'title': 'University of Cambridge',
       'location': 'Cambridge, United Kingdom',
       'imageUrl': AssetPaths.cambridge,
-      'ranking': 3,
+      'ranking': 2,
       'rating': 4.8,
-      'subtitle': 'Historic excellence in education',
-      'onTap': null,
+      'subtitle': 'Excellence in research and education',
+      'onTap': () {
+        // Navigate to Cambridge page when implemented
+      },
     },
     {
       'title': 'Imperial College London',
       'location': 'London, United Kingdom',
       'imageUrl': AssetPaths.imperial,
-      'ranking': 4,
+      'ranking': 3,
       'rating': 4.7,
-      'subtitle': 'Science, engineering, medicine & business',
-      'onTap': null,
-    },
-    {
-      'title': 'University College London',
-      'location': 'London, United Kingdom',
-      'imageUrl': AssetPaths.ucl,
-      'ranking': 5,
-      'rating': 4.6,
-      'subtitle': 'London\'s global university',
-      'onTap': null,
+      'subtitle': 'World-leading science and technology',
+      'onTap': () {
+        // Navigate to Imperial page when implemented
+      },
     },
   ];
 
-  Widget _buildSubjectsSection() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppConstants.spaceM),
-      child: Wrap(
-        spacing: AppConstants.spaceS,
-        runSpacing: AppConstants.spaceS,
-        children: [
-          'Computer Science',
-          'Business Administration',
-          'Engineering',
-          'Medicine',
-          'Psychology',
-          'Economics',
-          'Law',
-          'Mathematics',
-        ].map((subject) {
-          return SubjectChip(
-            label: subject,
-            onTap: () {
-              // Handle subject selection
-            },
-          );
-        }).toList(),
-      ),
-    );
-  }
+
 
   Widget _buildQuickActionsSection() {
     return Padding(
@@ -586,12 +560,12 @@ class _ModernHomePageState extends State<ModernHomePage>
         children: [
           Expanded(
             child: _buildActionCard(
-              icon: Icons.attach_money,
-              title: 'Education Loans',
-              subtitle: 'Explore funding options',
+              icon: Icons.people_outline,
+              title: 'Community',
+              subtitle: 'Connect with Students',
               color: AppColors.secondary,
               onTap: () {
-                // Navigate to loans
+                // Navigate to community
               },
             ),
           ),
@@ -673,4 +647,77 @@ class _ModernHomePageState extends State<ModernHomePage>
   }
 
   // Helper method for staggered animations
+
+ 
+
+  Widget _buildStatItem({
+    required IconData icon,
+    required String value,
+    required String label,
+  }) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(
+          icon,
+          color: AppColors.primary,
+          size: 28,
+        ),
+        const SizedBox(height: AppConstants.spaceXS),
+        Text(
+          value,
+          style: AppTextStyles.h6.copyWith(
+            color: AppColors.textPrimary,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          label,
+          style: AppTextStyles.bodySmall.copyWith(
+            color: AppColors.textSecondary,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildInfoSection(String title, String content, IconData icon) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppConstants.spaceS),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            icon,
+            color: AppColors.primary,
+            size: 24,
+          ),
+          const SizedBox(width: AppConstants.spaceM),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: AppTextStyles.labelLarge.copyWith(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: AppConstants.spaceXS),
+                Text(
+                  content,
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

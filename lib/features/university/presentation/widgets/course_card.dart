@@ -16,7 +16,7 @@ class CourseCard extends StatelessWidget {
     required this.level,
     required this.duration,
     this.department,
-    required this.onTap,
+    required this.onTap, required String courseName, required String fee,
   });
 
   @override
