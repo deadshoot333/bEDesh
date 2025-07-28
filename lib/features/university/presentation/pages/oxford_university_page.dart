@@ -8,6 +8,7 @@ import '../../../../core/constants/asset_paths.dart';
 import '../../../../shared/widgets/buttons/modern_buttons.dart';
 import '../../../../shared/widgets/common/section_header.dart';
 import '../widgets/university_stat_card.dart';
+import '../widgets/scholarship_filter_tags.dart';
 import '../widgets/scholarship_card.dart';
 import '../widgets/course_card.dart';
 
@@ -46,105 +47,217 @@ Widget _infoText(String label, String? value) {
   );
 }
 
-
-final Map<String, Map<String, String>> scholarshipDetails = {
-  'Rhodes Scholarship': {
-    'description': 'Covers all university and living expenses for international students. Extremely competitive and prestigious.',
-    'url': 'https://www.rhodeshouse.ox.ac.uk/scholarships/the-rhodes-scholarship/',
-  },
-  'Clarendon Fund': {
-    'description': 'Provides full tuition and generous living stipends for academically excellent graduate students.',
-    'url': 'https://www.ox.ac.uk/clarendon',
-  },
-  'Reach Oxford Scholarship': {
-    'description': 'For students from low-income countries, covers tuition, living, and return airfare.',
-    'url': 'https://www.ox.ac.uk/admissions/undergraduate/fees-and-funding/oxford-support/reach-oxford-scholarship',
-  },
-  'Weidenfeld-Hoffmann': {
-    'description': 'Targets emerging leaders and covers full tuition and living costs for graduate programs.',
-    'url': 'https://www.ox.ac.uk/admissions/graduate/fees-and-funding/fees-funding-and-scholarship-search/weidenfeld-hoffmann-scholarships-and-leadership-programme',
-  },
-  'Simon & June Li Scholarship': {
-    'description': 'Supports students from developing countries based on financial need and academic merit.',
-    'url': 'https://governance.admin.ox.ac.uk/legislation/simon-and-june-li-scholarship-fund',
-  },
-};
-
 class _OxfordUniversityPageState extends State<OxfordUniversityPage>
     with TickerProviderStateMixin {
-
-      void _launchURL(String url) async {
-  final uri = Uri.parse(url);
-  if (await canLaunchUrl(uri)) {
-    await launchUrl(uri, mode: LaunchMode.externalApplication);
-  } else {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Could not open the link',
-          style: AppTextStyles.bodyMedium.copyWith(
-            color: AppColors.textOnPrimary,
-          ),
-        ),
-        backgroundColor: AppColors.error,
-      ),
-    );
-  }
-}
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
 
-  final Map<String, Map<String, String>> scholarshipDetails = {
-  'Rhodes Scholarship': {
-    'description': 'Covers all university and living expenses for international students. Extremely competitive and prestigious.',
-    'url': 'https://www.rhodeshouse.ox.ac.uk/scholarships/the-rhodes-scholarship/',
-  },
-  'Clarendon Fund': {
-    'description': 'Provides full tuition and generous living stipends for academically excellent graduate students.',
-    'url': 'https://www.ox.ac.uk/clarendon',
-  },
-  'Reach Oxford Scholarship': {
-    'description': 'For students from low-income countries, covers tuition, living, and return airfare.',
-    'url': 'https://www.ox.ac.uk/admissions/undergraduate/fees-and-funding/oxford-support/reach-oxford-scholarship',
-  },
-  'Weidenfeld-Hoffmann': {
-    'description': 'Targets emerging leaders and covers full tuition and living costs for graduate programs.',
-    'url': 'https://www.ox.ac.uk/admissions/graduate/fees-and-funding/fees-funding-and-scholarship-search/weidenfeld-hoffmann-scholarships-and-leadership-programme',
-  },
-  'Simon & June Li Scholarship': {
-    'description': 'Supports students from developing countries based on financial need and academic merit.',
-    'url': 'https://governance.admin.ox.ac.uk/legislation/simon-and-june-li-scholarship-fund',
-  },
-};
+  // Scholarship filter state
+  String _selectedType = 'All Types';
+  String _selectedFunding = 'All Funding';
+  String _selectedDegreeLevel = 'All Levels';
+  String _selectedDeadline = 'All Deadlines';
 
+  // Oxford scholarship data with comprehensive details
+  final List<Map<String, dynamic>> _oxfordScholarships = [
+    {
+      'title': 'Rhodes Scholarship',
+      'offeredBy': 'Rhodes Trust',
+      'description': 'The world\'s oldest international scholarship programme, enabling outstanding young people from around the world to study at the University of Oxford.',
+      'type': 'International',
+      'funding': 'Full',
+      'degreeLevel': 'Masters',
+      'deadline': 'Ongoing',
+      'amount': '£18,180/year + stipend',
+      'fieldsOfStudy': ['All Disciplines', 'Liberal Arts', 'Sciences', 'Social Sciences'],
+      'eligibility': [
+        'Outstanding academic achievement',
+        'Leadership potential and commitment to service',
+        'Age between 18-24 years',
+        'Citizens of eligible countries',
+        'English language proficiency'
+      ],
+      'applicationProcess': 'Submit online application through Rhodes Trust portal. Requires academic transcripts, personal statement, letters of recommendation, and interview.',
+      'deadlineStatus': 'Ongoing',
+      'url': 'https://www.rhodeshouse.ox.ac.uk/scholarships/the-rhodes-scholarship/',
+    },
+    {
+      'title': 'Clarendon Fund',
+      'offeredBy': 'University of Oxford',
+      'description': 'Oxford University\'s premier graduate scholarship scheme, offering around 140 new scholarships every year.',
+      'type': 'International',
+      'funding': 'Full',
+      'degreeLevel': 'Masters',
+      'deadline': 'Upcoming',
+      'amount': 'Full tuition + £17,668 stipend',
+      'fieldsOfStudy': ['All Graduate Programs', 'Research', 'Taught Masters'],
+      'eligibility': [
+        'Outstanding academic merit',
+        'Potential for leadership and public service',
+        'Strong academic references',
+        'Clear research proposal (for research degrees)',
+        'Meet Oxford admission requirements'
+      ],
+      'applicationProcess': 'Automatic consideration when applying to Oxford graduate programs. No separate application required. Submit university application by January deadline.',
+      'deadlineStatus': 'Upcoming',
+      'url': 'https://www.ox.ac.uk/clarendon',
+    },
+    {
+      'title': 'Reach Oxford Scholarship',
+      'offeredBy': 'University of Oxford',
+      'description': 'For students from low-income countries who, for political or financial reasons, or because suitable educational facilities do not exist, cannot study for a degree in their own countries.',
+      'type': 'International',
+      'funding': 'Full',
+      'degreeLevel': 'Bachelors',
+      'deadline': 'Upcoming',
+      'amount': 'Full tuition + living costs',
+      'fieldsOfStudy': ['Undergraduate Programs', 'Liberal Arts', 'Sciences'],
+      'eligibility': [
+        'From low-income developing countries',
+        'Cannot study in home country due to circumstances',
+        'Demonstrate financial need',
+        'Outstanding academic potential',
+        'Strong motivation and commitment'
+      ],
+      'applicationProcess': 'Submit UCAS application for Oxford by October deadline. Complete additional Reach Oxford application form with supporting documents.',
+      'deadlineStatus': 'Upcoming',
+      'url': 'https://www.ox.ac.uk/admissions/undergraduate/fees-and-funding/oxford-support/reach-oxford-scholarship',
+    },
+    {
+      'title': 'Weidenfeld-Hoffmann Scholarships',
+      'offeredBy': 'Weidenfeld-Hoffmann Trust',
+      'description': 'Full scholarships for graduate students who have the potential to become leaders in government, business, or civil society in their home countries.',
+      'type': 'International',
+      'funding': 'Full',
+      'degreeLevel': 'Masters',
+      'deadline': 'Ongoing',
+      'amount': 'Full tuition + £17,668 stipend',
+      'fieldsOfStudy': ['Public Policy', 'Economics', 'International Relations', 'Development Studies'],
+      'eligibility': [
+        'From developing countries',
+        'Leadership potential in public service',
+        'Commitment to returning home after studies',
+        'Strong academic background',
+        'Clear career goals in public sector'
+      ],
+      'applicationProcess': 'Apply through Oxford\'s graduate application system. Complete leadership programme application including essays on leadership experience and future goals.',
+      'deadlineStatus': 'Ongoing',
+      'url': 'https://www.ox.ac.uk/admissions/graduate/fees-and-funding/fees-funding-and-scholarship-search/weidenfeld-hoffmann-scholarships-and-leadership-programme',
+    },
+    {
+      'title': 'Simon & June Li Scholarship',
+      'offeredBy': 'Li Ka Shing Foundation',
+      'description': 'Supporting students from developing countries who would not otherwise be able to afford to study at Oxford.',
+      'type': 'International',
+      'funding': 'Partial',
+      'degreeLevel': 'Masters',
+      'deadline': 'Ongoing',
+      'amount': '£10,000 - £15,000',
+      'fieldsOfStudy': ['All Graduate Programs', 'Preferably STEM Fields'],
+      'eligibility': [
+        'From developing countries in Asia',
+        'Demonstrate financial need',
+        'Academic excellence',
+        'Commitment to development in home country',
+        'Previous work experience preferred'
+      ],
+      'applicationProcess': 'Submit graduate application to Oxford. Complete separate funding application through Oxford funding portal with financial documentation.',
+      'deadlineStatus': 'Ongoing',
+      'url': 'https://governance.admin.ox.ac.uk/legislation/simon-and-june-li-scholarship-fund',
+    },
+    {
+      'title': 'Hulme Undergraduate Scholarship',
+      'offeredBy': 'University of Oxford',
+      'description': 'Financial assistance for UK students from backgrounds with little or no tradition of university education.',
+      'type': 'Domestic',
+      'funding': 'Partial',
+      'degreeLevel': 'Bachelors',
+      'deadline': 'Upcoming',
+      'amount': '£4,000/year',
+      'fieldsOfStudy': ['All Undergraduate Programs'],
+      'eligibility': [
+        'UK residents',
+        'First-generation university students',
+        'From low-income families',
+        'Academic potential',
+        'Meet Oxford admission requirements'
+      ],
+      'applicationProcess': 'Apply through UCAS for Oxford admission. Complete Oxford Bursary application with household income documentation.',
+      'deadlineStatus': 'Upcoming',
+      'url': 'https://www.ox.ac.uk/admissions/undergraduate/fees-and-funding/oxford-support',
+    },
+    {
+      'title': 'Moritz-Heyman Scholarship',
+      'offeredBy': 'Moritz-Heyman Foundation',
+      'description': 'For outstanding students pursuing graduate studies who are committed to using their education to improve the lives of others.',
+      'type': 'International',
+      'funding': 'Full',
+      'degreeLevel': 'PhD',
+      'deadline': 'Upcoming',
+      'amount': 'Full tuition + stipend',
+      'fieldsOfStudy': ['Social Impact Research', 'Public Health', 'Development Studies', 'Education'],
+      'eligibility': [
+        'Commitment to social impact',
+        'Outstanding academic record',
+        'Demonstrated leadership in community service',
+        'Clear research proposal with social benefit',
+        'Previous work in relevant field'
+      ],
+      'applicationProcess': 'Apply for Oxford DPhil program. Submit separate Moritz-Heyman application including essays on social impact goals and research proposal.',
+      'deadlineStatus': 'Upcoming',
+      'url': 'https://www.ox.ac.uk/admissions/graduate/fees-and-funding',
+    },
+    {
+      'title': 'Hill Foundation Scholarship',
+      'offeredBy': 'Hill Foundation',
+      'description': 'Enabling intellectually outstanding students from Russia and other countries of the former Soviet Union to pursue graduate studies at leading universities.',
+      'type': 'International',
+      'funding': 'Full',
+      'degreeLevel': 'Masters',
+      'deadline': 'Closed',
+      'amount': 'Full tuition + living allowance',
+      'fieldsOfStudy': ['All Graduate Programs', 'Preferably Academic Research'],
+      'eligibility': [
+        'Citizens of former Soviet Union countries',
+        'Exceptional academic achievement',
+        'Commitment to returning home',
+        'Leadership potential',
+        'Financial need'
+      ],
+      'applicationProcess': 'Apply through Hill Foundation portal. Requires Oxford admission offer, academic transcripts, essays, and interviews.',
+      'deadlineStatus': 'Closed',
+      'url': 'https://www.ox.ac.uk/admissions/graduate/fees-and-funding',
+    },
+  ];
+
+  // Course data
   final List<Map<String, String>> courses = [
-  {
-    'name': 'BSc Computer Science',
-    'level': 'Undergraduate',
-    'duration': '3 years',
-    'availability': 'Spring',
-    'popularity': 'High',
-    'url': 'https://www.ox.ac.uk/admissions/undergraduate/courses/course-listing/computer-science',
-  },
-  {
-    'name': 'MBA Business',
-    'level': 'Postgraduate',
-    'duration': '2 years',
-    'availability': 'Fall',
-    'popularity': 'Very High',
-    'url': 'https://www.sbs.ox.ac.uk/programmes/mbas/oxford-executive-mba?utm_source=google&utm_medium=cpc&utm_campaign=PPC_Conversion_EMBA_EMBA_google_PMax_UK-North-America-Africa-MENA-Asia-Pacific-Europe_Custom_Generic&gad_source=1&gad_campaignid=22586827665&gbraid=0AAAAADBiMDqukZ5snmFcFKePGoss__jCa&gclid=Cj0KCQjw-ZHEBhCxARIsAGGN96JShfYbZ8TZRGgM4IkcRbuPLf_fEP8uV0FA9CO4XjFtmYHYk_u29UoaAlCdEALw_wcB',
-  },
-  {
-    'name': 'Law LLB',
-    'level': 'Undergraduate',
-    'duration': '3 years',
-    'availability': 'Fall',
-    'popularity': 'Medium',
-    'url': 'https://www.ox.ac.uk/admissions/undergraduate/courses/course-listing/law-jurisprudence',
-  },
-];
-
+    {
+      'name': 'BSc Computer Science',
+      'level': 'Undergraduate',
+      'duration': '3 years',
+      'availability': 'Spring',
+      'popularity': 'High',
+      'url': 'https://www.ox.ac.uk/admissions/undergraduate/courses/course-listing/computer-science',
+    },
+    {
+      'name': 'MBA Business',
+      'level': 'Postgraduate',
+      'duration': '2 years',
+      'availability': 'Fall',
+      'popularity': 'Very High',
+      'url': 'https://www.sbs.ox.ac.uk/programmes/mbas/oxford-executive-mba?utm_source=google&utm_medium=cpc&utm_campaign=PPC_Conversion_EMBA_EMBA_google_PMax_UK-North-America-Africa-MENA-Asia-Pacific-Europe_Custom_Generic&gad_source=1&gad_campaignid=22586827665&gbraid=0AAAAADBiMDqukZ5snmFcFKePGoss__jCa&gclid=Cj0KCQjw-ZHEBhCxARIsAGGN96JShfYbZ8TZRGgM4IkcRbuPLf_fEP8uV0FA9CO4XjFtmYHYk_u29UoaAlCdEALw_wcB',
+    },
+    {
+      'name': 'Law LLB',
+      'level': 'Undergraduate',
+      'duration': '3 years',
+      'availability': 'Fall',
+      'popularity': 'Medium',
+      'url': 'https://www.ox.ac.uk/admissions/undergraduate/courses/course-listing/law-jurisprudence',
+    },
+  ];
 
   @override
   void initState() {
@@ -176,9 +289,72 @@ class _OxfordUniversityPageState extends State<OxfordUniversityPage>
     super.dispose();
   }
 
+  // Scholarship filtering methods
+  List<Map<String, dynamic>> get _filteredScholarships {
+    List<Map<String, dynamic>> scholarships = _oxfordScholarships;
+    
+    if (_selectedType != 'All Types') {
+      scholarships = scholarships.where((s) => 
+        s['type']?.toString().toLowerCase() == _selectedType.toLowerCase()
+      ).toList();
+    }
+    
+    if (_selectedFunding != 'All Funding') {
+      scholarships = scholarships.where((s) => 
+        s['funding']?.toString().toLowerCase() == _selectedFunding.toLowerCase()
+      ).toList();
+    }
+    
+    if (_selectedDegreeLevel != 'All Levels') {
+      scholarships = scholarships.where((s) => 
+        s['degreeLevel']?.toString().toLowerCase() == _selectedDegreeLevel.toLowerCase()
+      ).toList();
+    }
+    
+    if (_selectedDeadline != 'All Deadlines') {
+      scholarships = scholarships.where((s) => 
+        s['deadline']?.toString().toLowerCase() == _selectedDeadline.toLowerCase()
+      ).toList();
+    }
+    
+    return scholarships;
+  }
+
+  void _onTypeChanged(String value) {
+    setState(() {
+      _selectedType = value;
+    });
+  }
+
+  void _onFundingChanged(String value) {
+    setState(() {
+      _selectedFunding = value;
+    });
+  }
+
+  void _onDegreeLevelChanged(String value) {
+    setState(() {
+      _selectedDegreeLevel = value;
+    });
+  }
+
+  void _onDeadlineChanged(String value) {
+    setState(() {
+      _selectedDeadline = value;
+    });
+  }
+
+  void _clearScholarshipFilters() {
+    setState(() {
+      _selectedType = 'All Types';
+      _selectedFunding = 'All Funding';
+      _selectedDegreeLevel = 'All Levels';
+      _selectedDeadline = 'All Deadlines';
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    final List<String> scholarships = scholarshipDetails.keys.toList();
     return Scaffold(
       backgroundColor: AppColors.backgroundPrimary,
       body: FadeTransition(
@@ -403,22 +579,71 @@ class _OxfordUniversityPageState extends State<OxfordUniversityPage>
                         icon: Icons.card_giftcard_outlined,
                       ),
                       const SizedBox(height: AppConstants.spaceM),
+                      
+                      // Scholarship Filter Tags
+                      ScholarshipFilterTags(
+                        selectedType: _selectedType,
+                        selectedFunding: _selectedFunding,
+                        selectedDegreeLevel: _selectedDegreeLevel,
+                        selectedDeadline: _selectedDeadline,
+                        onTypeChanged: _onTypeChanged,
+                        onFundingChanged: _onFundingChanged,
+                        onDegreeLevelChanged: _onDegreeLevelChanged,
+                        onDeadlineChanged: _onDeadlineChanged,
+                        onClearFilters: _clearScholarshipFilters,
+                      ),
+                      
+                      const SizedBox(height: AppConstants.spaceM),
+                      
+                      // Filtered Scholarships List
                       SizedBox(
-                        height: 140,
-                        child: ListView.separated(
-                          scrollDirection: Axis.horizontal,
-                          padding: const EdgeInsets.symmetric(horizontal: AppConstants.spaceS),
-                          itemCount: scholarships.length,
-                          separatorBuilder: (context, index) => const SizedBox(
-                            width: AppConstants.spaceM,
-                          ),
-                          itemBuilder: (context, index) {
-                            return ScholarshipCard(
-                              title: scholarships[index],
-                              onTap: () => _viewScholarship(scholarships[index]),
-                            );
-                          },
-                        ),
+                        height: 200,
+                        child: _filteredScholarships.isEmpty
+                            ? Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.card_giftcard_outlined,
+                                      size: 48,
+                                      color: AppColors.textTertiary,
+                                    ),
+                                    const SizedBox(height: AppConstants.spaceS),
+                                    Text(
+                                      'No scholarships match your filters',
+                                      style: AppTextStyles.bodyMedium.copyWith(
+                                        color: AppColors.textTertiary,
+                                      ),
+                                    ),
+                                    const SizedBox(height: AppConstants.spaceS),
+                                    TextButton(
+                                      onPressed: _clearScholarshipFilters,
+                                      child: Text(
+                                        'Clear Filters',
+                                        style: AppTextStyles.labelMedium.copyWith(
+                                          color: AppColors.primary,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              )
+                            : ListView.separated(
+                                scrollDirection: Axis.horizontal,
+                                padding: const EdgeInsets.symmetric(horizontal: AppConstants.spaceS),
+                                itemCount: _filteredScholarships.length,
+                                separatorBuilder: (context, index) => const SizedBox(
+                                  width: AppConstants.spaceM,
+                                ),
+                                itemBuilder: (context, index) {
+                                  final scholarship = _filteredScholarships[index];
+                                  return ScholarshipCard(
+                                    title: scholarship['title']!,
+                                    onTap: () => _viewScholarship(scholarship),
+                                  );
+                                },
+                              ),
                       ),
 
                       const SizedBox(height: AppConstants.spaceXL),
@@ -478,7 +703,7 @@ Center(
  void _shareUniversity() {
   final String message = 'Check out Oxford University! 🎓 https://www.ox.ac.uk/';
   Share.share(message);
-}
+  }
 
 
   void _toggleFavorite() {
@@ -496,68 +721,328 @@ Center(
     );
   }
 
-void _viewScholarship(String scholarship) {
-  final data = scholarshipDetails[scholarship];
-  final detail = data?['description'] ?? 'Details coming soon.';
-  final url = data?['url'];
-
+void _viewScholarship(Map<String, dynamic> scholarship) {
   showDialog(
     context: context,
-    builder: (context) {
-      return AlertDialog(
-        backgroundColor: AppColors.backgroundCard,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppConstants.radiusM),
-        ),
-        title: Text(
-          scholarship,
-          style: AppTextStyles.h4.copyWith(color: AppColors.textPrimary),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              detail,
-              style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary),
-            ),
-            if (url != null && url.isNotEmpty) ...[
-              const SizedBox(height: 12),
-              InkWell(
-                onTap: () async {
-                  final uri = Uri.parse(url);
-                  if (await canLaunchUrl(uri)) {
-                    await launchUrl(uri, mode: LaunchMode.externalApplication);
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Could not open the scholarship link.')),
-                    );
-                  }
-                },
-                child: Text(
-                  'Visit Scholarship Page →',
-                  style: AppTextStyles.labelLarge.copyWith(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.bold,
-                    decoration: TextDecoration.underline,
+    builder: (BuildContext context) {
+      return Dialog(
+        insetPadding: const EdgeInsets.all(16),
+        child: Container(
+          constraints: const BoxConstraints(
+            maxWidth: 600,
+            maxHeight: 700,
+          ),
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Header with close button
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          scholarship['title'] ?? '',
+                          style: AppTextStyles.h3.copyWith(
+                            color: AppColors.textPrimary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        icon: const Icon(Icons.close),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      ),
+                    ],
                   ),
-                ),
-              ),
-            ],
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(
-              'Close',
-              style: AppTextStyles.labelLarge.copyWith(
-                color: AppColors.primary,
-                fontWeight: FontWeight.bold,
+                  const SizedBox(height: 8),
+                  
+                  // Offered by
+                  Text(
+                    'Offered by ${scholarship['offeredBy'] ?? 'University of Oxford'}',
+                    style: AppTextStyles.bodyMedium.copyWith(
+                      color: AppColors.textSecondary,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  
+                  // Tags section
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      // Degree level chip
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: AppColors.primary.withOpacity(0.3)),
+                        ),
+                        child: Text(
+                          scholarship['degreeLevel'] ?? '',
+                          style: AppTextStyles.labelSmall.copyWith(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      
+                      // Funding type chip
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: AppColors.success.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: AppColors.success.withOpacity(0.3)),
+                        ),
+                        child: Text(
+                          '${scholarship['funding']} Funding',
+                          style: AppTextStyles.labelSmall.copyWith(
+                            color: AppColors.success,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      
+                      // Type chip
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: AppColors.warning.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: AppColors.warning.withOpacity(0.3)),
+                        ),
+                        child: Text(
+                          scholarship['type'] ?? '',
+                          style: AppTextStyles.labelSmall.copyWith(
+                            color: AppColors.warning,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  
+                  // Description
+                  Text(
+                    scholarship['description'] ?? '',
+                    style: AppTextStyles.bodyMedium.copyWith(
+                      color: AppColors.textPrimary,
+                      height: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  
+                  // Information grid
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppColors.backgroundCard,
+                      borderRadius: BorderRadius.circular(AppConstants.radiusM),
+                      border: Border.all(color: AppColors.borderLight),
+                    ),
+                    child: Column(
+                      children: [
+                        // Fields of study
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Icon(Icons.school, size: 20, color: AppColors.textSecondary),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Fields of Study',
+                                    style: AppTextStyles.labelMedium.copyWith(
+                                      color: AppColors.textPrimary,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Wrap(
+                                    spacing: 6,
+                                    runSpacing: 4,
+                                    children: (scholarship['fieldsOfStudy'] as List<String>? ?? [])
+                                        .map((field) => Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                              decoration: BoxDecoration(
+                                                color: AppColors.backgroundTertiary,
+                                                borderRadius: BorderRadius.circular(12),
+                                                border: Border.all(color: AppColors.borderLight),
+                                              ),
+                                              child: Text(
+                                                field,
+                                                style: AppTextStyles.labelSmall.copyWith(
+                                                  color: AppColors.textSecondary,
+                                                ),
+                                              ),
+                                            ))
+                                        .toList(),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        
+                        // Amount and deadline
+                        Row(
+                          children: [
+                            Icon(Icons.monetization_on, size: 20, color: AppColors.textSecondary),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Amount',
+                                    style: AppTextStyles.labelMedium.copyWith(
+                                      color: AppColors.textPrimary,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  Text(
+                                    scholarship['amount'] ?? 'Amount varies',
+                                    style: AppTextStyles.bodySmall.copyWith(
+                                      color: AppColors.textSecondary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: scholarship['deadlineStatus'] == 'Upcoming' 
+                                    ? AppColors.success.withOpacity(0.1)
+                                    : scholarship['deadlineStatus'] == 'Ongoing'
+                                        ? AppColors.warning.withOpacity(0.1)
+                                        : AppColors.error.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: Text(
+                                scholarship['deadlineStatus'] ?? 'Check Website',
+                                style: AppTextStyles.labelSmall.copyWith(
+                                  color: scholarship['deadlineStatus'] == 'Upcoming' 
+                                      ? AppColors.success
+                                      : scholarship['deadlineStatus'] == 'Ongoing'
+                                          ? AppColors.warning
+                                          : AppColors.error,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  
+                  // Eligibility
+                  Text(
+                    'Eligibility Requirements',
+                    style: AppTextStyles.h5.copyWith(
+                      color: AppColors.textPrimary,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  ...(scholarship['eligibility'] as List<String>? ?? [])
+                      .map((requirement) => Padding(
+                            padding: const EdgeInsets.only(bottom: 6),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('• ', style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary)),
+                                Expanded(
+                                  child: Text(
+                                    requirement,
+                                    style: AppTextStyles.bodySmall.copyWith(
+                                      color: AppColors.textSecondary,
+                                      height: 1.4,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ))
+                      .toList(),
+                  const SizedBox(height: 20),
+                  
+                  // Application process
+                  Text(
+                    'Application Process',
+                    style: AppTextStyles.h5.copyWith(
+                      color: AppColors.textPrimary,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    scholarship['applicationProcess'] ?? 'Please visit the official website for application details.',
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: AppColors.textSecondary,
+                      height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  
+                  // Official link button
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        final url = scholarship['url'];
+                        if (url != null && url.isNotEmpty) {
+                          if (await canLaunchUrl(Uri.parse(url))) {
+                            await launchUrl(
+                              Uri.parse(url),
+                              mode: LaunchMode.externalApplication,
+                            );
+                          }
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: AppColors.textOnPrimary,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppConstants.radiusS),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.open_in_new, size: 20),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Visit Official Page',
+                            style: AppTextStyles.labelLarge.copyWith(
+                              color: AppColors.textOnPrimary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
-        ],
+        ),
       );
     },
   );
@@ -648,24 +1133,5 @@ void _viewCourse(String courseName) {
       ),
     );
   }
-}
-
-
-  void _learnMore() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'More information feature coming soon!',
-          style: AppTextStyles.bodyMedium.copyWith(
-            color: AppColors.textOnPrimary,
-          ),
-        ),
-        backgroundColor: AppColors.info,
-      ),
-    );
   }
-  
-  
 }
-
-
