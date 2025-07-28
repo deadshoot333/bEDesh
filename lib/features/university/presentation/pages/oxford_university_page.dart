@@ -73,6 +73,21 @@ final Map<String, Map<String, String>> scholarshipDetails = {
 class _OxfordUniversityPageState extends State<OxfordUniversityPage>
     with TickerProviderStateMixin {
 
+ String? selectedLevel;
+String? selectedCategory;
+String? selectedSession;
+
+List<Map<String, String>> get filteredCourses {
+  return courses.where((course) {
+    final matchesLevel = selectedLevel == null || course['level'] == selectedLevel;
+    final matchesCategory = selectedCategory == null || course['category'] == selectedCategory;
+    final matchesSession = selectedSession == null || course['availability'] == selectedSession;
+    return matchesLevel && matchesCategory && matchesSession;
+  }).toList();
+}
+
+
+
       void _launchURL(String url) async {
   final uri = Uri.parse(url);
   if (await canLaunchUrl(uri)) {
@@ -118,10 +133,13 @@ class _OxfordUniversityPageState extends State<OxfordUniversityPage>
   },
 };
 
-  final List<Map<String, String>> courses = [
+  // Inside _OxfordUniversityPageState
+
+final List<Map<String, String>> courses = [
   {
     'name': 'BSc Computer Science',
-    'level': 'Undergraduate',
+    'level': 'Bachelor',
+    'category': 'Engineering',
     'duration': '3 years',
     'availability': 'Spring',
     'popularity': 'High',
@@ -129,21 +147,69 @@ class _OxfordUniversityPageState extends State<OxfordUniversityPage>
   },
   {
     'name': 'MBA Business',
-    'level': 'Postgraduate',
+    'level': 'Masters',
+    'category': 'Arts',
     'duration': '2 years',
     'availability': 'Fall',
     'popularity': 'Very High',
-    'url': 'https://www.sbs.ox.ac.uk/programmes/mbas/oxford-executive-mba?utm_source=google&utm_medium=cpc&utm_campaign=PPC_Conversion_EMBA_EMBA_google_PMax_UK-North-America-Africa-MENA-Asia-Pacific-Europe_Custom_Generic&gad_source=1&gad_campaignid=22586827665&gbraid=0AAAAADBiMDqukZ5snmFcFKePGoss__jCa&gclid=Cj0KCQjw-ZHEBhCxARIsAGGN96JShfYbZ8TZRGgM4IkcRbuPLf_fEP8uV0FA9CO4XjFtmYHYk_u29UoaAlCdEALw_wcB',
+    'url': 'https://www.sbs.ox.ac.uk/programmes/mbas/oxford-executive-mba',
   },
   {
     'name': 'Law LLB',
-    'level': 'Undergraduate',
+    'level': 'Bachelor',
+    'category': 'Law',
     'duration': '3 years',
     'availability': 'Fall',
     'popularity': 'Medium',
     'url': 'https://www.ox.ac.uk/admissions/undergraduate/courses/course-listing/law-jurisprudence',
   },
+  {
+    'name': 'MSc Data Science',
+    'level': 'Masters',
+    'category': 'Engineering',
+    'duration': '1 year',
+    'availability': 'Winter',
+    'popularity': 'High',
+    'url': 'https://www.ox.ac.uk/admissions/graduate/courses/msc-data-science',
+  },
+  {
+    'name': 'PhD Artificial Intelligence',
+    'level': 'PhD',
+    'category': 'Engineering',
+    'duration': '4 years',
+    'availability': 'Fall',
+    'popularity': 'Top Tier',
+    'url': 'https://www.ox.ac.uk/admissions/graduate/courses/dphil-computer-science',
+  },
+  {
+    'name': 'BA English Literature',
+    'level': 'Bachelor',
+    'category': 'Arts',
+    'duration': '3 years',
+    'availability': 'Spring',
+    'popularity': 'High',
+    'url': 'https://www.ox.ac.uk/admissions/undergraduate/courses/course-listing/english-language-and-literature',
+  },
+  {
+    'name': 'MPhil International Law',
+    'level': 'Masters',
+    'category': 'Law',
+    'duration': '2 years',
+    'availability': 'Winter',
+    'popularity': 'Prestigious',
+    'url': 'https://www.law.ox.ac.uk/admissions/graduate-courses/mphil-law',
+  },
+  {
+    'name': 'PhD Philosophy',
+    'level': 'PhD',
+    'category': 'Arts',
+    'duration': '3-4 years',
+    'availability': 'Spring',
+    'popularity': 'Medium',
+    'url': 'https://www.philosophy.ox.ac.uk/philosophy-dphil',
+  },
 ];
+
 
 
   @override
@@ -423,6 +489,61 @@ class _OxfordUniversityPageState extends State<OxfordUniversityPage>
 
                       const SizedBox(height: AppConstants.spaceXL),
 
+                      Column(
+  crossAxisAlignment: CrossAxisAlignment.start,
+  children: [
+    const Text('Filter Courses:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+    const SizedBox(height: 8),
+    Row(
+      children: [
+        Expanded(
+          child: DropdownButtonFormField<String>(
+  value: selectedLevel,
+  hint: const Text('Level'),
+  items: [
+    const DropdownMenuItem(value: null, child: Text('All Levels')),
+    ...['Bachelor', 'Masters', 'PhD'].map((level) {
+      return DropdownMenuItem(value: level, child: Text(level));
+    }),
+  ],
+  onChanged: (value) => setState(() => selectedLevel = value),
+),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: DropdownButtonFormField<String>(
+  value: selectedCategory,
+  hint: const Text('Category'),
+  items: [
+    const DropdownMenuItem(value: null, child: Text('All')),
+    ...['Engineering', 'Arts', 'Law'].map((cat) {
+      return DropdownMenuItem(value: cat, child: Text(cat));
+    }),
+  ],
+  onChanged: (value) => setState(() => selectedCategory = value),
+),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: DropdownButtonFormField<String>(
+  value: selectedSession,
+  hint: const Text('Session'),
+  items: [
+    const DropdownMenuItem(value: null, child: Text('All Sessions')),
+    ...['Spring', 'Fall', 'Winter'].map((session) {
+      return DropdownMenuItem(value: session, child: Text(session));
+    }),
+  ],
+  onChanged: (value) => setState(() => selectedSession = value),
+),
+        ),
+      ],
+    ),
+    const SizedBox(height: 16),
+  ],
+),
+
+
                       // Popular Courses
                       const SectionHeader(
                         title: 'Popular Courses',
@@ -432,17 +553,17 @@ class _OxfordUniversityPageState extends State<OxfordUniversityPage>
                       ListView.separated(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
-                        itemCount: courses.length,
+                        itemCount: filteredCourses.length,
                         separatorBuilder: (context, index) => const SizedBox(
                           height: AppConstants.spaceM,
                         ),
                         itemBuilder: (context, index) {
-                          final course = courses[index];
+                          final course = filteredCourses[index];
                           return CourseCard(
                             name: course['name']!,
                             level: course['level']!,
                             duration: course['duration']!,
-                            onTap: () => _viewCourse(course['name']!), courseName: '', fee: '',
+                            onTap: () => _viewCourse(course['name']!), courseName: '', fee: '', course: {},
                           );
                         },
                       ),
@@ -548,15 +669,15 @@ void _viewScholarship(String scholarship) {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(
-              'Close',
-              style: AppTextStyles.labelLarge.copyWith(
-                color: AppColors.primary,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
+  onPressed: () {
+    setState(() {
+      selectedLevel = null;
+      selectedCategory = null;
+      selectedSession = null;
+    });
+  },
+  child: Text('Clear Filters'),
+),
         ],
       );
     },

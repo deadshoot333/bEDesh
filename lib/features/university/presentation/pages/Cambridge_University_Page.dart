@@ -243,7 +243,7 @@ class _CambridgeUniversityPageState extends State<CambridgeUniversityPage> {
               fee: '£35,000/year',
               name: 'Computer Science',
               level: 'Undergraduate',
-              onTap: () => _viewCourse('Computer Science'),
+              onTap: () => _viewCourse('Computer Science'), course: {},
             ),
             CourseCard(
               courseName: 'Law',
@@ -251,7 +251,7 @@ class _CambridgeUniversityPageState extends State<CambridgeUniversityPage> {
               fee: '£32,500/year',
               name: 'Law',
               level: 'Undergraduate',
-              onTap: () => _viewCourse('Law'),
+              onTap: () => _viewCourse('Law'), course: {},
             ),
             CourseCard(
               courseName: 'Engineering',
@@ -259,7 +259,7 @@ class _CambridgeUniversityPageState extends State<CambridgeUniversityPage> {
               fee: '£36,000/year',
               name: 'Engineering',
               level: 'Undergraduate',
-              onTap: () => _viewCourse('Engineering'),
+              onTap: () => _viewCourse('Engineering'), course: {},
             ),
             const SizedBox(height: AppConstants.spaceL),
             SizedBox(

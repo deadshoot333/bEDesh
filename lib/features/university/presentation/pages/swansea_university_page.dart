@@ -426,7 +426,7 @@ late final List<String> scholarships = scholarshipDetails.keys.toList();
       name: course['name']!,
       level: course['level']!,
       duration: course['duration']!,
-      onTap: () => _viewCourse(course), courseName: '', fee: '',
+      onTap: () => _viewCourse(course), courseName: '', fee: '', course: {},
     );
   },
 )
