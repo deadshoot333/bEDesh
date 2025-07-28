@@ -11,7 +11,76 @@ import '../widgets/university_stat_card.dart';
 import '../widgets/scholarship_card.dart';
 import '../widgets/course_card.dart';
 
-
+void showCourseDetailsPopup(BuildContext context, Map<String, String> course) {
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      contentPadding: EdgeInsets.zero,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ClipRRect(
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(16),
+                topRight: Radius.circular(16),
+              ),
+              child: Image.network(
+                'https://upload.wikimedia.org/wikipedia/en/thumb/b/b0/Oxford_University_Coat_Of_Arms.svg/1200px-Oxford_University_Coat_Of_Arms.svg.png',
+                height: 160,
+                width: double.infinity,
+                fit: BoxFit.cover,
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(course['name'] ?? '',
+                      style: AppTextStyles.h5.copyWith(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  Text('Level: ${course['level']}', style: AppTextStyles.bodySmall),
+                  Text('Duration: ${course['duration']}', style: AppTextStyles.bodySmall),
+                  Text('Intake: ${course['availability']}', style: AppTextStyles.bodySmall),
+                  Text('Category: ${course['category']}', style: AppTextStyles.bodySmall),
+                  Text('Popularity: ${course['popularity']}', style: AppTextStyles.bodySmall),
+                  const Divider(height: 24),
+                  Text(
+                    course['description'] ?? '',
+                    style: AppTextStyles.bodyMedium,
+                    textAlign: TextAlign.justify,
+                  ),
+                  const SizedBox(height: 20),
+                  if (course['url'] != null)
+                    ElevatedButton.icon(
+                      icon: const Icon(Icons.open_in_new),
+                      label: const Text("Visit Course Page"),
+                      onPressed: () async {
+                        final url = Uri.parse(course['url']!);
+                        if (await canLaunchUrl(url)) {
+                          launchUrl(url, mode: LaunchMode.externalApplication);
+                        }
+                      },
+                    ),
+                  const SizedBox(height: 10),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: const Text("Close"),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
 class OxfordUniversityPage extends StatefulWidget {
  
   @override
@@ -22,6 +91,9 @@ class OxfordUniversityPage extends StatefulWidget {
 
   
 }
+
+
+
 
 
 
@@ -136,80 +208,84 @@ List<Map<String, String>> get filteredCourses {
   // Inside _OxfordUniversityPageState
 
 final List<Map<String, String>> courses = [
-  {
-    'name': 'BSc Computer Science',
-    'level': 'Bachelor',
-    'category': 'Engineering',
-    'duration': '3 years',
-    'availability': 'Spring',
-    'popularity': 'High',
-    'url': 'https://www.ox.ac.uk/admissions/undergraduate/courses/course-listing/computer-science',
-  },
-  {
-    'name': 'MBA Business',
-    'level': 'Masters',
-    'category': 'Arts',
-    'duration': '2 years',
-    'availability': 'Fall',
-    'popularity': 'Very High',
-    'url': 'https://www.sbs.ox.ac.uk/programmes/mbas/oxford-executive-mba',
-  },
-  {
-    'name': 'Law LLB',
-    'level': 'Bachelor',
-    'category': 'Law',
-    'duration': '3 years',
-    'availability': 'Fall',
-    'popularity': 'Medium',
-    'url': 'https://www.ox.ac.uk/admissions/undergraduate/courses/course-listing/law-jurisprudence',
-  },
-  {
-    'name': 'MSc Data Science',
-    'level': 'Masters',
-    'category': 'Engineering',
-    'duration': '1 year',
-    'availability': 'Winter',
-    'popularity': 'High',
-    'url': 'https://www.ox.ac.uk/admissions/graduate/courses/msc-data-science',
-  },
-  {
-    'name': 'PhD Artificial Intelligence',
-    'level': 'PhD',
-    'category': 'Engineering',
-    'duration': '4 years',
-    'availability': 'Fall',
-    'popularity': 'Top Tier',
-    'url': 'https://www.ox.ac.uk/admissions/graduate/courses/dphil-computer-science',
-  },
-  {
-    'name': 'BA English Literature',
-    'level': 'Bachelor',
-    'category': 'Arts',
-    'duration': '3 years',
-    'availability': 'Spring',
-    'popularity': 'High',
-    'url': 'https://www.ox.ac.uk/admissions/undergraduate/courses/course-listing/english-language-and-literature',
-  },
-  {
-    'name': 'MPhil International Law',
-    'level': 'Masters',
-    'category': 'Law',
-    'duration': '2 years',
-    'availability': 'Winter',
-    'popularity': 'Prestigious',
-    'url': 'https://www.law.ox.ac.uk/admissions/graduate-courses/mphil-law',
-  },
-  {
-    'name': 'PhD Philosophy',
-    'level': 'PhD',
-    'category': 'Arts',
-    'duration': '3-4 years',
-    'availability': 'Spring',
-    'popularity': 'Medium',
-    'url': 'https://www.philosophy.ox.ac.uk/philosophy-dphil',
-  },
-];
-
+    {
+      'name': 'BSc Computer Science',
+      'level': 'Bachelor',
+      'category': 'Engineering',
+      'duration': '3 years',
+      'availability': 'Spring',
+      'popularity': 'High',
+      'url': 'https://www.ox.ac.uk/admissions/undergraduate/courses-listing/computer-science',
+      'description':
+          'The BSc in Computer Science at Oxford covers algorithms, machine learning, databases, systems architecture, and more. Students gain theoretical understanding and practical experience in software design, preparing for high-demand roles in tech and academia.',
+    },
+    {
+      'name': 'MSc Data Science',
+      'level': 'Masters',
+      'category': 'Engineering',
+      'duration': '1 year',
+      'availability': 'Fall',
+      'popularity': 'Very High',
+      'url': 'https://www.ox.ac.uk/admissions/graduate/courses/msc-social-data-science',
+      'description':
+          'This program offers hands-on training in statistics, machine learning, and programming, alongside critical social science thinking. Graduates are equipped to lead in data-driven research, business intelligence, and public policy innovation.',
+    },
+    {
+      'name': 'PhD in Artificial Intelligence',
+      'level': 'PhD',
+      'category': 'Engineering',
+      'duration': '3-4 years',
+      'availability': 'Winter',
+      'popularity': 'Elite',
+      'url': 'https://www.cs.ox.ac.uk/admissions/graduate/',
+      'description':
+          'Oxford\'s AI doctoral program leads cutting-edge research in deep learning, reinforcement learning, ethical AI, and neural-symbolic systems. It fosters innovation in collaboration with global research centers and AI institutes.',
+    },
+    {
+      'name': 'BA in Law (Jurisprudence)',
+      'level': 'Bachelor',
+      'category': 'Law',
+      'duration': '3 years',
+      'availability': 'Fall',
+      'popularity': 'High',
+      'url': 'https://www.law.ox.ac.uk/admissions/undergraduate',
+      'description':
+          'The BA in Law is a rigorous program focusing on legal reasoning, constitutional law, and international human rights. It prepares students for global legal practice and offers opportunities for mooting, debates, and internships.',
+    },
+    {
+      'name': 'DPhil in Public Policy',
+      'level': 'PhD',
+      'category': 'Law',
+      'duration': '3-4 years',
+      'availability': 'Fall',
+      'popularity': 'Medium',
+      'url': 'https://www.bsg.ox.ac.uk/study/dphil-public-policy',
+      'description':
+          'The DPhil in Public Policy equips students with cross-disciplinary skills in governance, economics, law, and political theory. It supports high-impact research that informs public service leadership and policymaking worldwide.',
+    },
+    {
+      'name': 'BA in Fine Arts',
+      'level': 'Bachelor',
+      'category': 'Arts',
+      'duration': '3 years',
+      'availability': 'Spring',
+      'popularity': 'Moderate',
+      'url': 'https://www.rsa.ox.ac.uk/study/undergraduate',
+      'description':
+          'This studio-based course develops students’ creative voice through painting, sculpture, new media, and theory. Offered by the Ruskin School, it combines historical awareness with experimental practice.',
+    },
+    {
+      'name': 'MSt in English Literature',
+      'level': 'Masters',
+      'category': 'Arts',
+      'duration': '1 year',
+      'availability': 'Fall',
+      'popularity': 'High',
+      'url': 'https://www.english.ox.ac.uk/masters-courses',
+      'description':
+          'A deeply immersive literature program spanning medieval to contemporary periods. Students engage in textual analysis, literary criticism, and prepare for careers in academia, publishing, and education.',
+    },
+  ];
 
 
   @override
@@ -241,6 +317,9 @@ final List<Map<String, String>> courses = [
     _animationController.dispose();
     super.dispose();
   }
+
+
+  
 
   @override
   Widget build(BuildContext context) {
@@ -501,7 +580,7 @@ final List<Map<String, String>> courses = [
   value: selectedLevel,
   hint: const Text('Level'),
   items: [
-    const DropdownMenuItem(value: null, child: Text('All Levels')),
+    const DropdownMenuItem(value: null, child: Text('Levels')),
     ...['Bachelor', 'Masters', 'PhD'].map((level) {
       return DropdownMenuItem(value: level, child: Text(level));
     }),
@@ -515,7 +594,7 @@ final List<Map<String, String>> courses = [
   value: selectedCategory,
   hint: const Text('Category'),
   items: [
-    const DropdownMenuItem(value: null, child: Text('All')),
+    const DropdownMenuItem(value: null, child: Text('Cateogory')),
     ...['Engineering', 'Arts', 'Law'].map((cat) {
       return DropdownMenuItem(value: cat, child: Text(cat));
     }),
@@ -529,7 +608,7 @@ final List<Map<String, String>> courses = [
   value: selectedSession,
   hint: const Text('Session'),
   items: [
-    const DropdownMenuItem(value: null, child: Text('All Sessions')),
+    const DropdownMenuItem(value: null, child: Text('Sessions')),
     ...['Spring', 'Fall', 'Winter'].map((session) {
       return DropdownMenuItem(value: session, child: Text(session));
     }),
@@ -692,64 +771,122 @@ void _viewCourse(String courseName) {
   showDialog(
     context: context,
     builder: (context) {
-      return AlertDialog(
-        backgroundColor: AppColors.backgroundCard,
+      return Dialog(
+        insetPadding: const EdgeInsets.all(16),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppConstants.radiusM),
+          borderRadius: BorderRadius.circular(AppConstants.radiusL),
         ),
-        title: Text(
-          course['name']!,
-          style: AppTextStyles.h4.copyWith(color: AppColors.textPrimary),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _infoText('Level', course['level']),
-            _infoText('Duration', course['duration']),
-            _infoText('Availability', course['availability']),
-            _infoText('Popularity', course['popularity']),
-            const SizedBox(height: 12),
-           InkWell(
-  onTap: () async {
-    final courseUrl = course['url']!;
-    final uri = Uri.parse(courseUrl);
+        child: Container(
+          constraints: const BoxConstraints(maxHeight: 600),
+          width: double.infinity,
+          padding: const EdgeInsets.all(AppConstants.spaceM),
+          decoration: BoxDecoration(
+            color: AppColors.backgroundCard,
+            borderRadius: BorderRadius.circular(AppConstants.radiusL),
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header with logo
+                Row(
+                  children: [
+                    CircleAvatar(
+                      backgroundImage: NetworkImage(course['logo'] ??
+                          'https://upload.wikimedia.org/wikipedia/en/e/ea/Oxford_University_Circlet.svg'),
+                      radius: 24,
+                      backgroundColor: Colors.transparent,
+                    ),
+                    const SizedBox(width: AppConstants.spaceM),
+                    Expanded(
+                      child: Text(
+                        course['name'] ?? 'Course Name',
+                        style: AppTextStyles.h4.copyWith(
+                          color: AppColors.textPrimary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppConstants.spaceM),
 
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not open the course link.')),
-      );
-    }
-  },
-  child: Text(
-    'Visit Course Page →',
-    style: AppTextStyles.labelLarge.copyWith(
-      color: AppColors.primary,
-      fontWeight: FontWeight.bold,
-      decoration: TextDecoration.underline,
-    ),
-  ),
-),
+                // Course Banner or Image (optional)
+                if (course['image'] != null)
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(AppConstants.radiusM),
+                    child: Image.network(
+                      course['image']!,
+                      height: 180,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => const SizedBox(),
+                    ),
+                  ),
 
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(
-              'Close',
-              style: AppTextStyles.labelLarge.copyWith(
-                color: AppColors.primary,
-              ),
+                const SizedBox(height: AppConstants.spaceM),
+
+                // Description
+                Text(
+                  course['description'] ??
+                      'This course provides students with foundational and advanced knowledge in the subject. Students will learn through lectures, lab sessions, and project-based work.',
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: AppColors.textSecondary,
+                    height: 1.5,
+                  ),
+                ),
+
+                const SizedBox(height: AppConstants.spaceM),
+
+                // Info Text
+                _infoText('Level', course['level']),
+                _infoText('Duration', course['duration']),
+                _infoText('Availability', course['availability']),
+                _infoText('Popularity', course['popularity']),
+
+                const SizedBox(height: AppConstants.spaceM),
+
+                // Visit Website
+                if (course['url'] != null && course['url']!.isNotEmpty)
+                  Center(
+                    child: PrimaryButton(
+                      text: 'Visit Course Page',
+                      icon: Icons.open_in_new_outlined,
+                      onPressed: () async {
+                        final uri = Uri.parse(course['url']!);
+                        if (await canLaunchUrl(uri)) {
+                          await launchUrl(uri, mode: LaunchMode.externalApplication);
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Could not open the course link.')),
+                          );
+                        }
+                      },
+                    ),
+                  ),
+
+                const SizedBox(height: AppConstants.spaceM),
+
+                // Close Button
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: Text(
+                      'Close',
+                      style: AppTextStyles.labelLarge.copyWith(color: AppColors.primary),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-        ],
+        ),
       );
     },
   );
 }
+
 
 
  void _applyToUniversity() async {
