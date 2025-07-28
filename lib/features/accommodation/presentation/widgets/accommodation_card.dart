@@ -18,6 +18,9 @@ class AccommodationCard extends StatelessWidget {
   final VoidCallback? onTap;
   final List<String> nearbyUniversities;
   final String availableFrom;
+  final String? country;
+  final String? genderPreference;
+  final List<String>? facilities;
 
   const AccommodationCard({
     super.key,
@@ -34,6 +37,9 @@ class AccommodationCard extends StatelessWidget {
     this.onTap,
     required this.nearbyUniversities,
     required this.availableFrom,
+    this.country,
+    this.genderPreference,
+    this.facilities,
   });
 
   @override
@@ -102,14 +108,35 @@ class AccommodationCard extends StatelessWidget {
                     Positioned(
                       top: AppConstants.spaceS,
                       left: AppConstants.spaceS,
-                      child: Row(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          if (isRoommateRequest) 
+                          Row(
+                            children: [
+                              if (isRoommateRequest) 
+                                _buildBadge(
+                                  'Roommate',
+                                  AppColors.secondary,
+                                  Icons.people,
+                                ),
+                              if (country != null) ...[
+                                const SizedBox(width: AppConstants.spaceXS),
+                                _buildBadge(
+                                  country!,
+                                  AppColors.info,
+                                  Icons.public,
+                                ),
+                              ],
+                            ],
+                          ),
+                          if (genderPreference != null && genderPreference != 'All') ...[
+                            const SizedBox(height: AppConstants.spaceXS),
                             _buildBadge(
-                              'Roommate',
-                              AppColors.secondary,
-                              Icons.people,
+                              '$genderPreference Only',
+                              AppColors.warning,
+                              Icons.person,
                             ),
+                          ],
                         ],
                       ),
                     ),
@@ -238,12 +265,13 @@ class AccommodationCard extends StatelessWidget {
                       const SizedBox(height: AppConstants.spaceS),
                     ],
                     
-                    // Amenities
-                    if (amenities.isNotEmpty) ...[
+                    // Amenities/Facilities
+                    if ((facilities?.isNotEmpty ?? false) || amenities.isNotEmpty) ...[
                       Wrap(
                         spacing: AppConstants.spaceXS,
                         runSpacing: AppConstants.spaceXS,
-                        children: amenities.take(3).map((amenity) {
+                        children: (facilities?.isNotEmpty ?? false ? facilities! : amenities)
+                            .take(3).map((item) {
                           return Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: AppConstants.spaceS,
@@ -254,7 +282,7 @@ class AccommodationCard extends StatelessWidget {
                               borderRadius: BorderRadius.circular(AppConstants.radiusS),
                             ),
                             child: Text(
-                              amenity,
+                              item,
                               style: AppTextStyles.labelSmall.copyWith(
                                 color: AppColors.textSecondary,
                               ),
