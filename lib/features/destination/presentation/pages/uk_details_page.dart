@@ -391,17 +391,21 @@ class _UKDetailsPageState extends State<UKDetailsPage>
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceAround,
                               children: [
-                                _buildIntakePeriod(
-                                  'Spring Intake',
-                                  'January - March',
-                                  Icons.sunny,
-                                  Colors.orange,
+                                Expanded(
+                                  child: _buildIntakePeriod(
+                                    'Spring Intake',
+                                    'January - March',
+                                    Icons.sunny,
+                                    Colors.orange,
+                                  ),
                                 ),
-                                _buildIntakePeriod(
-                                  'Fall Intake',
-                                  'September - October',
-                                  Icons.eco,
-                                  Colors.green,
+                                Expanded(
+                                  child: _buildIntakePeriod(
+                                    'Fall Intake',
+                                    'September - October',
+                                    Icons.eco,
+                                    Colors.green,
+                                  ),
                                 ),
                               ],
                             ),
@@ -508,6 +512,7 @@ class _UKDetailsPageState extends State<UKDetailsPage>
                       Row(
                         children: [
                           Expanded(
+                            flex: 3,
                             child: PrimaryButton(
                               text: 'Explore Universities',
                               icon: Icons.explore_outlined,
@@ -515,10 +520,13 @@ class _UKDetailsPageState extends State<UKDetailsPage>
                             ),
                           ),
                           const SizedBox(width: AppConstants.spaceM),
-                          SecondaryButton(
-                            text: '',
-                            icon: Icons.share_outlined,
-                            onPressed: _shareDestination,
+                          Expanded(
+                            flex: 1,
+                            child: SecondaryButton(
+                              text: 'Share',
+                              icon: Icons.share_outlined,
+                              onPressed: _shareDestination,
+                            ),
                           ),
                         ],
                       ),
