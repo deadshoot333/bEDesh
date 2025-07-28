@@ -9,7 +9,7 @@ import '../widgets/post_card.dart';
 import '../widgets/create_post_dialog.dart';
 import '../widgets/comments_dialog.dart';
 import '../../domain/models/post.dart';
-
+import './user_profile_page.dart';
 class CommunityFeedPage extends StatefulWidget {
   const CommunityFeedPage({super.key});
 
