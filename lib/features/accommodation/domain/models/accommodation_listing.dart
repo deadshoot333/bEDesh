@@ -20,7 +20,6 @@ class AccommodationListing {
   final DateTime? availableTo;
   final bool isRoommateRequest;
   final String postedBy;
-  final bool isVerified;
   final DateTime postedAt;
   final double? latitude;
   final double? longitude;
@@ -50,7 +49,6 @@ class AccommodationListing {
     this.availableTo,
     required this.isRoommateRequest,
     required this.postedBy,
-    required this.isVerified,
     required this.postedAt,
     this.latitude,
     this.longitude,

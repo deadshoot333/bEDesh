@@ -5,7 +5,6 @@ import '../../../../core/constants/app_constants.dart';
 import '../../../../shared/widgets/buttons/modern_buttons.dart';
 import '../../../../shared/widgets/inputs/modern_search_bar.dart';
 import '../widgets/accommodation_card.dart';
-import 'verification_page.dart';
 
 /// Main accommodation page with listings and filters
 class AccommodationPage extends StatefulWidget {
@@ -25,7 +24,6 @@ class _AccommodationPageState extends State<AccommodationPage>
   String _selectedFilter = 'All';
   String _selectedLocation = 'All Cities';
   String _selectedPropertyType = 'All Types';
-  bool _isUserVerified = false; // This would come from user state
   
   final List<String> _filterOptions = [
     'All',
@@ -90,7 +88,6 @@ class _AccommodationPageState extends State<AccommodationPage>
       'bathrooms': 1,
       'amenities': ['WiFi', 'Furnished', 'Laundry'],
       'isRoommateRequest': true,
-      'isVerified': true,
       'nearbyUniversities': ['UCL', 'King\'s College London'],
       'availableFrom': 'Sept 2025',
     },
@@ -104,7 +101,6 @@ class _AccommodationPageState extends State<AccommodationPage>
       'bathrooms': 1,
       'amenities': ['Shared Kitchen', 'WiFi', 'Near Tube'],
       'isRoommateRequest': true,
-      'isVerified': true,
       'nearbyUniversities': ['UCL', 'University of Westminster'],
       'availableFrom': 'Oct 2025',
     },
@@ -118,7 +114,6 @@ class _AccommodationPageState extends State<AccommodationPage>
       'bathrooms': 2,
       'amenities': ['Garden', 'Study Room', 'Parking'],
       'isRoommateRequest': true,
-      'isVerified': true,
       'nearbyUniversities': ['University of Manchester'],
       'availableFrom': 'Sept 2025',
     },
@@ -132,7 +127,6 @@ class _AccommodationPageState extends State<AccommodationPage>
       'bathrooms': 1,
       'amenities': ['Catering', 'WiFi', 'Study Areas'],
       'isRoommateRequest': true,
-      'isVerified': true,
       'nearbyUniversities': ['University of Birmingham'],
       'availableFrom': 'Aug 2025',
     },
@@ -146,7 +140,6 @@ class _AccommodationPageState extends State<AccommodationPage>
       'bathrooms': 1,
       'amenities': ['Central Heating', 'WiFi', 'Dishwasher'],
       'isRoommateRequest': true,
-      'isVerified': true,
       'nearbyUniversities': ['University of Edinburgh'],
       'availableFrom': 'Sept 2025',
     },
@@ -160,7 +153,6 @@ class _AccommodationPageState extends State<AccommodationPage>
       'bathrooms': 1,
       'amenities': ['Modern Kitchen', 'WiFi', 'Gym Access'],
       'isRoommateRequest': true,
-      'isVerified': true,
       'nearbyUniversities': ['University of Glasgow'],
       'availableFrom': 'Sept 2025',
     },
@@ -433,7 +425,6 @@ class _AccommodationPageState extends State<AccommodationPage>
           bathrooms: listing['bathrooms'],
           amenities: List<String>.from(listing['amenities']),
           isRoommateRequest: listing['isRoommateRequest'],
-          isVerified: listing['isVerified'],
           nearbyUniversities: List<String>.from(listing['nearbyUniversities']),
           availableFrom: listing['availableFrom'],
           onTap: () => _showAccommodationDetails(listing),
@@ -595,73 +586,7 @@ class _AccommodationPageState extends State<AccommodationPage>
   }
 
   void _handlePostAccommodation() {
-    if (!_isUserVerified) {
-      _showVerificationDialog();
-    } else {
-      _showComingSoonDialog('Post Roommate Request');
-    }
-  }
-
-  void _showVerificationDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.backgroundCard,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppConstants.radiusL),
-        ),
-        title: Row(
-          children: [
-            Icon(
-              Icons.security,
-              color: AppColors.primary,
-            ),
-            const SizedBox(width: AppConstants.spaceS),
-            Text(
-              'Verification Required',
-              style: AppTextStyles.h4.copyWith(
-                color: AppColors.textPrimary,
-              ),
-            ),
-          ],
-        ),
-        content: Text(
-          'To post roommate requests, you need to verify your student status first.',
-          style: AppTextStyles.bodyMedium.copyWith(
-            color: AppColors.textSecondary,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'Cancel',
-              style: AppTextStyles.labelMedium.copyWith(
-                color: AppColors.textSecondary,
-              ),
-            ),
-          ),
-          PrimaryButton(
-            text: 'Verify Now',
-            size: ButtonSize.small,
-            onPressed: () async {
-              Navigator.pop(context);
-              final result = await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const VerificationPage(),
-                ),
-              );
-              if (result == true) {
-                setState(() {
-                  _isUserVerified = true;
-                });
-              }
-            },
-          ),
-        ],
-      ),
-    );
+    _showComingSoonDialog('Post Roommate Request');
   }
 
   void _showComingSoonDialog(String feature) {

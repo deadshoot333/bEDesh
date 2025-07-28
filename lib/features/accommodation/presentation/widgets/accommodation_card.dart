@@ -15,7 +15,6 @@ class AccommodationCard extends StatelessWidget {
   final List<String> amenities;
   final String? imageUrl;
   final bool isRoommateRequest;
-  final bool isVerified;
   final VoidCallback? onTap;
   final List<String> nearbyUniversities;
   final String availableFrom;
@@ -32,7 +31,6 @@ class AccommodationCard extends StatelessWidget {
     required this.amenities,
     this.imageUrl,
     required this.isRoommateRequest,
-    required this.isVerified,
     this.onTap,
     required this.nearbyUniversities,
     required this.availableFrom,
@@ -112,14 +110,6 @@ class AccommodationCard extends StatelessWidget {
                               AppColors.secondary,
                               Icons.people,
                             ),
-                          if (isVerified) ...[
-                            const SizedBox(width: AppConstants.spaceXS),
-                            _buildBadge(
-                              'Verified',
-                              AppColors.success,
-                              Icons.verified,
-                            ),
-                          ],
                         ],
                       ),
                     ),
