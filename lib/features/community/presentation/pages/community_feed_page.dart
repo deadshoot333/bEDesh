@@ -412,8 +412,36 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
             color: AppColors.textPrimary,
           ),
         ),
-        content: const ModernSearchBar(
-          hintText: 'Search posts, users, or topics...',
+        content: Container(
+          width: double.maxFinite,
+          child: TextField(
+            decoration: InputDecoration(
+              hintText: 'Search posts, users, or topics...',
+              hintStyle: AppTextStyles.bodyMedium.copyWith(
+                color: AppColors.textTertiary,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppConstants.radiusM),
+                borderSide: BorderSide(color: AppColors.borderLight),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppConstants.radiusM),
+                borderSide: BorderSide(color: AppColors.borderLight),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppConstants.radiusM),
+                borderSide: BorderSide(color: AppColors.primary, width: 2),
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: AppConstants.spaceM,
+                vertical: AppConstants.spaceM,
+              ),
+              prefixIcon: Icon(
+                Icons.search,
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ),
         ),
         actions: [
           TextButton(
@@ -477,11 +505,7 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
       context,
       PageRouteBuilder(
         pageBuilder:
-            (context, animation, secondaryAnimation) => UserProfilePage(
-              userId: userId,
-              userName: userName,
-              userLocation: userLocation,
-            ),
+            (context, animation, secondaryAnimation) => const ProfilePage(),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           const begin = Offset(1.0, 0.0);
           const end = Offset.zero;

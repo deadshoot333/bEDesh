@@ -212,64 +212,75 @@ class _ModernHomePageState extends State<ModernHomePage>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      // Back button
-                      Container(
-                        margin: const EdgeInsets.only(right: AppConstants.spaceM),
-                        decoration: BoxDecoration(
-                          color: AppColors.textOnPrimary.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: IconButton(
-                          icon: Icon(
-                            Icons.arrow_back_ios_new,
-                            color: AppColors.textOnPrimary,
-                            size: 20,
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        // Back button
+                        Container(
+                          margin: const EdgeInsets.only(right: AppConstants.spaceM),
+                          decoration: BoxDecoration(
+                            color: AppColors.textOnPrimary.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(12),
                           ),
-                          onPressed: _navigateToOnboarding,
-                        ),
-                      ),
-                      // App name and description
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            AppConstants.appName,
-                            style: AppTextStyles.h2.copyWith(
+                          child: IconButton(
+                            icon: Icon(
+                              Icons.arrow_back_ios_new,
                               color: AppColors.textOnPrimary,
-                              fontWeight: FontWeight.w800,
+                              size: 20,
                             ),
+                            onPressed: _navigateToOnboarding,
                           ),
-                          const SizedBox(height: AppConstants.spaceXS),
-                          Text(
-                            AppConstants.appDescription,
-                            style: AppTextStyles.bodyMedium.copyWith(
-                              color: AppColors.textOnPrimary.withOpacity(0.9),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  ModernIconButton(
-                    icon: Icons.person_outline,
-                    backgroundColor: AppColors.textOnPrimary.withOpacity(0.2),
-                    iconColor: AppColors.textOnPrimary,
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const ProfilePage(),
                         ),
-                      );
-                    },
-                    tooltip: 'Profile',
-                  ),
-                ],
+                        // App name and description
+                        ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxWidth: MediaQuery.of(context).size.width * 0.6, // Limit width
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                AppConstants.appName,
+                                style: AppTextStyles.h2.copyWith(
+                                  color: AppColors.textOnPrimary,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: AppConstants.spaceXS),
+                              Text(
+                                AppConstants.appDescription,
+                                style: AppTextStyles.bodyMedium.copyWith(
+                                  color: AppColors.textOnPrimary.withOpacity(0.9),
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 2,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    ModernIconButton(
+                      icon: Icons.person_outline,
+                      backgroundColor: AppColors.textOnPrimary.withOpacity(0.2),
+                      iconColor: AppColors.textOnPrimary,
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const ProfilePage(),
+                          ),
+                        );
+                      },
+                      tooltip: 'Profile',
+                    ),
+                  ],
+                ),
               ),
               
               const SizedBox(height: AppConstants.spaceL),
