@@ -10,6 +10,7 @@ import '../widgets/create_post_dialog.dart';
 import '../widgets/comments_dialog.dart';
 import '../../domain/models/post.dart';
 import './user_profile_page.dart';
+
 class CommunityFeedPage extends StatefulWidget {
   const CommunityFeedPage({super.key});
 
@@ -37,6 +38,7 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
   final List<Post> posts = [
     Post(
       id: '1',
+      userId: 'userId_1',
       userImage: '', // Will use placeholder
       userName: 'Rahul Sharma',
       userLocation: 'Mumbai, India',
@@ -51,6 +53,7 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
     ),
     Post(
       id: '2',
+      userId: 'userId_2',
       userImage: '', // Will use placeholder
       userName: 'Priya Patel',
       userLocation: 'Delhi, India',
@@ -65,6 +68,7 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
     ),
     Post(
       id: '3',
+      userId: 'userId_3',
       userImage: '', // Will use placeholder
       userName: 'Ahmed Khan',
       userLocation: 'Dhaka, Bangladesh',
@@ -80,6 +84,7 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
     ),
     Post(
       id: '4',
+      userId: 'userId_4',
       userImage: '', // Will use placeholder
       userName: 'Sarah Johnson',
       userLocation: 'Toronto, Canada',
@@ -94,6 +99,7 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
     ),
     Post(
       id: '5',
+      userId: 'userId_5',
       userImage: '', // Will use placeholder
       userName: 'Michael Chen',
       userLocation: 'London, UK',
@@ -303,8 +309,8 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
         onPressed: () => _showCreatePostDialog(context),
         backgroundColor: AppColors.primary,
         foregroundColor: AppColors.textOnPrimary,
-        child: const Icon(Icons.add, size: 24),
         elevation: 8,
+        child: const Icon(Icons.add, size: 24),
       ),
     );
   }

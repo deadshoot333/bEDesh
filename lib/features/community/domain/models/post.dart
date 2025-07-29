@@ -1,5 +1,6 @@
 class Post {
   final String id;
+  final String userId;
   final String userImage;
   final String userName;
   final String userLocation;
@@ -14,6 +15,7 @@ class Post {
 
   Post({
     required this.id,
+    required this.userId,
     required this.userImage,
     required this.userName,
     required this.userLocation,

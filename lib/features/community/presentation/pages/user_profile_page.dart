@@ -101,6 +101,7 @@ class _UserProfilePageState extends State<UserProfilePage>
     userPosts = [
       Post(
         id: '1',
+        userId: 'userId_1',
         userImage: '',
         userName: widget.userName,
         userLocation: widget.userLocation,
@@ -114,6 +115,7 @@ class _UserProfilePageState extends State<UserProfilePage>
       ),
       Post(
         id: '3',
+        userId: 'userId_3',
         userImage: '',
         userName: widget.userName,
         userLocation: widget.userLocation,
