@@ -9,6 +9,7 @@ import '../../../../shared/widgets/common/section_header.dart';
 import '../widgets/university_stat_card.dart';
 import '../widgets/scholarship_card.dart';
 import '../widgets/course_card.dart';
+import '../widgets/course_filter_tags.dart';
 
 class SwanseaUniversityPage extends StatefulWidget {
   const SwanseaUniversityPage({super.key});
@@ -22,6 +23,12 @@ class _SwanseaUniversityPageState extends State<SwanseaUniversityPage>
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
+
+  // Course filter state
+  String _selectedField = 'All Fields';
+  String _selectedLevel = 'All Levels';
+  String _selectedIntake = 'All Intakes';
+  String _selectedFeeRange = 'All Fees';
 
   final Map<String, Map<String, String>> scholarshipDetails = {
   'Swansea International Scholarship': {
@@ -42,31 +49,242 @@ late final List<String> scholarships = scholarshipDetails.keys.toList();
 
 
   final List<Map<String, String>> courses = [
-  {
-    'name': 'BSc Computer Science',
-    'level': 'Undergraduate',
-    'duration': '3 years',
-    'availability': 'September',
-    'popularity': 'High',
-    'url': 'https://www.swansea.ac.uk/course/computer-science/',
-  },
-  {
-    'name': 'MSc Data Science',
-    'level': 'Postgraduate',
-    'duration': '1 year',
-    'availability': 'September',
-    'popularity': 'High',
-    'url': 'https://www.swansea.ac.uk/course/data-science-msc/',
-  },
-  {
-    'name': 'MBA Business Administration',
-    'level': 'Postgraduate',
-    'duration': '1 year',
-    'availability': 'January',
-    'popularity': 'Medium',
-    'url': 'https://www.swansea.ac.uk/course/mba/',
-  },
-];
+    // Computer Science
+    {
+      'name': 'BSc Computer Science',
+      'level': 'Undergraduate',
+      'duration': '3 years',
+      'field': 'Computer Science',
+      'intake': 'Fall',
+      'fee': '£20,350/year',
+      'feeRange': '£15K - £25K',
+      'popularity': 'High',
+      'description': 'Study programming, algorithms, and software development with industry placement opportunities.',
+      'url': 'https://www.swansea.ac.uk/course/computer-science/',
+    },
+    {
+      'name': 'MSc Data Science',
+      'level': 'Masters',
+      'duration': '1 year',
+      'field': 'Computer Science',
+      'intake': 'Fall',
+      'fee': '£22,650/year',
+      'feeRange': '£15K - £25K',
+      'popularity': 'High',
+      'description': 'Advanced data analytics, machine learning, and big data technologies.',
+      'url': 'https://www.swansea.ac.uk/course/data-science-msc/',
+    },
+    {
+      'name': 'PhD Computer Science',
+      'level': 'PhD',
+      'duration': '3-4 years',
+      'field': 'Computer Science',
+      'intake': 'Fall',
+      'fee': '£18,400/year',
+      'feeRange': '£15K - £25K',
+      'popularity': 'Medium',
+      'description': 'Research degree in computer science and technology.',
+      'url': 'https://www.swansea.ac.uk/postgraduate/research-degrees/computer-science/',
+    },
+    // Engineering
+    {
+      'name': 'BEng Civil Engineering',
+      'level': 'Undergraduate',
+      'duration': '3 years',
+      'field': 'Engineering',
+      'intake': 'Fall',
+      'fee': '£21,200/year',
+      'feeRange': '£15K - £25K',
+      'popularity': 'High',
+      'description': 'Design and construction of infrastructure, roads, and buildings.',
+      'url': 'https://www.swansea.ac.uk/course/civil-engineering/',
+    },
+    {
+      'name': 'MEng Aerospace Engineering',
+      'level': 'Undergraduate',
+      'duration': '4 years',
+      'field': 'Engineering',
+      'intake': 'Fall',
+      'fee': '£21,850/year',
+      'feeRange': '£15K - £25K',
+      'popularity': 'High',
+      'description': 'Design and development of aircraft and spacecraft systems.',
+      'url': 'https://www.swansea.ac.uk/course/aerospace-engineering/',
+    },
+    {
+      'name': 'MSc Environmental Engineering',
+      'level': 'Masters',
+      'duration': '1 year',
+      'field': 'Engineering',
+      'intake': 'Fall',
+      'fee': '£22,400/year',
+      'feeRange': '£15K - £25K',
+      'popularity': 'Medium',
+      'description': 'Sustainable engineering solutions for environmental challenges.',
+      'url': 'https://www.swansea.ac.uk/course/environmental-engineering/',
+    },
+    // Business
+    {
+      'name': 'MBA Business Administration',
+      'level': 'Masters',
+      'duration': '1 year',
+      'field': 'Business',
+      'intake': 'Spring',
+      'fee': '£24,500/year',
+      'feeRange': '£15K - £25K',
+      'popularity': 'Medium',
+      'description': 'Executive leadership and strategic business management.',
+      'url': 'https://www.swansea.ac.uk/course/mba/',
+    },
+    {
+      'name': 'BSc Economics',
+      'level': 'Undergraduate',
+      'duration': '3 years',
+      'field': 'Business',
+      'intake': 'Fall',
+      'fee': '£19,650/year',
+      'feeRange': '£15K - £25K',
+      'popularity': 'Medium',
+      'description': 'Economic theory, policy analysis, and financial markets.',
+      'url': 'https://www.swansea.ac.uk/course/economics/',
+    },
+    {
+      'name': 'MSc Finance and Investment',
+      'level': 'Masters',
+      'duration': '1 year',
+      'field': 'Business',
+      'intake': 'Fall',
+      'fee': '£23,200/year',
+      'feeRange': '£15K - £25K',
+      'popularity': 'High',
+      'description': 'Corporate finance, investment analysis, and risk management.',
+      'url': 'https://www.swansea.ac.uk/course/finance-investment/',
+    },
+    // Medicine
+    {
+      'name': 'MBBS Medicine',
+      'level': 'Undergraduate',
+      'duration': '5 years',
+      'field': 'Medicine',
+      'intake': 'Fall',
+      'fee': '£38,000/year',
+      'feeRange': '£35K - £45K',
+      'popularity': 'Very High',
+      'description': 'Medical degree with clinical training and research opportunities.',
+      'url': 'https://www.swansea.ac.uk/course/medicine/',
+    },
+    {
+      'name': 'BSc Health and Social Care',
+      'level': 'Undergraduate',
+      'duration': '3 years',
+      'field': 'Medicine',
+      'intake': 'Fall',
+      'fee': '£20,100/year',
+      'feeRange': '£15K - £25K',
+      'popularity': 'High',
+      'description': 'Comprehensive healthcare and social work training.',
+      'url': 'https://www.swansea.ac.uk/course/health-social-care/',
+    },
+    {
+      'name': 'MSc Public Health',
+      'level': 'Masters',
+      'duration': '1 year',
+      'field': 'Medicine',
+      'intake': 'Fall',
+      'fee': '£21,850/year',
+      'feeRange': '£15K - £25K',
+      'popularity': 'Medium',
+      'description': 'Population health, epidemiology, and health policy.',
+      'url': 'https://www.swansea.ac.uk/course/public-health/',
+    },
+    // Law
+    {
+      'name': 'LLB Law',
+      'level': 'Undergraduate',
+      'duration': '3 years',
+      'field': 'Law',
+      'intake': 'Fall',
+      'fee': '£19,400/year',
+      'feeRange': '£15K - £25K',
+      'popularity': 'High',
+      'description': 'Comprehensive legal education with practical training.',
+      'url': 'https://www.swansea.ac.uk/course/law/',
+    },
+    {
+      'name': 'LLM Human Rights Law',
+      'level': 'Masters',
+      'duration': '1 year',
+      'field': 'Law',
+      'intake': 'Fall',
+      'fee': '£21,200/year',
+      'feeRange': '£15K - £25K',
+      'popularity': 'Medium',
+      'description': 'Specialized study in international human rights law.',
+      'url': 'https://www.swansea.ac.uk/course/human-rights-law/',
+    },
+    // Psychology
+    {
+      'name': 'BSc Psychology',
+      'level': 'Undergraduate',
+      'duration': '3 years',
+      'field': 'Psychology',
+      'intake': 'Fall',
+      'fee': '£19,850/year',
+      'feeRange': '£15K - £25K',
+      'popularity': 'High',
+      'description': 'Scientific study of mind and behavior with research opportunities.',
+      'url': 'https://www.swansea.ac.uk/course/psychology/',
+    },
+    {
+      'name': 'MSc Clinical Psychology',
+      'level': 'Masters',
+      'duration': '2 years',
+      'field': 'Psychology',
+      'intake': 'Fall',
+      'fee': '£22,100/year',
+      'feeRange': '£15K - £25K',
+      'popularity': 'Medium',
+      'description': 'Advanced clinical practice and therapeutic interventions.',
+      'url': 'https://www.swansea.ac.uk/course/clinical-psychology/',
+    },
+    // Fall/Spring alternative intakes
+    {
+      'name': 'MSc International Management',
+      'level': 'Masters',
+      'duration': '1 year',
+      'field': 'Business',
+      'intake': 'Spring',
+      'fee': '£22,900/year',
+      'feeRange': '£15K - £25K',
+      'popularity': 'Medium',
+      'description': 'Global business management and cross-cultural leadership.',
+      'url': 'https://www.swansea.ac.uk/course/international-management/',
+    },
+    {
+      'name': 'BSc Environmental Science',
+      'level': 'Undergraduate',
+      'duration': '3 years',
+      'field': 'Science',
+      'intake': 'Fall',
+      'fee': '£20,750/year',
+      'feeRange': '£15K - £25K',
+      'popularity': 'Medium',
+      'description': 'Environmental sustainability and conservation science.',
+      'url': 'https://www.swansea.ac.uk/course/environmental-science/',
+    },
+    {
+      'name': 'MSc Renewable Energy Engineering',
+      'level': 'Masters',
+      'duration': '1 year',
+      'field': 'Engineering',
+      'intake': 'Spring',
+      'fee': '£23,400/year',
+      'feeRange': '£15K - £25K',
+      'popularity': 'High',
+      'description': 'Sustainable energy technologies and green engineering.',
+      'url': 'https://www.swansea.ac.uk/course/renewable-energy/',
+    },
+  ];
 
   final List<String> highlights = [
     'High student satisfaction with 83% employability rate',
@@ -105,6 +323,70 @@ late final List<String> scholarships = scholarshipDetails.keys.toList();
   void dispose() {
     _animationController.dispose();
     super.dispose();
+  }
+
+  // Course filtering methods
+  List<Map<String, String>> get filteredCourses {
+    List<Map<String, String>> coursesList = courses;
+    
+    if (_selectedField != 'All Fields') {
+      coursesList = coursesList.where((c) => 
+        c['field']?.toString().toLowerCase() == _selectedField.toLowerCase()
+      ).toList();
+    }
+    
+    if (_selectedLevel != 'All Levels') {
+      coursesList = coursesList.where((c) => 
+        c['level']?.toString().toLowerCase() == _selectedLevel.toLowerCase()
+      ).toList();
+    }
+    
+    if (_selectedIntake != 'All Intakes') {
+      coursesList = coursesList.where((c) => 
+        c['intake']?.toString().toLowerCase() == _selectedIntake.toLowerCase()
+      ).toList();
+    }
+    
+    if (_selectedFeeRange != 'All Fees') {
+      coursesList = coursesList.where((c) => 
+        c['feeRange']?.toString() == _selectedFeeRange
+      ).toList();
+    }
+    
+    return coursesList;
+  }
+
+  void _onFieldChanged(String value) {
+    setState(() {
+      _selectedField = value;
+    });
+  }
+
+  void _onLevelChanged(String value) {
+    setState(() {
+      _selectedLevel = value;
+    });
+  }
+
+  void _onIntakeChanged(String value) {
+    setState(() {
+      _selectedIntake = value;
+    });
+  }
+
+  void _onFeeRangeChanged(String value) {
+    setState(() {
+      _selectedFeeRange = value;
+    });
+  }
+
+  void _clearCourseFilters() {
+    setState(() {
+      _selectedField = 'All Fields';
+      _selectedLevel = 'All Levels';
+      _selectedIntake = 'All Intakes';
+      _selectedFeeRange = 'All Fees';
+    });
   }
 
   @override
@@ -406,35 +688,6 @@ late final List<String> scholarships = scholarshipDetails.keys.toList();
     );
   }
 
-  Widget _buildCoursesSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SectionHeader(
-          title: 'Popular Courses',
-          icon: Icons.menu_book_outlined,
-        ),
-        const SizedBox(height: AppConstants.spaceM),
-      ListView.separated(
-  shrinkWrap: true,
-  physics: const NeverScrollableScrollPhysics(),
-  itemCount: courses.length,
-  separatorBuilder: (context, index) => const SizedBox(height: AppConstants.spaceM),
-  itemBuilder: (context, index) {
-    final course = courses[index];
-    return CourseCard(
-      name: course['name']!,
-      level: course['level']!,
-      duration: course['duration']!,
-      onTap: () => _viewCourse(course), courseName: '', fee: '',
-    );
-  },
-)
-
-      ],
-    );
-  }
-
   Widget _buildActionButtons() {
     return Column(
       children: [
@@ -524,67 +777,112 @@ late final List<String> scholarships = scholarshipDetails.keys.toList();
 }
 
 
- void _viewCourse(Map<String, String> course) {
-  showDialog(
-    context: context,
-    builder: (context) {
-      return AlertDialog(
-        backgroundColor: AppColors.backgroundCard,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppConstants.radiusM),
-        ),
-        title: Text(
-          course['name']!,
-          style: AppTextStyles.h4.copyWith(color: AppColors.textPrimary),
-        ),
+ void _viewCourse(String courseName) {
+    final courseDetail = courses.firstWhere(
+      (course) => course['name'] == courseName,
+      orElse: () => {},
+    );
+    if (courseDetail.isEmpty) return;
+
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text(courseDetail['name'] ?? courseName),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _infoText('Level', course['level']),
-            _infoText('Duration', course['duration']),
-            _infoText('Availability', course['availability']),
-            _infoText('Popularity', course['popularity']),
+            Text(courseDetail['description'] ?? ''),
             const SizedBox(height: 12),
-            if (course['url'] != null)
-              InkWell(
-                onTap: () async {
-                  final uri = Uri.parse(course['url']!);
-                  if (await canLaunchUrl(uri)) {
-                    await launchUrl(uri, mode: LaunchMode.externalApplication);
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Could not open the course link.')),
-                    );
-                  }
-                },
-                child: Text(
-                  'Visit Course Page →',
-                  style: AppTextStyles.labelLarge.copyWith(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.bold,
-                    decoration: TextDecoration.underline,
-                  ),
+            GestureDetector(
+              onTap: () => _launchURL(courseDetail['url'] ?? ''),
+              child: const Text(
+                'Visit Course Page',
+                style: TextStyle(
+                  color: Colors.blue,
+                  decoration: TextDecoration.underline,
                 ),
               ),
+            ),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: Text(
-              'Close',
-              style: AppTextStyles.labelLarge.copyWith(
-                color: AppColors.primary,
-              ),
-            ),
+            child: const Text('Close'),
           ),
         ],
-      );
-    },
-  );
-}
+      ),
+    );
+  }
 
+  Widget _buildCoursesSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SectionHeader(
+          title: 'Popular Courses',
+          icon: Icons.menu_book_outlined,
+        ),
+        const SizedBox(height: AppConstants.spaceM),
+        CourseFilterTags(
+          selectedField: _selectedField,
+          selectedLevel: _selectedLevel,
+          selectedIntake: _selectedIntake,
+          selectedFeeRange: _selectedFeeRange,
+          onFieldChanged: _onFieldChanged,
+          onLevelChanged: _onLevelChanged,
+          onIntakeChanged: _onIntakeChanged,
+          onFeeRangeChanged: _onFeeRangeChanged,
+          onClearFilters: _clearCourseFilters,
+        ),
+        const SizedBox(height: AppConstants.spaceM),
+        filteredCourses.isEmpty
+            ? const Padding(
+                padding: EdgeInsets.all(AppConstants.spaceL),
+                child: Center(
+                  child: Text(
+                    'No courses match your filter criteria.',
+                    style: AppTextStyles.bodyMedium,
+                  ),
+                ),
+              )
+            : ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: filteredCourses.length,
+                itemBuilder: (context, index) {
+                  final course = filteredCourses[index];
+                  return CourseCard(
+                    courseName: course['name']!,
+                    duration: course['duration']!,
+                    fee: course['fee']!,
+                    name: course['name']!,
+                    level: course['level']!,
+                    onTap: () => _viewCourse(course['name']!),
+                  );
+                },
+              ),
+      ],
+    );
+  }
+
+  void _launchURL(String url) async {
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Could not open the link.',
+            style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textOnPrimary),
+          ),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    }
+  }
 
   Widget _buildCourseDetail(String label, String value) {
     return Padding(

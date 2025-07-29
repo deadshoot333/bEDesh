@@ -103,25 +103,6 @@ class _ModernHomePageState extends State<ModernHomePage>
       },
       child: Scaffold(
         backgroundColor: AppColors.backgroundPrimary,
-        appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          leading: Container(
-            margin: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: AppColors.backgroundCard,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: IconButton(
-              icon: Icon(
-                Icons.arrow_back_ios_new,
-                color: AppColors.textPrimary,
-                size: 20,
-              ),
-              onPressed: _navigateToOnboarding,
-            ),
-          ),
-        ),
         body: AnimatedBuilder(
         animation: Listenable.merge([
           _heroAnimationController,
@@ -231,43 +212,75 @@ class _ModernHomePageState extends State<ModernHomePage>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        AppConstants.appName,
-                        style: AppTextStyles.h2.copyWith(
-                          color: AppColors.textOnPrimary,
-                          fontWeight: FontWeight.w800,
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        // Back button
+                        Container(
+                          margin: const EdgeInsets.only(right: AppConstants.spaceM),
+                          decoration: BoxDecoration(
+                            color: AppColors.textOnPrimary.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: IconButton(
+                            icon: Icon(
+                              Icons.arrow_back_ios_new,
+                              color: AppColors.textOnPrimary,
+                              size: 20,
+                            ),
+                            onPressed: _navigateToOnboarding,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: AppConstants.spaceXS),
-                      Text(
-                        AppConstants.appDescription,
-                        style: AppTextStyles.bodyMedium.copyWith(
-                          color: AppColors.textOnPrimary.withOpacity(0.9),
+                        // App name and description
+                        ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxWidth: MediaQuery.of(context).size.width * 0.6, // Limit width
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                AppConstants.appName,
+                                style: AppTextStyles.h2.copyWith(
+                                  color: AppColors.textOnPrimary,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: AppConstants.spaceXS),
+                              Text(
+                                AppConstants.appDescription,
+                                style: AppTextStyles.bodyMedium.copyWith(
+                                  color: AppColors.textOnPrimary.withOpacity(0.9),
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 2,
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                  ModernIconButton(
-                    icon: Icons.person_outline,
-                    backgroundColor: AppColors.textOnPrimary.withOpacity(0.2),
-                    iconColor: AppColors.textOnPrimary,
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const ProfilePage(),
-                        ),
-                      );
-                    },
-                    tooltip: 'Profile',
-                  ),
-                ],
+                      ],
+                    ),
+                    ModernIconButton(
+                      icon: Icons.person_outline,
+                      backgroundColor: AppColors.textOnPrimary.withOpacity(0.2),
+                      iconColor: AppColors.textOnPrimary,
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const ProfilePage(),
+                          ),
+                        );
+                      },
+                      tooltip: 'Profile',
+                    ),
+                  ],
+                ),
               ),
               
               const SizedBox(height: AppConstants.spaceL),
@@ -659,81 +672,6 @@ class _ModernHomePageState extends State<ModernHomePage>
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  // Helper method for staggered animations
-
- 
-
-  Widget _buildStatItem({
-    required IconData icon,
-    required String value,
-    required String label,
-  }) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(
-          icon,
-          color: AppColors.primary,
-          size: 28,
-        ),
-        const SizedBox(height: AppConstants.spaceXS),
-        Text(
-          value,
-          style: AppTextStyles.h6.copyWith(
-            color: AppColors.textPrimary,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          label,
-          style: AppTextStyles.bodySmall.copyWith(
-            color: AppColors.textSecondary,
-          ),
-          textAlign: TextAlign.center,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildInfoSection(String title, String content, IconData icon) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppConstants.spaceS),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(
-            icon,
-            color: AppColors.primary,
-            size: 24,
-          ),
-          const SizedBox(width: AppConstants.spaceM),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: AppTextStyles.labelLarge.copyWith(
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: AppConstants.spaceXS),
-                Text(
-                  content,
-                  style: AppTextStyles.bodyMedium.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }

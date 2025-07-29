@@ -3,13 +3,12 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../shared/widgets/buttons/modern_buttons.dart';
-import '../../../../shared/widgets/inputs/modern_search_bar.dart';
 import '../../../../shared/widgets/chips/modern_chip.dart';
 import '../widgets/post_card.dart';
 import '../widgets/create_post_dialog.dart';
 import '../widgets/comments_dialog.dart';
 import '../../domain/models/post.dart';
-import './user_profile_page.dart';
+import '../../../profile/presentation/pages/profile_page.dart';
 class CommunityFeedPage extends StatefulWidget {
   const CommunityFeedPage({super.key});
 
@@ -21,7 +20,7 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
     with TickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
-  
+
   String _selectedFilter = 'All';
   final List<String> _filters = [
     'All',
@@ -31,12 +30,13 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
     'USA',
     'UK',
     'Canada',
-    'Australia'
+    'Australia',
   ];
 
   final List<Post> posts = [
     Post(
       id: '1',
+      userId: 'userId_1',
       userImage: '', // Will use placeholder
       userName: 'Rahul Sharma',
       userLocation: 'Mumbai, India',
@@ -51,6 +51,7 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
     ),
     Post(
       id: '2',
+      userId: 'userId_2',
       userImage: '', // Will use placeholder
       userName: 'Priya Patel',
       userLocation: 'Delhi, India',
@@ -65,6 +66,7 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
     ),
     Post(
       id: '3',
+      userId: 'userId_3',
       userImage: '', // Will use placeholder
       userName: 'Ahmed Khan',
       userLocation: 'Dhaka, Bangladesh',
@@ -80,6 +82,7 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
     ),
     Post(
       id: '4',
+      userId: 'userId_4',
       userImage: '', // Will use placeholder
       userName: 'Sarah Johnson',
       userLocation: 'Toronto, Canada',
@@ -94,6 +97,7 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
     ),
     Post(
       id: '5',
+      userId: 'userId_5',
       userImage: '', // Will use placeholder
       userName: 'Michael Chen',
       userLocation: 'London, UK',
@@ -115,13 +119,9 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
       duration: const Duration(milliseconds: 1000),
       vsync: this,
     );
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeInOut,
-    ));
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
     _animationController.forward();
   }
 
@@ -135,73 +135,42 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.backgroundPrimary,
-      appBar: AppBar(
-        backgroundColor: AppColors.backgroundCard,
-        elevation: 0,
-        title: Text(
-          'Community',
-          style: AppTextStyles.h3.copyWith(
-            color: AppColors.textPrimary,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(
-              Icons.search_outlined,
-              color: AppColors.textSecondary,
-            ),
-            onPressed: () {
-              _showSearchDialog(context);
-            },
-          ),
-          IconButton(
-            icon: const Icon(
-              Icons.notifications_outlined,
-              color: AppColors.textSecondary,
-            ),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    'Notifications feature coming soon!',
-                    style: AppTextStyles.bodyMedium.copyWith(
-                      color: AppColors.textOnPrimary,
-                    ),
-                  ),
-                  backgroundColor: AppColors.info,
-                ),
-              );
-            },
-          ),
-          const SizedBox(width: AppConstants.spaceS),
-        ],
-      ),
       body: FadeTransition(
         opacity: _fadeAnimation,
         child: Column(
           children: [
+            // Modern Header (like home page)
+            _buildModernHeader(),
             // Quick Actions Bar
             Container(
               color: AppColors.backgroundCard,
               padding: const EdgeInsets.all(AppConstants.spaceM),
               child: Row(
                 children: [
-                  Container(
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: AppColors.primary.withOpacity(0.3),
-                        width: 2,
+                  GestureDetector(
+                    onTap:
+                        () => _navigateToUserProfile(
+                          context,
+                          'current_user_id', // Replace with actual current user ID
+                          'Your Name', // Replace with actual current user name
+                          'Your Location', // Replace with actual current user location
+                        ),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: AppColors.primary.withOpacity(0.3),
+                          width: 2,
+                        ),
                       ),
-                    ),
-                    child: CircleAvatar(
-                      radius: 20,
-                      backgroundColor: AppColors.primary.withOpacity(0.1),
-                      child: Icon(
-                        Icons.person,
-                        color: AppColors.primary,
-                        size: 24,
+                      child: CircleAvatar(
+                        radius: 20,
+                        backgroundColor: AppColors.primary.withOpacity(0.1),
+                        child: Icon(
+                          Icons.person,
+                          color: AppColors.primary,
+                          size: 24,
+                        ),
                       ),
                     ),
                   ),
@@ -216,7 +185,9 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
                         ),
                         decoration: BoxDecoration(
                           color: AppColors.backgroundSecondary,
-                          borderRadius: BorderRadius.circular(AppConstants.radiusXL),
+                          borderRadius: BorderRadius.circular(
+                            AppConstants.radiusXL,
+                          ),
                           border: Border.all(
                             color: AppColors.borderLight,
                             width: 1,
@@ -256,9 +227,10 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
                   vertical: AppConstants.spaceS,
                 ),
                 child: Row(
-                  children: _filters
-                      .map((filter) => _buildFilterChip(filter))
-                      .toList(),
+                  children:
+                      _filters
+                          .map((filter) => _buildFilterChip(filter))
+                          .toList(),
                 ),
               ),
             ),
@@ -266,21 +238,22 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
             // Posts Feed
             Expanded(
               child: ListView.separated(
-                padding: const EdgeInsets.symmetric(vertical: AppConstants.spaceS),
-                itemCount: posts.length,
-                separatorBuilder: (context, index) => const SizedBox(
-                  height: AppConstants.spaceS,
+                padding: const EdgeInsets.symmetric(
+                  vertical: AppConstants.spaceS,
                 ),
+                itemCount: posts.length,
+                separatorBuilder:
+                    (context, index) =>
+                        const SizedBox(height: AppConstants.spaceS),
                 itemBuilder: (context, index) {
                   return AnimatedContainer(
-                    duration: Duration(
-                      milliseconds: 300 + (index * 100),
-                    ),
+                    duration: Duration(milliseconds: 300 + (index * 100)),
                     curve: Curves.easeOutBack,
                     child: PostCard(
                       post: posts[index],
                       onLike: () => _toggleLike(index),
-                      onComment: () => _showCommentsDialog(context, posts[index]),
+                      onComment:
+                          () => _showCommentsDialog(context, posts[index]),
                       onShare: () => _sharePost(posts[index]),
                     ),
                   );
@@ -294,8 +267,84 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
         onPressed: () => _showCreatePostDialog(context),
         backgroundColor: AppColors.primary,
         foregroundColor: AppColors.textOnPrimary,
-        child: const Icon(Icons.add, size: 24),
         elevation: 8,
+        child: const Icon(Icons.add, size: 24),
+      ),
+    );
+  }
+
+  Widget _buildModernHeader() {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [AppColors.primary, AppColors.primaryLight],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(AppConstants.spaceM),
+          child: Row(
+            children: [
+              // Back button
+              Container(
+                margin: const EdgeInsets.only(right: AppConstants.spaceM),
+                decoration: BoxDecoration(
+                  color: AppColors.textOnPrimary.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: IconButton(
+                  icon: Icon(
+                    Icons.arrow_back_ios_new,
+                    color: AppColors.textOnPrimary,
+                    size: 20,
+                  ),
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                ),
+              ),
+              // Community Feed title
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Community Feed',
+                      style: AppTextStyles.h2.copyWith(
+                        color: AppColors.textOnPrimary,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: AppConstants.spaceXS),
+                    Text(
+                      'Connect with students worldwide',
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        color: AppColors.textOnPrimary.withOpacity(0.9),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Action buttons
+              ModernIconButton(
+                icon: Icons.person_outline,
+                backgroundColor: AppColors.textOnPrimary.withOpacity(0.2),
+                iconColor: AppColors.textOnPrimary,
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const ProfilePage(),
+                    ),
+                  );
+                },
+                tooltip: 'Profile',
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -312,8 +361,10 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
             _selectedFilter = filter;
           });
         },
-        backgroundColor: isSelected ? AppColors.primary : AppColors.backgroundSecondary,
-        textColor: isSelected ? AppColors.textOnPrimary : AppColors.textSecondary,
+        backgroundColor:
+            isSelected ? AppColors.primary : AppColors.backgroundSecondary,
+        textColor:
+            isSelected ? AppColors.textOnPrimary : AppColors.textSecondary,
       ),
     );
   }
@@ -361,8 +412,36 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
             color: AppColors.textPrimary,
           ),
         ),
-        content: const ModernSearchBar(
-          hintText: 'Search posts, users, or topics...',
+        content: Container(
+          width: double.maxFinite,
+          child: TextField(
+            decoration: InputDecoration(
+              hintText: 'Search posts, users, or topics...',
+              hintStyle: AppTextStyles.bodyMedium.copyWith(
+                color: AppColors.textTertiary,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppConstants.radiusM),
+                borderSide: BorderSide(color: AppColors.borderLight),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppConstants.radiusM),
+                borderSide: BorderSide(color: AppColors.borderLight),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppConstants.radiusM),
+                borderSide: BorderSide(color: AppColors.primary, width: 2),
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: AppConstants.spaceM,
+                vertical: AppConstants.spaceM,
+              ),
+              prefixIcon: Icon(
+                Icons.search,
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ),
         ),
         actions: [
           TextButton(
@@ -412,6 +491,37 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
           textColor: AppColors.textOnPrimary,
           onPressed: () {},
         ),
+      ),
+    );
+  }
+
+  void _navigateToUserProfile(
+    BuildContext context,
+    String userId,
+    String userName,
+    String userLocation,
+  ) {
+    Navigator.push(
+      context,
+      PageRouteBuilder(
+        pageBuilder:
+            (context, animation, secondaryAnimation) => const ProfilePage(),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          const begin = Offset(1.0, 0.0);
+          const end = Offset.zero;
+          const curve = Curves.easeInOut;
+
+          var tween = Tween(
+            begin: begin,
+            end: end,
+          ).chain(CurveTween(curve: curve));
+
+          return SlideTransition(
+            position: animation.drive(tween),
+            child: child,
+          );
+        },
+        transitionDuration: const Duration(milliseconds: 300),
       ),
     );
   }

@@ -4,6 +4,7 @@ import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../shared/widgets/buttons/modern_buttons.dart';
 import '../../../../shared/widgets/inputs/modern_search_bar.dart';
+import '../../../profile/presentation/pages/profile_page.dart';
 
 class PeerConnectPage extends StatefulWidget {
   const PeerConnectPage({super.key});
@@ -34,29 +35,25 @@ class _PeerConnectPageState extends State<PeerConnectPage>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.backgroundPrimary,
-      appBar: AppBar(
-        title: Text(
-          "Peer Connect",
-          style: AppTextStyles.h3.copyWith(
-            color: AppColors.textPrimary,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        backgroundColor: AppColors.backgroundPrimary,
-        elevation: 0,
-        bottom: TabBar(
-          controller: _tabController,
-          labelColor: AppColors.primary,
-          unselectedLabelColor: AppColors.textSecondary,
-          indicatorColor: AppColors.primary,
-          tabs: const [
-            Tab(text: "University"),
-            Tab(text: "City"),
-          ],
-        ),
-      ),
       body: Column(
         children: [
+          // Modern Header (like home page)
+          _buildModernHeader(),
+          
+          // Tab Bar
+          Container(
+            color: AppColors.backgroundCard,
+            child: TabBar(
+              controller: _tabController,
+              labelColor: AppColors.primary,
+              unselectedLabelColor: AppColors.textSecondary,
+              indicatorColor: AppColors.primary,
+              tabs: const [
+                Tab(text: "University"),
+                Tab(text: "City"),
+              ],
+            ),
+          ),
           // Search bar
           Padding(
             padding: const EdgeInsets.all(AppConstants.spaceM),
@@ -80,6 +77,70 @@ class _PeerConnectPageState extends State<PeerConnectPage>
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildModernHeader() {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [AppColors.primary, AppColors.primaryLight],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(AppConstants.spaceM),
+          child: Row(
+            children: [
+              // Back button
+              Container(
+                margin: const EdgeInsets.only(right: AppConstants.spaceM),
+                decoration: BoxDecoration(
+                  color: AppColors.textOnPrimary.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: IconButton(
+                  icon: Icon(
+                    Icons.arrow_back_ios_new,
+                    color: AppColors.textOnPrimary,
+                    size: 20,
+                  ),
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                ),
+              ),
+              // Peer Connect title
+              Expanded(
+                child: Text(
+                  'Peer Connect',
+                  style: AppTextStyles.h2.copyWith(
+                    color: AppColors.textOnPrimary,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              // Profile button
+              ModernIconButton(
+                icon: Icons.person_outline,
+                backgroundColor: AppColors.textOnPrimary.withOpacity(0.2),
+                iconColor: AppColors.textOnPrimary,
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const ProfilePage(),
+                    ),
+                  );
+                },
+                tooltip: 'Profile',
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -126,131 +187,170 @@ class _PeerConnectPageState extends State<PeerConnectPage>
 
     final query = _searchController.text.toLowerCase();
 
-    final filteredPeers = peers.where((peer) {
-      final target = filterType == 'university'
-          ? peer['university']!
-          : peer['city']!;
-      return peer['name']!.toLowerCase().contains(query) ||
-          target.toLowerCase().contains(query) ||
-          peer['course']!.toLowerCase().contains(query);
-    }).toList();
+    final filteredPeers =
+        peers.where((peer) {
+          final target =
+              filterType == 'university' ? peer['university']! : peer['city']!;
+          return peer['name']!.toLowerCase().contains(query) ||
+              target.toLowerCase().contains(query) ||
+              peer['course']!.toLowerCase().contains(query);
+        }).toList();
 
     return ListView.builder(
       padding: const EdgeInsets.all(AppConstants.spaceM),
       itemCount: filteredPeers.length,
       itemBuilder: (context, index) {
         final peer = filteredPeers[index];
+        final screenWidth = MediaQuery.of(context).size.width;
+        final isSmallScreen = screenWidth < 380;
+
         return Container(
           margin: const EdgeInsets.only(bottom: AppConstants.spaceM),
           decoration: BoxDecoration(
             color: AppColors.backgroundCard,
             borderRadius: BorderRadius.circular(AppConstants.radiusL),
-            border: Border.all(
-              color: AppColors.borderLight,
-              width: 1,
-            ),
+            border: Border.all(color: AppColors.borderLight, width: 1),
           ),
-          child: ListTile(
-            contentPadding: const EdgeInsets.all(AppConstants.spaceM),
-            leading: CircleAvatar(
-              backgroundColor: AppColors.primary,
-              radius: 25,
-              child: Text(
-                peer['name']!.substring(0, 1).toUpperCase(),
-                style: AppTextStyles.h4.copyWith(
-                  color: AppColors.textOnPrimary,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-            title: Text(
-              peer['name']!,
-              style: AppTextStyles.h5.copyWith(
-                color: AppColors.textPrimary,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          child: Padding(
+            padding: const EdgeInsets.all(AppConstants.spaceM),
+            child: Column(
               children: [
-                const SizedBox(height: AppConstants.spaceXS),
-                Text(
-                  filterType == 'university'
-                      ? peer['university']!
-                      : "Lives in ${peer['city']!}",
-                  style: AppTextStyles.bodyMedium.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-                const SizedBox(height: AppConstants.spaceXS),
+                // Top row with avatar, name and info
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppConstants.spaceS,
-                        vertical: AppConstants.spaceXS,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.accent,
-                        borderRadius: BorderRadius.circular(AppConstants.radiusS),
-                      ),
+                    CircleAvatar(
+                      backgroundColor: AppColors.primary,
+                      radius: isSmallScreen ? 20 : 25,
                       child: Text(
-                        peer['course']!,
-                        style: AppTextStyles.labelSmall.copyWith(
-                          color: AppColors.textSecondary,
+                        peer['name']!.substring(0, 1).toUpperCase(),
+                        style: AppTextStyles.h4.copyWith(
+                          color: AppColors.textOnPrimary,
+                          fontWeight: FontWeight.w600,
+                          fontSize: isSmallScreen ? 16 : null,
                         ),
                       ),
                     ),
-                    const SizedBox(width: AppConstants.spaceS),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppConstants.spaceS,
-                        vertical: AppConstants.spaceXS,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.primaryLight,
-                        borderRadius: BorderRadius.circular(AppConstants.radiusS),
-                      ),
-                      child: Text(
-                        peer['year']!,
-                        style: AppTextStyles.labelSmall.copyWith(
-                          color: AppColors.primary,
-                        ),
+                    const SizedBox(width: AppConstants.spaceM),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            peer['name']!,
+                            style: AppTextStyles.h5.copyWith(
+                              color: AppColors.textPrimary,
+                              fontWeight: FontWeight.w600,
+                              fontSize: isSmallScreen ? 16 : null,
+                            ),
+                          ),
+                          const SizedBox(height: AppConstants.spaceXS),
+                          Text(
+                            filterType == 'university'
+                                ? peer['university']!
+                                : "Lives in ${peer['city']!}",
+                            style: AppTextStyles.bodyMedium.copyWith(
+                              color: AppColors.textSecondary,
+                              fontSize: isSmallScreen ? 12 : null,
+                            ),
+                          ),
+                          const SizedBox(height: AppConstants.spaceS),
+                          // Course and year tags
+                          Wrap(
+                            spacing: AppConstants.spaceS,
+                            runSpacing: AppConstants.spaceXS,
+                            children: [
+                              Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal:
+                                      isSmallScreen ? 6 : AppConstants.spaceS,
+                                  vertical: AppConstants.spaceXS,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.accent,
+                                  borderRadius: BorderRadius.circular(
+                                    AppConstants.radiusS,
+                                  ),
+                                ),
+                                child: Text(
+                                  peer['course']!,
+                                  style: AppTextStyles.labelSmall.copyWith(
+                                    color: AppColors.textSecondary,
+                                    fontSize: isSmallScreen ? 10 : null,
+                                  ),
+                                ),
+                              ),
+                              Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal:
+                                      isSmallScreen ? 6 : AppConstants.spaceS,
+                                  vertical: AppConstants.spaceXS,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primaryLight,
+                                  borderRadius: BorderRadius.circular(
+                                    AppConstants.radiusS,
+                                  ),
+                                ),
+                                child: Text(
+                                  peer['year']!,
+                                  style: AppTextStyles.labelSmall.copyWith(
+                                    color: AppColors.primary,
+                                    fontSize: isSmallScreen ? 10 : null,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
-              ],
-            ),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                PrimaryButton(
-                  text: "Connect",
-                  icon: Icons.person_add_alt,
-                  size: ButtonSize.small,
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text("Connection request sent to ${peer['name']}"),
-                        backgroundColor: AppColors.success,
+                const SizedBox(height: AppConstants.spaceM),
+                // Buttons row
+                Row(
+                  children: [
+                    Expanded(
+                      child: PrimaryButton(
+                        text: "Connect",
+                        icon: Icons.person_add_alt,
+                        size:
+                            isSmallScreen
+                                ? ButtonSize.small
+                                : ButtonSize.medium,
+                        onPressed: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                "Connection request sent to ${peer['name']}",
+                              ),
+                              backgroundColor: AppColors.success,
+                            ),
+                          );
+                        },
                       ),
-                    );
-                  },
-                ),
-                const SizedBox(width: 8),
-                PrimaryButton(
-                  text: "Message",
-                  icon: Icons.chat_bubble_outline,
-                  size: ButtonSize.small,
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text("Messaging ${peer['name']}"),
-                        backgroundColor: AppColors.primary,
+                    ),
+                    const SizedBox(width: AppConstants.spaceS),
+                    Expanded(
+                      child: PrimaryButton(
+                        text: "Message",
+                        icon: Icons.chat_bubble_outline,
+                        size:
+                            isSmallScreen
+                                ? ButtonSize.small
+                                : ButtonSize.medium,
+                        onPressed: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text("Messaging ${peer['name']}"),
+                              backgroundColor: AppColors.primary,
+                            ),
+                          );
+                        },
                       ),
-                    );
-                  },
+                    ),
+                  ],
                 ),
               ],
             ),

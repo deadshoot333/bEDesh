@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/app_constants.dart';
+import '../../../../shared/widgets/chips/modern_chip.dart';
 import '../../domain/models/post.dart';
+import '../pages/user_profile_page.dart';
 
 class PostCard extends StatelessWidget {
   final Post post;
@@ -25,47 +27,48 @@ class PostCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.backgroundCard,
         borderRadius: BorderRadius.circular(AppConstants.radiusL),
-        boxShadow: const [
+        boxShadow: [
           BoxShadow(
-            color: AppColors.shadowLight,
-            offset: Offset(0, 2),
-            blurRadius: 8,
-            spreadRadius: 0,
+            color: AppColors.accentLight,
+            blurRadius: 10,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // User Header
+          // Header with user info
           Padding(
             padding: const EdgeInsets.all(AppConstants.spaceM),
             child: Row(
               children: [
-                Container(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: AppColors.primary.withOpacity(0.3),
-                      width: 2,
+                GestureDetector(
+                  onTap: () => _navigateToUserProfile(context),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: AppColors.primary.withOpacity(0.3),
+                        width: 1.5,
+                      ),
                     ),
-                  ),
-                  child: CircleAvatar(
-                    backgroundImage: post.userImage.isNotEmpty 
-                        ? AssetImage(post.userImage) 
-                        : null,
-                    radius: 20,
-                    backgroundColor: AppColors.primary.withOpacity(0.1),
-                    onBackgroundImageError: post.userImage.isNotEmpty 
-                        ? (_, __) {} 
-                        : null,
-                    child: post.userImage.isEmpty
-                        ? Icon(
-                            Icons.person,
-                            color: AppColors.primary,
-                            size: 20,
-                          )
-                        : null,
+                    child: CircleAvatar(
+                      radius: 20,
+                      backgroundColor: AppColors.primary.withOpacity(0.1),
+                      backgroundImage:
+                          post.userImage.isNotEmpty
+                              ? NetworkImage(post.userImage)
+                              : null,
+                      child:
+                          post.userImage.isEmpty
+                              ? Icon(
+                                Icons.person,
+                                color: AppColors.primary,
+                                size: 20,
+                              )
+                              : null,
+                    ),
                   ),
                 ),
                 const SizedBox(width: AppConstants.spaceM),
@@ -73,97 +76,93 @@ class PostCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        post.userName,
-                        style: AppTextStyles.labelLarge.copyWith(
-                          color: AppColors.textPrimary,
-                          fontWeight: FontWeight.w600,
+                      GestureDetector(
+                        onTap: () => _navigateToUserProfile(context),
+                        child: Text(
+                          post.userName,
+                          style: AppTextStyles.labelLarge.copyWith(
+                            color: AppColors.textPrimary,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
-                      Text(
-                        '${post.userLocation} • ${post.timeAgo}',
-                        style: AppTextStyles.bodySmall.copyWith(
-                          color: AppColors.textTertiary,
-                        ),
+                      const SizedBox(height: AppConstants.spaceXS),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.location_on_outlined,
+                            color: AppColors.textTertiary,
+                            size: 12,
+                          ),
+                          const SizedBox(width: AppConstants.spaceXS),
+                          Text(
+                            post.userLocation,
+                            style: AppTextStyles.bodySmall.copyWith(
+                              color: AppColors.textTertiary,
+                            ),
+                          ),
+                          const SizedBox(width: AppConstants.spaceS),
+                          Icon(
+                            Icons.access_time,
+                            color: AppColors.textTertiary,
+                            size: 12,
+                          ),
+                          const SizedBox(width: AppConstants.spaceXS),
+                          Text(
+                            post.timeAgo,
+                            style: AppTextStyles.bodySmall.copyWith(
+                              color: AppColors.textTertiary,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppConstants.spaceS,
-                    vertical: AppConstants.spaceXS,
+                IconButton(
+                  icon: const Icon(
+                    Icons.more_vert,
+                    color: AppColors.textTertiary,
                   ),
-                  decoration: BoxDecoration(
-                    color: _getPostTypeColor(post.postType).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(AppConstants.radiusM),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        _getPostTypeIcon(post.postType),
-                        color: _getPostTypeColor(post.postType),
-                        size: 14,
-                      ),
-                      const SizedBox(width: AppConstants.spaceXS),
-                      Text(
-                        _getPostTypeLabel(post.postType),
-                        style: AppTextStyles.labelSmall.copyWith(
-                          color: _getPostTypeColor(post.postType),
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
+                  onPressed: () => _showPostOptions(context),
                 ),
               ],
             ),
           ),
 
-          // Content
+          // Post content
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppConstants.spaceM),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppConstants.spaceM,
+            ),
             child: Text(
               post.content,
               style: AppTextStyles.bodyMedium.copyWith(
                 color: AppColors.textPrimary,
-                height: 1.5,
+                height: 1.4,
               ),
             ),
           ),
 
-          // Images (if any)
+          // Post images (if any)
           if (post.images != null && post.images!.isNotEmpty) ...[
             const SizedBox(height: AppConstants.spaceM),
             SizedBox(
               height: 200,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.only(left: AppConstants.spaceM),
+              child: PageView.builder(
                 itemCount: post.images!.length,
                 itemBuilder: (context, index) {
                   return Container(
-                    width: 250,
-                    margin: const EdgeInsets.only(right: AppConstants.spaceS),
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: AppConstants.spaceM,
+                    ),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(AppConstants.radiusM),
-                      color: AppColors.backgroundSecondary,
                       image: DecorationImage(
-                        image: AssetImage(post.images![index]),
+                        image: NetworkImage(post.images![index]),
                         fit: BoxFit.cover,
-                        onError: (_, __) {},
                       ),
                     ),
-                    child: post.images![index].isEmpty
-                        ? Center(
-                            child: Icon(
-                              Icons.image_outlined,
-                              color: AppColors.textTertiary,
-                              size: 32,
-                            ),
-                          )
-                        : null,
                   );
                 },
               ),
@@ -174,110 +173,98 @@ class PostCard extends StatelessWidget {
           if (post.tags.isNotEmpty) ...[
             const SizedBox(height: AppConstants.spaceM),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppConstants.spaceM),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppConstants.spaceM,
+              ),
               child: Wrap(
                 spacing: AppConstants.spaceS,
-                runSpacing: AppConstants.spaceXS,
-                children: post.tags.map((tag) {
-                  return Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppConstants.spaceS,
-                      vertical: AppConstants.spaceXS,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(AppConstants.radiusM),
-                    ),
-                    child: Text(
-                      '#$tag',
-                      style: AppTextStyles.labelSmall.copyWith(
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  );
-                }).toList(),
+                runSpacing: AppConstants.spaceS,
+                children:
+                    post.tags
+                        .map(
+                          (tag) => ModernChip(
+                            label: tag,
+                            isSelected: false,
+                            onTap: () => _searchByTag(context, tag),
+                            backgroundColor: AppColors.backgroundSecondary,
+                            textColor: AppColors.textSecondary,
+                          ),
+                        )
+                        .toList(),
               ),
             ),
           ],
 
-          // Actions
+          // Actions bar
           Padding(
             padding: const EdgeInsets.all(AppConstants.spaceM),
             child: Row(
               children: [
-                // Like Button
+                // Like button
                 GestureDetector(
                   onTap: onLike,
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppConstants.spaceS,
-                      vertical: AppConstants.spaceXS,
-                    ),
-                    decoration: BoxDecoration(
-                      color: post.isLiked
-                          ? AppColors.error.withOpacity(0.1)
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(AppConstants.radiusM),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 200),
-                          child: Icon(
-                            post.isLiked
-                                ? Icons.favorite
-                                : Icons.favorite_border,
-                            key: ValueKey(post.isLiked),
-                            color: post.isLiked
-                                ? AppColors.error
-                                : AppColors.textSecondary,
-                            size: 20,
-                          ),
-                        ),
-                        const SizedBox(width: AppConstants.spaceXS),
-                        Text(
-                          '${post.likes}',
-                          style: AppTextStyles.labelMedium.copyWith(
-                            color: post.isLiked
-                                ? AppColors.error
-                                : AppColors.textSecondary,
-                            fontWeight: post.isLiked
-                                ? FontWeight.w600
-                                : FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                const SizedBox(width: AppConstants.spaceM),
-
-                // Comment Button
-                GestureDetector(
-                  onTap: onComment,
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: AppConstants.spaceS,
-                      vertical: AppConstants.spaceXS,
+                      horizontal: AppConstants.spaceM,
+                      vertical: AppConstants.spaceS,
                     ),
                     decoration: BoxDecoration(
+                      color:
+                          post.isLiked
+                              ? AppColors.primary.withOpacity(0.1)
+                              : AppColors.backgroundSecondary,
                       borderRadius: BorderRadius.circular(AppConstants.radiusM),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
-                          Icons.comment_outlined,
-                          color: AppColors.textSecondary,
-                          size: 20,
+                          post.isLiked ? Icons.favorite : Icons.favorite_border,
+                          color:
+                              post.isLiked
+                                  ? AppColors.primary
+                                  : AppColors.textSecondary,
+                          size: 18,
                         ),
-                        const SizedBox(width: AppConstants.spaceXS),
+                        const SizedBox(width: AppConstants.spaceS),
                         Text(
-                          '${post.comments}',
+                          post.likes.toString(),
+                          style: AppTextStyles.labelMedium.copyWith(
+                            color:
+                                post.isLiked
+                                    ? AppColors.primary
+                                    : AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: AppConstants.spaceM),
+
+                // Comment button
+                GestureDetector(
+                  onTap: onComment,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppConstants.spaceM,
+                      vertical: AppConstants.spaceS,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.backgroundSecondary,
+                      borderRadius: BorderRadius.circular(AppConstants.radiusM),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.chat_bubble_outline,
+                          color: AppColors.textSecondary,
+                          size: 18,
+                        ),
+                        const SizedBox(width: AppConstants.spaceS),
+                        Text(
+                          post.comments.toString(),
                           style: AppTextStyles.labelMedium.copyWith(
                             color: AppColors.textSecondary,
                           ),
@@ -289,19 +276,19 @@ class PostCard extends StatelessWidget {
 
                 const Spacer(),
 
-                // Share Button
+                // Share button
                 GestureDetector(
                   onTap: onShare,
                   child: Container(
-                    padding: const EdgeInsets.all(AppConstants.spaceXS),
+                    padding: const EdgeInsets.all(AppConstants.spaceS),
                     decoration: BoxDecoration(
                       color: AppColors.backgroundSecondary,
                       borderRadius: BorderRadius.circular(AppConstants.radiusM),
                     ),
-                    child: Icon(
+                    child: const Icon(
                       Icons.share_outlined,
                       color: AppColors.textSecondary,
-                      size: 20,
+                      size: 18,
                     ),
                   ),
                 ),
@@ -313,36 +300,93 @@ class PostCard extends StatelessWidget {
     );
   }
 
-  IconData _getPostTypeIcon(PostType type) {
-    switch (type) {
-      case PostType.question:
-        return Icons.help_outline;
-      case PostType.tips:
-        return Icons.lightbulb_outline;
-      case PostType.text:
-        return Icons.article_outlined;
-    }
+  void _navigateToUserProfile(BuildContext context) {
+    Navigator.push(
+      context,
+      PageRouteBuilder(
+        pageBuilder:
+            (context, animation, secondaryAnimation) => UserProfilePage(
+              userId:
+                  post.id, // You might want to add a separate userId field to Post model
+              userName: post.userName,
+              userLocation: post.userLocation,
+            ),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          const begin = Offset(1.0, 0.0);
+          const end = Offset.zero;
+          const curve = Curves.easeInOut;
+
+          var tween = Tween(
+            begin: begin,
+            end: end,
+          ).chain(CurveTween(curve: curve));
+
+          return SlideTransition(
+            position: animation.drive(tween),
+            child: child,
+          );
+        },
+        transitionDuration: const Duration(milliseconds: 300),
+      ),
+    );
   }
 
-  Color _getPostTypeColor(PostType type) {
-    switch (type) {
-      case PostType.question:
-        return AppColors.warning;
-      case PostType.tips:
-        return AppColors.success;
-      case PostType.text:
-        return AppColors.info;
-    }
+  void _searchByTag(BuildContext context, String tag) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Searching for posts with tag: $tag'),
+        backgroundColor: AppColors.info,
+      ),
+    );
   }
 
-  String _getPostTypeLabel(PostType type) {
-    switch (type) {
-      case PostType.question:
-        return 'Question';
-      case PostType.tips:
-        return 'Tips';
-      case PostType.text:
-        return 'Post';
-    }
+  void _showPostOptions(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.backgroundCard,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppConstants.radiusL),
+        ),
+      ),
+      builder:
+          (context) => Container(
+            padding: const EdgeInsets.all(AppConstants.spaceL),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.bookmark_outline),
+                  title: const Text('Save Post'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Post saved successfully!'),
+                        backgroundColor: AppColors.success,
+                      ),
+                    );
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.report_outlined),
+                  title: const Text('Report Post'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    // Handle report
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.block_outlined),
+                  title: const Text('Hide Post'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    // Handle hide
+                  },
+                ),
+              ],
+            ),
+          ),
+    );
   }
 }
