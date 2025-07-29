@@ -11,6 +11,7 @@ import '../widgets/university_stat_card.dart';
 import '../widgets/scholarship_filter_tags.dart';
 import '../widgets/scholarship_card.dart';
 import '../widgets/course_card.dart';
+import '../widgets/course_filter_tags.dart';
 
 
 class OxfordUniversityPage extends StatefulWidget {
@@ -58,6 +59,12 @@ class _OxfordUniversityPageState extends State<OxfordUniversityPage>
   String _selectedFunding = 'All Funding';
   String _selectedDegreeLevel = 'All Levels';
   String _selectedDeadline = 'All Deadlines';
+
+  // Course filter state
+  String _selectedField = 'All Fields';
+  String _selectedLevel = 'All Levels';
+  String _selectedIntake = 'All Intakes';
+  String _selectedFeeRange = 'All Fees';
 
   // Oxford scholarship data with comprehensive details
   final List<Map<String, dynamic>> _oxfordScholarships = [
@@ -231,31 +238,281 @@ class _OxfordUniversityPageState extends State<OxfordUniversityPage>
     },
   ];
 
-  // Course data
+  // Course data with comprehensive filtering fields
   final List<Map<String, String>> courses = [
+    // Computer Science
     {
       'name': 'BSc Computer Science',
       'level': 'Undergraduate',
       'duration': '3 years',
-      'availability': 'Spring',
+      'availability': 'Fall',
       'popularity': 'High',
+      'field': 'Computer Science',
+      'intake': 'Fall',
+      'fee': '£28,000/year',
+      'feeRange': '£25K - £35K',
       'url': 'https://www.ox.ac.uk/admissions/undergraduate/courses/course-listing/computer-science',
     },
     {
-      'name': 'MBA Business',
-      'level': 'Postgraduate',
-      'duration': '2 years',
+      'name': 'MSc Computer Science',
+      'level': 'Masters',
+      'duration': '1 year',
       'availability': 'Fall',
       'popularity': 'Very High',
-      'url': 'https://www.sbs.ox.ac.uk/programmes/mbas/oxford-executive-mba?utm_source=google&utm_medium=cpc&utm_campaign=PPC_Conversion_EMBA_EMBA_google_PMax_UK-North-America-Africa-MENA-Asia-Pacific-Europe_Custom_Generic&gad_source=1&gad_campaignid=22586827665&gbraid=0AAAAADBiMDqukZ5snmFcFKePGoss__jCa&gclid=Cj0KCQjw-ZHEBhCxARIsAGGN96JShfYbZ8TZRGgM4IkcRbuPLf_fEP8uV0FA9CO4XjFtmYHYk_u29UoaAlCdEALw_wcB',
+      'field': 'Computer Science',
+      'intake': 'Fall',
+      'fee': '£32,760/year',
+      'feeRange': '£25K - £35K',
+      'url': 'https://www.ox.ac.uk/admissions/graduate/courses/computer-science',
     },
     {
-      'name': 'Law LLB',
+      'name': 'DPhil Computer Science',
+      'level': 'PhD',
+      'duration': '3-4 years',
+      'availability': 'Year Round',
+      'popularity': 'High',
+      'field': 'Computer Science',
+      'intake': 'Year Round',
+      'fee': '£24,910/year',
+      'feeRange': '£15K - £25K',
+      'url': 'https://www.ox.ac.uk/admissions/graduate/courses/computer-science',
+    },
+    // Engineering
+    {
+      'name': 'MEng Engineering Science',
+      'level': 'Undergraduate',
+      'duration': '4 years',
+      'availability': 'Fall',
+      'popularity': 'Very High',
+      'field': 'Engineering',
+      'intake': 'Fall',
+      'fee': '£37,510/year',
+      'feeRange': '£35K - £45K',
+      'url': 'https://www.ox.ac.uk/admissions/undergraduate/courses/course-listing/engineering-science',
+    },
+    {
+      'name': 'MSc Engineering Science',
+      'level': 'Masters',
+      'duration': '1 year',
+      'availability': 'Fall',
+      'popularity': 'High',
+      'field': 'Engineering',
+      'intake': 'Fall',
+      'fee': '£32,760/year',
+      'feeRange': '£25K - £35K',
+      'url': 'https://www.ox.ac.uk/admissions/graduate/courses/engineering-science',
+    },
+    // Law
+    {
+      'name': 'BA Jurisprudence (Law)',
       'level': 'Undergraduate',
       'duration': '3 years',
       'availability': 'Fall',
-      'popularity': 'Medium',
+      'popularity': 'Very High',
+      'field': 'Law',
+      'intake': 'Fall',
+      'fee': '£28,370/year',
+      'feeRange': '£25K - £35K',
       'url': 'https://www.ox.ac.uk/admissions/undergraduate/courses/course-listing/law-jurisprudence',
+    },
+    {
+      'name': 'Magister Juris (MJur)',
+      'level': 'Masters',
+      'duration': '1 year',
+      'availability': 'Fall',
+      'popularity': 'High',
+      'field': 'Law',
+      'intake': 'Fall',
+      'fee': '£32,760/year',
+      'feeRange': '£25K - £35K',
+      'url': 'https://www.ox.ac.uk/admissions/graduate/courses/law',
+    },
+    {
+      'name': 'DPhil Law',
+      'level': 'PhD',
+      'duration': '3-4 years',
+      'availability': 'Fall',
+      'popularity': 'Medium',
+      'field': 'Law',
+      'intake': 'Fall',
+      'fee': '£24,910/year',
+      'feeRange': '£15K - £25K',
+      'url': 'https://www.ox.ac.uk/admissions/graduate/courses/law',
+    },
+    // Business & Management
+    {
+      'name': 'MBA',
+      'level': 'MBA',
+      'duration': '1 year',
+      'availability': 'Fall',
+      'popularity': 'Very High',
+      'field': 'Business & Management',
+      'intake': 'Fall',
+      'fee': '£69,000/year',
+      'feeRange': 'Above £45K',
+      'url': 'https://www.sbs.ox.ac.uk/programmes/mbas/oxford-mba',
+    },
+    {
+      'name': 'MSc Management',
+      'level': 'Masters',
+      'duration': '1 year',
+      'availability': 'Fall',
+      'popularity': 'High',
+      'field': 'Business & Management',
+      'intake': 'Fall',
+      'fee': '£57,200/year',
+      'feeRange': 'Above £45K',
+      'url': 'https://www.sbs.ox.ac.uk/programmes/degrees/msc-management',
+    },
+    // Medicine
+    {
+      'name': 'Medicine (6 years)',
+      'level': 'Undergraduate',
+      'duration': '6 years',
+      'availability': 'Fall',
+      'popularity': 'Very High',
+      'field': 'Medicine',
+      'intake': 'Fall',
+      'fee': '£54,240/year',
+      'feeRange': 'Above £45K',
+      'url': 'https://www.ox.ac.uk/admissions/undergraduate/courses/course-listing/medicine',
+    },
+    {
+      'name': 'MSc Global Health Science',
+      'level': 'Masters',
+      'duration': '1 year',
+      'availability': 'Fall',
+      'popularity': 'High',
+      'field': 'Medicine',
+      'intake': 'Fall',
+      'fee': '£32,760/year',
+      'feeRange': '£25K - £35K',
+      'url': 'https://www.ox.ac.uk/admissions/graduate/courses/global-health-science',
+    },
+    // Social Sciences
+    {
+      'name': 'BA Philosophy, Politics and Economics (PPE)',
+      'level': 'Undergraduate',
+      'duration': '3 years',
+      'availability': 'Fall',
+      'popularity': 'Very High',
+      'field': 'Social Sciences',
+      'intake': 'Fall',
+      'fee': '£28,370/year',
+      'feeRange': '£25K - £35K',
+      'url': 'https://www.ox.ac.uk/admissions/undergraduate/courses/course-listing/philosophy-politics-and-economics',
+    },
+    {
+      'name': 'MSc Economics',
+      'level': 'Masters',
+      'duration': '1 year',
+      'availability': 'Fall',
+      'popularity': 'High',
+      'field': 'Social Sciences',
+      'intake': 'Fall',
+      'fee': '£32,760/year',
+      'feeRange': '£25K - £35K',
+      'url': 'https://www.ox.ac.uk/admissions/graduate/courses/economics',
+    },
+    // Mathematics
+    {
+      'name': 'BA Mathematics',
+      'level': 'Undergraduate',
+      'duration': '3 years',
+      'availability': 'Fall',
+      'popularity': 'High',
+      'field': 'Mathematics',
+      'intake': 'Fall',
+      'fee': '£28,370/year',
+      'feeRange': '£25K - £35K',
+      'url': 'https://www.ox.ac.uk/admissions/undergraduate/courses/course-listing/mathematics',
+    },
+    {
+      'name': 'MSc Mathematical Sciences',
+      'level': 'Masters',
+      'duration': '1 year',
+      'availability': 'Fall',
+      'popularity': 'Medium',
+      'field': 'Mathematics',
+      'intake': 'Fall',
+      'fee': '£32,760/year',
+      'feeRange': '£25K - £35K',
+      'url': 'https://www.ox.ac.uk/admissions/graduate/courses/mathematical-sciences',
+    },
+    // Arts & Humanities
+    {
+      'name': 'BA English Language and Literature',
+      'level': 'Undergraduate',
+      'duration': '3 years',
+      'availability': 'Fall',
+      'popularity': 'High',
+      'field': 'Arts & Humanities',
+      'intake': 'Fall',
+      'fee': '£28,370/year',
+      'feeRange': '£25K - £35K',
+      'url': 'https://www.ox.ac.uk/admissions/undergraduate/courses/course-listing/english-language-and-literature',
+    },
+    {
+      'name': 'MSc History',
+      'level': 'Masters',
+      'duration': '1 year',
+      'availability': 'Fall',
+      'popularity': 'Medium',
+      'field': 'Arts & Humanities',
+      'intake': 'Fall',
+      'fee': '£28,040/year',
+      'feeRange': '£25K - £35K',
+      'url': 'https://www.ox.ac.uk/admissions/graduate/courses/history',
+    },
+    // Natural Sciences
+    {
+      'name': 'BA Chemistry',
+      'level': 'Undergraduate',
+      'duration': '4 years',
+      'availability': 'Fall',
+      'popularity': 'High',
+      'field': 'Natural Sciences',
+      'intake': 'Fall',
+      'fee': '£37,510/year',
+      'feeRange': '£35K - £45K',
+      'url': 'https://www.ox.ac.uk/admissions/undergraduate/courses/course-listing/chemistry',
+    },
+    {
+      'name': 'MSc Physics',
+      'level': 'Masters',
+      'duration': '1 year',
+      'availability': 'Fall',
+      'popularity': 'Medium',
+      'field': 'Natural Sciences',
+      'intake': 'Fall',
+      'fee': '£32,760/year',
+      'feeRange': '£25K - £35K',
+      'url': 'https://www.ox.ac.uk/admissions/graduate/courses/physics',
+    },
+    // Psychology
+    {
+      'name': 'BA Psychology',
+      'level': 'Undergraduate',
+      'duration': '3 years',
+      'availability': 'Fall',
+      'popularity': 'High',
+      'field': 'Psychology',
+      'intake': 'Fall',
+      'fee': '£28,370/year',
+      'feeRange': '£25K - £35K',
+      'url': 'https://www.ox.ac.uk/admissions/undergraduate/courses/course-listing/psychology-and-philosophy',
+    },
+    {
+      'name': 'MSc Psychological Research',
+      'level': 'Masters',
+      'duration': '1 year',
+      'availability': 'Fall',
+      'popularity': 'Medium',
+      'field': 'Psychology',
+      'intake': 'Fall',
+      'fee': '£32,760/year',
+      'feeRange': '£25K - £35K',
+      'url': 'https://www.ox.ac.uk/admissions/graduate/courses/psychological-research',
     },
   ];
 
@@ -350,6 +607,70 @@ class _OxfordUniversityPageState extends State<OxfordUniversityPage>
       _selectedFunding = 'All Funding';
       _selectedDegreeLevel = 'All Levels';
       _selectedDeadline = 'All Deadlines';
+    });
+  }
+
+  // Course filtering methods
+  List<Map<String, String>> get _filteredCourses {
+    List<Map<String, String>> coursesList = courses;
+    
+    if (_selectedField != 'All Fields') {
+      coursesList = coursesList.where((c) => 
+        c['field']?.toString().toLowerCase() == _selectedField.toLowerCase()
+      ).toList();
+    }
+    
+    if (_selectedLevel != 'All Levels') {
+      coursesList = coursesList.where((c) => 
+        c['level']?.toString().toLowerCase() == _selectedLevel.toLowerCase()
+      ).toList();
+    }
+    
+    if (_selectedIntake != 'All Intakes') {
+      coursesList = coursesList.where((c) => 
+        c['intake']?.toString().toLowerCase() == _selectedIntake.toLowerCase()
+      ).toList();
+    }
+    
+    if (_selectedFeeRange != 'All Fees') {
+      coursesList = coursesList.where((c) => 
+        c['feeRange']?.toString() == _selectedFeeRange
+      ).toList();
+    }
+    
+    return coursesList;
+  }
+
+  void _onFieldChanged(String value) {
+    setState(() {
+      _selectedField = value;
+    });
+  }
+
+  void _onLevelChanged(String value) {
+    setState(() {
+      _selectedLevel = value;
+    });
+  }
+
+  void _onIntakeChanged(String value) {
+    setState(() {
+      _selectedIntake = value;
+    });
+  }
+
+  void _onFeeRangeChanged(String value) {
+    setState(() {
+      _selectedFeeRange = value;
+    });
+  }
+
+  void _clearCourseFilters() {
+    setState(() {
+      _selectedField = 'All Fields';
+      _selectedLevel = 'All Levels';
+      _selectedIntake = 'All Intakes';
+      _selectedFeeRange = 'All Fees';
     });
   }
 
@@ -654,23 +975,71 @@ class _OxfordUniversityPageState extends State<OxfordUniversityPage>
                         icon: Icons.menu_book_outlined,
                       ),
                       const SizedBox(height: AppConstants.spaceM),
-                      ListView.separated(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: courses.length,
-                        separatorBuilder: (context, index) => const SizedBox(
-                          height: AppConstants.spaceM,
-                        ),
-                        itemBuilder: (context, index) {
-                          final course = courses[index];
-                          return CourseCard(
-                            name: course['name']!,
-                            level: course['level']!,
-                            duration: course['duration']!,
-                            onTap: () => _viewCourse(course['name']!), courseName: '', fee: '',
-                          );
-                        },
+                      
+                      // Course Filter Tags
+                      CourseFilterTags(
+                        selectedField: _selectedField,
+                        selectedLevel: _selectedLevel,
+                        selectedIntake: _selectedIntake,
+                        selectedFeeRange: _selectedFeeRange,
+                        onFieldChanged: _onFieldChanged,
+                        onLevelChanged: _onLevelChanged,
+                        onIntakeChanged: _onIntakeChanged,
+                        onFeeRangeChanged: _onFeeRangeChanged,
+                        onClearFilters: _clearCourseFilters,
                       ),
+                      
+                      const SizedBox(height: AppConstants.spaceM),
+                      
+                      // Filtered Courses List
+                      _filteredCourses.isEmpty
+                          ? Container(
+                              padding: const EdgeInsets.all(AppConstants.spaceXL),
+                              child: Column(
+                                children: [
+                                  Icon(
+                                    Icons.menu_book_outlined,
+                                    size: 48,
+                                    color: AppColors.textTertiary,
+                                  ),
+                                  const SizedBox(height: AppConstants.spaceS),
+                                  Text(
+                                    'No courses match your filters',
+                                    style: AppTextStyles.bodyMedium.copyWith(
+                                      color: AppColors.textTertiary,
+                                    ),
+                                  ),
+                                  const SizedBox(height: AppConstants.spaceS),
+                                  TextButton(
+                                    onPressed: _clearCourseFilters,
+                                    child: Text(
+                                      'Clear Filters',
+                                      style: AppTextStyles.labelMedium.copyWith(
+                                        color: AppColors.primary,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                          : ListView.separated(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: _filteredCourses.length,
+                              separatorBuilder: (context, index) => const SizedBox(
+                                height: AppConstants.spaceM,
+                              ),
+                              itemBuilder: (context, index) {
+                                final course = _filteredCourses[index];
+                                return CourseCard(
+                                  name: course['name']!,
+                                  level: course['level']!,
+                                  duration: course['duration']!,
+                                  onTap: () => _viewCourse(course['name']!), courseName: '', fee: '',
+                                );
+                              },
+                            ),
 
                       const SizedBox(height: AppConstants.spaceXL),
 
@@ -1071,7 +1440,9 @@ void _viewCourse(String courseName) {
           children: [
             _infoText('Level', course['level']),
             _infoText('Duration', course['duration']),
-            _infoText('Availability', course['availability']),
+            _infoText('Field of Study', course['field']),
+            _infoText('Intake', course['intake']),
+            _infoText('Annual Fee', course['fee']),
             _infoText('Popularity', course['popularity']),
             const SizedBox(height: 12),
            InkWell(

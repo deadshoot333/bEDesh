@@ -9,6 +9,7 @@ import '../../../../core/constants/app_constants.dart';
 import '../../../../shared/widgets/common/section_header.dart';
 import '../widgets/scholarship_filter_tags.dart';
 import '../widgets/scholarship_card.dart';
+import '../widgets/course_filter_tags.dart';
 
 class CambridgeUniversityPage extends StatefulWidget {
   const CambridgeUniversityPage({super.key});
@@ -26,6 +27,12 @@ class _CambridgeUniversityPageState extends State<CambridgeUniversityPage> {
   String? _selectedFunding;
   String? _selectedDegreeLevel;
   String? _selectedDeadline;
+
+  // Course filter state
+  String _selectedField = 'All Fields';
+  String _selectedLevel = 'All Levels';
+  String _selectedIntake = 'All Intakes';
+  String _selectedFeeRange = 'All Fees';
   
   // Cambridge-specific scholarship data with comprehensive details
   final List<Map<String, dynamic>> _cambridgeScholarships = [
@@ -216,23 +223,334 @@ class _CambridgeUniversityPageState extends State<CambridgeUniversityPage> {
     });
   }
 
-  final Map<String, Map<String, String>> courseDetails = {
-    'Computer Science': {
-      'description':
-          'Study of computation, algorithms, and programming at Cambridge.',
+  // Course filtering methods
+  List<Map<String, String>> get filteredCourses {
+    List<Map<String, String>> coursesList = courses;
+    
+    if (_selectedField != 'All Fields') {
+      coursesList = coursesList.where((c) => 
+        c['field']?.toString().toLowerCase() == _selectedField.toLowerCase()
+      ).toList();
+    }
+    
+    if (_selectedLevel != 'All Levels') {
+      coursesList = coursesList.where((c) => 
+        c['level']?.toString().toLowerCase() == _selectedLevel.toLowerCase()
+      ).toList();
+    }
+    
+    if (_selectedIntake != 'All Intakes') {
+      coursesList = coursesList.where((c) => 
+        c['intake']?.toString().toLowerCase() == _selectedIntake.toLowerCase()
+      ).toList();
+    }
+    
+    if (_selectedFeeRange != 'All Fees') {
+      coursesList = coursesList.where((c) => 
+        c['feeRange']?.toString() == _selectedFeeRange
+      ).toList();
+    }
+    
+    return coursesList;
+  }
+
+  void _onFieldChanged(String value) {
+    setState(() {
+      _selectedField = value;
+    });
+  }
+
+  void _onLevelChanged(String value) {
+    setState(() {
+      _selectedLevel = value;
+    });
+  }
+
+  void _onIntakeChanged(String value) {
+    setState(() {
+      _selectedIntake = value;
+    });
+  }
+
+  void _onFeeRangeChanged(String value) {
+    setState(() {
+      _selectedFeeRange = value;
+    });
+  }
+
+  void _clearCourseFilters() {
+    setState(() {
+      _selectedField = 'All Fields';
+      _selectedLevel = 'All Levels';
+      _selectedIntake = 'All Intakes';
+      _selectedFeeRange = 'All Fees';
+    });
+  }
+
+  final List<Map<String, String>> courses = [
+    // Computer Science
+    {
+      'name': 'Computer Science Tripos',
+      'level': 'Undergraduate',
+      'duration': '3 years',
+      'field': 'Computer Science',
+      'intake': 'Fall',
+      'fee': '£33,825/year',
+      'feeRange': '£25K - £35K',
+      'popularity': 'Very High',
+      'description': 'Study of computation, algorithms, and programming at Cambridge.',
       'url': 'https://www.cam.ac.uk/courses/computer-science',
     },
-    'Law': {
-      'description':
-          'Comprehensive law degree focusing on UK and international legal systems.',
-      'url': 'https://www.cam.ac.uk/courses/law',
+    {
+      'name': 'MPhil Advanced Computer Science',
+      'level': 'Masters',
+      'duration': '1 year',
+      'field': 'Computer Science',
+      'intake': 'Fall',
+      'fee': '£37,632/year',
+      'feeRange': '£35K - £45K',
+      'popularity': 'High',
+      'description': 'Advanced study in computer science research areas.',
+      'url': 'https://www.cam.ac.uk/courses/computer-science',
     },
-    'Engineering': {
-      'description':
-          'Covers mechanical, electrical, and civil engineering with world-class research.',
+    {
+      'name': 'PhD Computer Science',
+      'level': 'PhD',
+      'duration': '3-4 years',
+      'field': 'Computer Science',
+      'intake': 'Fall',
+      'fee': '£25,734/year',
+      'feeRange': '£25K - £35K',
+      'popularity': 'High',
+      'description': 'Research degree in computer science.',
+      'url': 'https://www.cam.ac.uk/courses/computer-science',
+    },
+    // Engineering
+    {
+      'name': 'Engineering Tripos',
+      'level': 'Undergraduate',
+      'duration': '4 years',
+      'field': 'Engineering',
+      'intake': 'Fall',
+      'fee': '£40,760/year',
+      'feeRange': '£35K - £45K',
+      'popularity': 'Very High',
+      'description': 'Covers mechanical, electrical, and civil engineering with world-class research.',
       'url': 'https://www.cam.ac.uk/courses/engineering',
     },
-  };
+    {
+      'name': 'MPhil Engineering',
+      'level': 'Masters',
+      'duration': '1 year',
+      'field': 'Engineering',
+      'intake': 'Fall',
+      'fee': '£37,632/year',
+      'feeRange': '£35K - £45K',
+      'popularity': 'High',
+      'description': 'Advanced engineering research and design.',
+      'url': 'https://www.cam.ac.uk/courses/engineering',
+    },
+    // Law
+    {
+      'name': 'Law Tripos',
+      'level': 'Undergraduate',
+      'duration': '3 years',
+      'field': 'Law',
+      'intake': 'Fall',
+      'fee': '£25,734/year',
+      'feeRange': '£25K - £35K',
+      'popularity': 'Very High',
+      'description': 'Comprehensive law degree focusing on UK and international legal systems.',
+      'url': 'https://www.cam.ac.uk/courses/law',
+    },
+    {
+      'name': 'LLM Law',
+      'level': 'Masters',
+      'duration': '1 year',
+      'field': 'Law',
+      'intake': 'Fall',
+      'fee': '£37,632/year',
+      'feeRange': '£35K - £45K',
+      'popularity': 'High',
+      'description': 'Advanced legal studies program.',
+      'url': 'https://www.cam.ac.uk/courses/law',
+    },
+    // Medicine
+    {
+      'name': 'Medicine',
+      'level': 'Undergraduate',
+      'duration': '6 years',
+      'field': 'Medicine',
+      'intake': 'Fall',
+      'fee': '£63,990/year',
+      'feeRange': 'Above £45K',
+      'popularity': 'Very High',
+      'description': 'Comprehensive medical degree program.',
+      'url': 'https://www.cam.ac.uk/courses/medicine',
+    },
+    {
+      'name': 'MPhil Population Health Sciences',
+      'level': 'Masters',
+      'duration': '1 year',
+      'field': 'Medicine',
+      'intake': 'Fall',
+      'fee': '£37,632/year',
+      'feeRange': '£35K - £45K',
+      'popularity': 'High',
+      'description': 'Advanced study in population health and epidemiology.',
+      'url': 'https://www.cam.ac.uk/courses/medicine',
+    },
+    // Natural Sciences
+    {
+      'name': 'Natural Sciences Tripos',
+      'level': 'Undergraduate',
+      'duration': '3 years',
+      'field': 'Natural Sciences',
+      'intake': 'Fall',
+      'fee': '£40,760/year',
+      'feeRange': '£35K - £45K',
+      'popularity': 'Very High',
+      'description': 'Broad science degree covering multiple disciplines.',
+      'url': 'https://www.cam.ac.uk/courses/natural-sciences',
+    },
+    {
+      'name': 'MPhil Scientific Computing',
+      'level': 'Masters',
+      'duration': '1 year',
+      'field': 'Natural Sciences',
+      'intake': 'Fall',
+      'fee': '£37,632/year',
+      'feeRange': '£35K - £45K',
+      'popularity': 'Medium',
+      'description': 'Computational methods in scientific research.',
+      'url': 'https://www.cam.ac.uk/courses/natural-sciences',
+    },
+    // Mathematics
+    {
+      'name': 'Mathematical Tripos',
+      'level': 'Undergraduate',
+      'duration': '3 years',
+      'field': 'Mathematics',
+      'intake': 'Fall',
+      'fee': '£25,734/year',
+      'feeRange': '£25K - £35K',
+      'popularity': 'High',
+      'description': 'Pure and applied mathematics program.',
+      'url': 'https://www.cam.ac.uk/courses/mathematics',
+    },
+    {
+      'name': 'Part III Mathematics',
+      'level': 'Masters',
+      'duration': '1 year',
+      'field': 'Mathematics',
+      'intake': 'Fall',
+      'fee': '£25,734/year',
+      'feeRange': '£25K - £35K',
+      'popularity': 'High',
+      'description': 'Advanced mathematics course.',
+      'url': 'https://www.cam.ac.uk/courses/mathematics',
+    },
+    // Economics
+    {
+      'name': 'Economics Tripos',
+      'level': 'Undergraduate',
+      'duration': '3 years',
+      'field': 'Economics',
+      'intake': 'Fall',
+      'fee': '£25,734/year',
+      'feeRange': '£25K - £35K',
+      'popularity': 'High',
+      'description': 'Comprehensive economics program.',
+      'url': 'https://www.cam.ac.uk/courses/economics',
+    },
+    {
+      'name': 'MPhil Economics',
+      'level': 'Masters',
+      'duration': '1 year',
+      'field': 'Economics',
+      'intake': 'Fall',
+      'fee': '£37,632/year',
+      'feeRange': '£35K - £45K',
+      'popularity': 'High',
+      'description': 'Advanced economic theory and research methods.',
+      'url': 'https://www.cam.ac.uk/courses/economics',
+    },
+    // Business & Management
+    {
+      'name': 'MBA',
+      'level': 'MBA',
+      'duration': '1 year',
+      'field': 'Business & Management',
+      'intake': 'Fall',
+      'fee': '£64,000/year',
+      'feeRange': 'Above £45K',
+      'popularity': 'Very High',
+      'description': 'Full-time MBA program.',
+      'url': 'https://www.jbs.cam.ac.uk/programmes/mba/',
+    },
+    {
+      'name': 'MPhil Management',
+      'level': 'Masters',
+      'duration': '1 year',
+      'field': 'Business & Management',
+      'intake': 'Fall',
+      'fee': '£45,000/year',
+      'feeRange': '£35K - £45K',
+      'popularity': 'High',
+      'description': 'Research-focused management degree.',
+      'url': 'https://www.jbs.cam.ac.uk/programmes/research-programmes/',
+    },
+    // Arts & Humanities
+    {
+      'name': 'English Tripos',
+      'level': 'Undergraduate',
+      'duration': '3 years',
+      'field': 'Arts & Humanities',
+      'intake': 'Fall',
+      'fee': '£25,734/year',
+      'feeRange': '£25K - £35K',
+      'popularity': 'High',
+      'description': 'English literature and language studies.',
+      'url': 'https://www.cam.ac.uk/courses/english',
+    },
+    {
+      'name': 'MPhil European Literature',
+      'level': 'Masters',
+      'duration': '1 year',
+      'field': 'Arts & Humanities',
+      'intake': 'Fall',
+      'fee': '£25,734/year',
+      'feeRange': '£25K - £35K',
+      'popularity': 'Medium',
+      'description': 'Advanced study of European literary traditions.',
+      'url': 'https://www.cam.ac.uk/courses/modern-languages',
+    },
+    // Psychology
+    {
+      'name': 'Psychological & Behavioural Sciences',
+      'level': 'Undergraduate',
+      'duration': '3 years',
+      'field': 'Psychology',
+      'intake': 'Fall',
+      'fee': '£25,734/year',
+      'feeRange': '£25K - £35K',
+      'popularity': 'High',
+      'description': 'Scientific study of mind and behavior.',
+      'url': 'https://www.cam.ac.uk/courses/psychology',
+    },
+    {
+      'name': 'MPhil Psychology',
+      'level': 'Masters',
+      'duration': '1 year',
+      'field': 'Psychology',
+      'intake': 'Fall',
+      'fee': '£37,632/year',
+      'feeRange': '£35K - £45K',
+      'popularity': 'Medium',
+      'description': 'Research methods in psychological sciences.',
+      'url': 'https://www.cam.ac.uk/courses/psychology',
+    },
+  ];
 
   void _viewScholarship(Map<String, dynamic> scholarship) {
     showDialog(
@@ -562,21 +880,24 @@ class _CambridgeUniversityPageState extends State<CambridgeUniversityPage> {
   }
 
   void _viewCourse(String courseName) {
-    final details = courseDetails[courseName];
-    if (details == null) return;
+    final courseDetail = courses.firstWhere(
+      (course) => course['name'] == courseName,
+      orElse: () => {},
+    );
+    if (courseDetail.isEmpty) return;
 
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: Text(courseName),
+        title: Text(courseDetail['name'] ?? courseName),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(details['description'] ?? ''),
+            Text(courseDetail['description'] ?? ''),
             const SizedBox(height: 12),
             GestureDetector(
-              onTap: () => _launchURL(details['url'] ?? ''),
+              onTap: () => _launchURL(courseDetail['url'] ?? ''),
               child: const Text(
                 'Visit Course Page',
                 style: TextStyle(
@@ -754,30 +1075,44 @@ class _CambridgeUniversityPageState extends State<CambridgeUniversityPage> {
               icon: Icons.menu_book_outlined,
             ),
             const SizedBox(height: AppConstants.spaceM),
-            CourseCard(
-              courseName: 'Computer Science',
-              duration: '3 Years',
-              fee: '£35,000/year',
-              name: 'Computer Science',
-              level: 'Undergraduate',
-              onTap: () => _viewCourse('Computer Science'),
+            CourseFilterTags(
+              selectedField: _selectedField,
+              selectedLevel: _selectedLevel,
+              selectedIntake: _selectedIntake,
+              selectedFeeRange: _selectedFeeRange,
+              onFieldChanged: _onFieldChanged,
+              onLevelChanged: _onLevelChanged,
+              onIntakeChanged: _onIntakeChanged,
+              onFeeRangeChanged: _onFeeRangeChanged,
+              onClearFilters: _clearCourseFilters,
             ),
-            CourseCard(
-              courseName: 'Law',
-              duration: '3 Years',
-              fee: '£32,500/year',
-              name: 'Law',
-              level: 'Undergraduate',
-              onTap: () => _viewCourse('Law'),
-            ),
-            CourseCard(
-              courseName: 'Engineering',
-              duration: '4 Years',
-              fee: '£36,000/year',
-              name: 'Engineering',
-              level: 'Undergraduate',
-              onTap: () => _viewCourse('Engineering'),
-            ),
+            const SizedBox(height: AppConstants.spaceM),
+            filteredCourses.isEmpty
+                ? const Padding(
+                    padding: EdgeInsets.all(AppConstants.spaceL),
+                    child: Center(
+                      child: Text(
+                        'No courses match your filter criteria.',
+                        style: AppTextStyles.bodyMedium,
+                      ),
+                    ),
+                  )
+                : ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: filteredCourses.length,
+                    itemBuilder: (context, index) {
+                      final course = filteredCourses[index];
+                      return CourseCard(
+                        courseName: course['name']!,
+                        duration: course['duration']!,
+                        fee: course['fee']!,
+                        name: course['name']!,
+                        level: course['level']!,
+                        onTap: () => _viewCourse(course['name']!),
+                      );
+                    },
+                  ),
             const SizedBox(height: AppConstants.spaceL),
             SizedBox(
               width: double.infinity,
