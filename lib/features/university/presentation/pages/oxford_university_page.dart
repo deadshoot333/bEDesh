@@ -560,7 +560,7 @@ final List<Map<String, String>> courses = [
                           itemBuilder: (context, index) {
                             return ScholarshipCard(
                               title: scholarships[index],
-                              onTap: () => _viewScholarship(scholarships[index]),
+                              onTap: () => _viewScholarship(scholarships[index]), name: '', eligibility: '',
                             );
                           },
                         ),
@@ -642,7 +642,7 @@ final List<Map<String, String>> courses = [
                             name: course['name']!,
                             level: course['level']!,
                             duration: course['duration']!,
-                            onTap: () => _viewCourse(course['name']!), courseName: '', fee: '', course: {},
+                            onTap: () => _viewCourse(course['name']!), courseName: '', fee: '', course: {}, tuitionFee: null, description: null, universityName: '', price: null, rating: null, tags: [], imageUrl: '',
                           );
                         },
                       ),

@@ -124,4 +124,6 @@ class AppTextStyles {
   );
 
   static var body;
+
+  static var bodyText;
 }

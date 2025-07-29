@@ -229,7 +229,7 @@ class _CambridgeUniversityPageState extends State<CambridgeUniversityPage> {
                 itemBuilder: (context, index) {
                   return ScholarshipCard(
                     title: scholarships[index],
-                    onTap: () => _viewScholarship(scholarships[index]),
+                    onTap: () => _viewScholarship(scholarships[index]), name: '', eligibility: '',
                   );
                 },
               ),
@@ -246,7 +246,7 @@ class _CambridgeUniversityPageState extends State<CambridgeUniversityPage> {
               fee: '£35,000/year',
               name: 'Computer Science',
               level: 'Undergraduate',
-              onTap: () => _viewCourse('Computer Science'), course: {},
+              onTap: () => _viewCourse('Computer Science'), course: {}, tuitionFee: null, description: null, universityName: '', price: null, rating: null, tags: [], imageUrl: '',
             ),
             CourseCard(
               courseName: 'Law',
@@ -254,7 +254,7 @@ class _CambridgeUniversityPageState extends State<CambridgeUniversityPage> {
               fee: '£32,500/year',
               name: 'Law',
               level: 'Undergraduate',
-              onTap: () => _viewCourse('Law'), course: {},
+              onTap: () => _viewCourse('Law'), course: {}, tuitionFee: null, description: null, universityName: '', price: null, rating: null, tags: [], imageUrl: '',
             ),
             CourseCard(
               courseName: 'Engineering',
@@ -262,7 +262,7 @@ class _CambridgeUniversityPageState extends State<CambridgeUniversityPage> {
               fee: '£36,000/year',
               name: 'Engineering',
               level: 'Undergraduate',
-              onTap: () => _viewCourse('Engineering'), course: {},
+              onTap: () => _viewCourse('Engineering'), course: {}, tuitionFee: null, description: null, universityName: '', price: null, rating: null, tags: [], imageUrl: '',
             ),
             const SizedBox(height: AppConstants.spaceL),
             SizedBox(

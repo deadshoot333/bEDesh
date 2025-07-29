@@ -91,6 +91,12 @@ flutter:
     - assets/australliascolar.jpg
     - assets/ukscolar.jpg
     - assets/aston2.jpg
+    - assets/harvard.jpg
+    - assets/mit_uni.jpg
+    - assets/stanford.jpg
+    - assets/yale.jpg
+    - assets/US_flag.jpg
+    - assets/liberty.jpg
 
   #   - images/a_dot_ham.jpeg
 

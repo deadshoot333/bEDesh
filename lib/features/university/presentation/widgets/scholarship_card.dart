@@ -14,7 +14,7 @@ class ScholarshipCard extends StatelessWidget {
     required this.title,
     this.description,
     this.amount,
-    required this.onTap,
+    required this.onTap, required String name, required String eligibility,
   });
 
   @override

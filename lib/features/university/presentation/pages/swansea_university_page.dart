@@ -396,7 +396,7 @@ late final List<String> scholarships = scholarshipDetails.keys.toList();
     itemBuilder: (context, index) {
       return ScholarshipCard(
         title: scholarships[index],
-        onTap: () => _viewScholarship(scholarships[index]),
+        onTap: () => _viewScholarship(scholarships[index]), name: '', eligibility: '',
       );
     },
   ),
@@ -426,7 +426,7 @@ late final List<String> scholarships = scholarshipDetails.keys.toList();
       name: course['name']!,
       level: course['level']!,
       duration: course['duration']!,
-      onTap: () => _viewCourse(course), courseName: '', fee: '', course: {},
+      onTap: () => _viewCourse(course), courseName: '', fee: '', course: {}, tuitionFee: null, description: null, universityName: '', price: null, rating: null, tags: [], imageUrl: '',
     );
   },
 )

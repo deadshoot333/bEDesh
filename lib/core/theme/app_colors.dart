@@ -89,4 +89,6 @@ class AppColors {
   );
 
   static var background;
+
+  static var primaryBlue;
 }

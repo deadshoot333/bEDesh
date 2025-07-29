@@ -1,5 +1,6 @@
 import 'package:bedesh/features/accommodation/presentation/pages/accommodation_page.dart';
 import 'package:bedesh/features/community/presentation/pages/community_feed_page.dart';
+import 'package:bedesh/features/destination/presentation/pages/USA_details_page.dart';
 import 'package:bedesh/features/destination/presentation/pages/uk_details_page.dart';
 import 'package:bedesh/features/university/presentation/pages/Cambridge_University_Page.dart';
 import 'package:flutter/material.dart';
@@ -434,6 +435,10 @@ class _ModernHomePageState extends State<ModernHomePage>
       'imageAsset': AssetPaths.abroad13,
       'onTap': () {
         // Navigate to US details
+        Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const USADetailsPage()),
+      );
       },
     },
     {

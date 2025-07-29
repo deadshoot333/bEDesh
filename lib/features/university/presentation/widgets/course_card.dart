@@ -16,7 +16,7 @@ class CourseCard extends StatelessWidget {
     required this.level,
     required this.duration,
     this.department,
-    required this.onTap, required String courseName, required String fee, required Map<String, String> course,
+    required this.onTap, required String courseName, required String fee, required Map<String, String> course, required tuitionFee, required description, required String universityName, required price, required rating, required List<String> tags, required String imageUrl,
   });
 
   @override

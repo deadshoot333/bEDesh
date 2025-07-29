@@ -27,6 +27,12 @@ class AssetPaths {
   static const String canadaUni = 'assets/canadauni.jpg';
   static const String australiaUni = 'assets/australliauni.jpg';
   static const String victoria = 'assets/victoria.jpg';
+  static const String harvard = 'assets/harvard.jpg';
+  static const String stanford = 'assets/stanford.jpg';
+  static const String mit_uni = 'assets/mit_uni.jpg';
+  static const String yale = 'assets/yale.jpg';
+  static const String liberty = 'assets/liberty.jpg';
+  static const String USA_f = 'assets/US_flag.jpg';
 
   // Scholarship Images
   static const String australiaScholar = 'assets/australliascolar.jpg';
