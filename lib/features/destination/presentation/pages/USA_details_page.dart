@@ -1,5 +1,6 @@
 
 import 'package:bedesh/features/destination/presentation/widgets/destination_stat_card.dart';
+import 'package:bedesh/features/university/presentation/pages/Harvard_University.dart';
 
 import 'package:bedesh/features/university/presentation/pages/university_list_page.dart';
 import 'package:flutter/material.dart';
@@ -69,7 +70,7 @@ class _USADetailsPageState extends State<USADetailsPage>
 
   void _navigateToUniversity(String universityName) {
     if (universityName == 'Harvard University') {
-      //Navigator.push(context, MaterialPageRoute(builder: (_) => const HarvardUniversityDetailsPage()));
+      Navigator.push(context, MaterialPageRoute(builder: (_) => HarvardUniversityDetailsPage()));
     } else if (universityName == 'MIT') {
      // Navigator.push(context, MaterialPageRoute(builder: (_) => const MITUniversityPage()));
     } else {
