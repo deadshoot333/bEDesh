@@ -222,18 +222,37 @@ class _PeerConnectPageState extends State<PeerConnectPage>
                 ),
               ],
             ),
-            trailing: PrimaryButton(
-              text: "Connect",
-              icon: Icons.chat_bubble_outline,
-              size: ButtonSize.small,
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text("Connection request sent to ${peer['name']}"),
-                    backgroundColor: AppColors.success,
-                  ),
-                );
-              },
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                PrimaryButton(
+                  text: "Connect",
+                  icon: Icons.person_add_alt,
+                  size: ButtonSize.small,
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text("Connection request sent to ${peer['name']}"),
+                        backgroundColor: AppColors.success,
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(width: 8),
+                PrimaryButton(
+                  text: "Message",
+                  icon: Icons.chat_bubble_outline,
+                  size: ButtonSize.small,
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text("Messaging ${peer['name']}"),
+                        backgroundColor: AppColors.primary,
+                      ),
+                    );
+                  },
+                ),
+              ],
             ),
           ),
         );
