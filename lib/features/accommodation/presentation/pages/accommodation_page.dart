@@ -765,12 +765,35 @@ class _AccommodationPageState extends State<AccommodationPage>
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          'bEDesh',
-                          style: AppTextStyles.h2.copyWith(
-                            color: AppColors.textOnPrimary,
-                            fontWeight: FontWeight.w800,
-                          ),
+                        Row(
+                          children: [
+                            // Back button
+                            Container(
+                              margin: const EdgeInsets.only(right: AppConstants.spaceM),
+                              decoration: BoxDecoration(
+                                color: AppColors.textOnPrimary.withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: IconButton(
+                                icon: Icon(
+                                  Icons.arrow_back_ios_new,
+                                  color: AppColors.textOnPrimary,
+                                  size: 20,
+                                ),
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                },
+                              ),
+                            ),
+                            // Accommodation title
+                            Text(
+                              'Accommodation',
+                              style: AppTextStyles.h2.copyWith(
+                                color: AppColors.textOnPrimary,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ],
                         ),
                         // Using the same ModernIconButton as homepage
                         Container(
@@ -812,17 +835,6 @@ class _AccommodationPageState extends State<AccommodationPage>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Accommodation Title
-                    Text(
-                      'Accommodation',
-                      style: AppTextStyles.h2.copyWith(
-                        color: AppColors.textPrimary,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    
-                    const SizedBox(height: AppConstants.spaceL),
-                    
                     // Search Bar
                     ModernSearchBar(
                       hintText: 'Search accommodations...',
