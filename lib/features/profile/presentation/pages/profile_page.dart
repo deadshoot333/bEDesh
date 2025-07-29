@@ -5,6 +5,9 @@ import '../../../../core/constants/app_constants.dart';
 import '../../../../shared/widgets/buttons/modern_buttons.dart';
 import '../widgets/profile_stat_card.dart';
 import '../widgets/profile_option_card.dart';
+import '../../../home/presentation/pages/modern_home_page.dart';
+import '../../../community/presentation/pages/community_feed_page.dart';
+import '../../../community/presentation/pages/peer_connect_page.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -156,35 +159,6 @@ class _ProfilePageState extends State<ProfilePage>
                             ),
                           ),
                           const SizedBox(height: AppConstants.spaceS),
-                          // Status Badge
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: AppConstants.spaceM,
-                              vertical: AppConstants.spaceXS,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppColors.textOnPrimary.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(AppConstants.radiusM),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.verified,
-                                  color: AppColors.textOnPrimary,
-                                  size: 16,
-                                ),
-                                const SizedBox(width: AppConstants.spaceXS),
-                                Text(
-                                  'Verified Student',
-                                  style: AppTextStyles.labelSmall.copyWith(
-                                    color: AppColors.textOnPrimary,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
                         ],
                       ),
                     ),
@@ -267,7 +241,7 @@ class _ProfilePageState extends State<ProfilePage>
                                   child: SecondaryButton(
                                     text: 'Apply Now',
                                     icon: Icons.edit_outlined,
-                                    onPressed: () => _showFeatureComingSoon('Apply Now'),
+                                    onPressed: () => _navigateToHome(),
                                   ),
                                 ),
                                 const SizedBox(width: AppConstants.spaceM),
@@ -275,7 +249,7 @@ class _ProfilePageState extends State<ProfilePage>
                                   child: SecondaryButton(
                                     text: 'View Community',
                                     icon: Icons.people_outline,
-                                    onPressed: () => _showFeatureComingSoon('View Community'),
+                                    onPressed: () => _navigateToCommunityFeed(),
                                   ),
                                 ),
                               ],
@@ -306,21 +280,21 @@ class _ProfilePageState extends State<ProfilePage>
                               icon: Icons.article_outlined,
                               title: "My Posts",
                               subtitle: "View and manage your community posts",
-                              onTap: () => _showFeatureComingSoon('My Posts'),
+                              onTap: () => _navigateToCommunityFeed(),
                             ),
                             const Divider(color: AppColors.borderLight, height: 1),
                             ProfileOptionCard(
                               icon: Icons.people_outline,
                               title: "My Connections",
                               subtitle: "Connect with other students",
-                              onTap: () => _showFeatureComingSoon('My Connections'),
+                              onTap: () => _navigateToPeerConnect(),
                             ),
                             const Divider(color: AppColors.borderLight, height: 1),
                             ProfileOptionCard(
                               icon: Icons.bookmark_outline,
                               title: "Saved Content",
                               subtitle: "View your saved universities & posts",
-                              onTap: () => _showFeatureComingSoon('Saved Content'),
+                              onTap: () => _navigateToHome(),
                             ),
                             const Divider(color: AppColors.borderLight, height: 1),
                             ProfileOptionCard(
@@ -328,13 +302,6 @@ class _ProfilePageState extends State<ProfilePage>
                               title: "Notifications",
                               subtitle: "Manage your preferences",
                               onTap: () => _showFeatureComingSoon('Notifications'),
-                            ),
-                            const Divider(color: AppColors.borderLight, height: 1),
-                            ProfileOptionCard(
-                              icon: Icons.support_agent_outlined,
-                              title: "Help & Support",
-                              subtitle: "Get help when you need it",
-                              onTap: () => _showFeatureComingSoon('Help & Support'),
                             ),
                           ],
                         ),
@@ -374,6 +341,33 @@ class _ProfilePageState extends State<ProfilePage>
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  void _navigateToHome() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const ModernHomePage(),
+      ),
+    );
+  }
+
+  void _navigateToCommunityFeed() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const CommunityFeedPage(),
+      ),
+    );
+  }
+
+  void _navigateToPeerConnect() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const PeerConnectPage(),
       ),
     );
   }

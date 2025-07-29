@@ -557,15 +557,17 @@ class _CambridgeUniversityPageState extends State<CambridgeUniversityPage> {
       context: context,
       builder: (BuildContext context) {
         return Dialog(
-          insetPadding: const EdgeInsets.all(16),
+          insetPadding: EdgeInsets.all(MediaQuery.of(context).size.width < 600 ? 16 : 24),
           child: Container(
-            constraints: const BoxConstraints(
-              maxWidth: 600,
-              maxHeight: 700,
+            constraints: BoxConstraints(
+              maxWidth: MediaQuery.of(context).size.width < 600 
+                  ? MediaQuery.of(context).size.width - 32 
+                  : 600,
+              maxHeight: MediaQuery.of(context).size.height * 0.8,
             ),
             child: SingleChildScrollView(
               child: Padding(
-                padding: const EdgeInsets.all(24),
+                padding: EdgeInsets.all(MediaQuery.of(context).size.width < 600 ? 16 : 24),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
@@ -837,11 +839,31 @@ class _CambridgeUniversityPageState extends State<CambridgeUniversityPage> {
                         onPressed: () async {
                           final url = scholarship['url'];
                           if (url != null && url.isNotEmpty) {
-                            if (await canLaunchUrl(Uri.parse(url))) {
-                              await launchUrl(
-                                Uri.parse(url),
-                                mode: LaunchMode.externalApplication,
+                            try {
+                              final uri = Uri.parse(url);
+                              bool launched = await launchUrl(
+                                uri,
+                                mode: LaunchMode.platformDefault,
                               );
+                              if (!launched) {
+                                // Try alternative launch mode
+                                launched = await launchUrl(
+                                  uri,
+                                  mode: LaunchMode.externalApplication,
+                                );
+                              }
+                              if (!launched) {
+                                throw 'Could not launch URL';
+                              }
+                            } catch (e) {
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Could not open the scholarship link: $e'),
+                                    backgroundColor: AppColors.error,
+                                  ),
+                                );
+                              }
                             }
                           }
                         },
@@ -888,51 +910,144 @@ class _CambridgeUniversityPageState extends State<CambridgeUniversityPage> {
 
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        title: Text(courseDetail['name'] ?? courseName),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(courseDetail['description'] ?? ''),
-            const SizedBox(height: 12),
-            GestureDetector(
-              onTap: () => _launchURL(courseDetail['url'] ?? ''),
-              child: const Text(
-                'Visit Course Page',
-                style: TextStyle(
-                  color: Colors.blue,
-                  decoration: TextDecoration.underline,
-                ),
+      builder: (_) => Dialog(
+        insetPadding: EdgeInsets.all(MediaQuery.of(context).size.width < 600 ? 16 : 24),
+        child: Container(
+          constraints: BoxConstraints(
+            maxWidth: MediaQuery.of(context).size.width < 600 
+                ? MediaQuery.of(context).size.width - 32 
+                : 500,
+            maxHeight: MediaQuery.of(context).size.height * 0.7,
+          ),
+          decoration: BoxDecoration(
+            color: AppColors.backgroundCard,
+            borderRadius: BorderRadius.circular(AppConstants.radiusM),
+          ),
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: EdgeInsets.all(MediaQuery.of(context).size.width < 600 ? 16 : 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Header with close button
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          courseDetail['name'] ?? courseName,
+                          style: AppTextStyles.h4.copyWith(color: AppColors.textPrimary),
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        icon: const Icon(Icons.close),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  // Course description
+                  Text(
+                    courseDetail['description'] ?? '',
+                    style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textPrimary),
+                  ),
+                  const SizedBox(height: 20),
+                  // Visit Course Page Button
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () => _launchURL(courseDetail['url'] ?? ''),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: AppColors.textOnPrimary,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppConstants.radiusS),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.open_in_new, size: 20),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Visit Course Page',
+                            style: AppTextStyles.labelLarge.copyWith(
+                              color: AppColors.textOnPrimary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
           ),
-        ],
+        ),
       ),
     );
   }
 
   void _applyToUniversity() async {
-    final uri = Uri.parse(universityApplyUrl);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not open the application link.')),
+    try {
+      final uri = Uri.parse(universityApplyUrl);
+      bool launched = await launchUrl(
+        uri,
+        mode: LaunchMode.platformDefault,
       );
+      if (!launched) {
+        // Try alternative launch mode
+        launched = await launchUrl(
+          uri,
+          mode: LaunchMode.externalApplication,
+        );
+      }
+      if (!launched) {
+        throw 'Could not launch URL';
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Could not open the application link: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
     }
   }
 
   void _launchURL(String url) async {
-    final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    try {
+      final uri = Uri.parse(url);
+      bool launched = await launchUrl(
+        uri,
+        mode: LaunchMode.platformDefault,
+      );
+      if (!launched) {
+        // Try alternative launch mode
+        launched = await launchUrl(
+          uri,
+          mode: LaunchMode.externalApplication,
+        );
+      }
+      if (!launched) {
+        throw 'Could not launch URL';
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Could not open the link: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
     }
   }
 

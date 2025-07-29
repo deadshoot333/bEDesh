@@ -1095,15 +1095,17 @@ void _viewScholarship(Map<String, dynamic> scholarship) {
     context: context,
     builder: (BuildContext context) {
       return Dialog(
-        insetPadding: const EdgeInsets.all(16),
+        insetPadding: EdgeInsets.all(MediaQuery.of(context).size.width < 600 ? 16 : 24),
         child: Container(
-          constraints: const BoxConstraints(
-            maxWidth: 600,
-            maxHeight: 700,
+          constraints: BoxConstraints(
+            maxWidth: MediaQuery.of(context).size.width < 600 
+                ? MediaQuery.of(context).size.width - 32 
+                : 600,
+            maxHeight: MediaQuery.of(context).size.height * 0.8,
           ),
           child: SingleChildScrollView(
             child: Padding(
-              padding: const EdgeInsets.all(24),
+              padding: EdgeInsets.all(MediaQuery.of(context).size.width < 600 ? 16 : 24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
@@ -1375,11 +1377,31 @@ void _viewScholarship(Map<String, dynamic> scholarship) {
                       onPressed: () async {
                         final url = scholarship['url'];
                         if (url != null && url.isNotEmpty) {
-                          if (await canLaunchUrl(Uri.parse(url))) {
-                            await launchUrl(
-                              Uri.parse(url),
-                              mode: LaunchMode.externalApplication,
+                          try {
+                            final uri = Uri.parse(url);
+                            bool launched = await launchUrl(
+                              uri,
+                              mode: LaunchMode.platformDefault,
                             );
+                            if (!launched) {
+                              // Try alternative launch mode
+                              launched = await launchUrl(
+                                uri,
+                                mode: LaunchMode.externalApplication,
+                              );
+                            }
+                            if (!launched) {
+                              throw 'Could not launch URL';
+                            }
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Could not open the scholarship link: $e'),
+                                  backgroundColor: AppColors.error,
+                                ),
+                              );
+                            }
                           }
                         }
                       },
@@ -1425,62 +1447,115 @@ void _viewCourse(String courseName) {
   showDialog(
     context: context,
     builder: (context) {
-      return AlertDialog(
-        backgroundColor: AppColors.backgroundCard,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppConstants.radiusM),
-        ),
-        title: Text(
-          course['name']!,
-          style: AppTextStyles.h4.copyWith(color: AppColors.textPrimary),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _infoText('Level', course['level']),
-            _infoText('Duration', course['duration']),
-            _infoText('Field of Study', course['field']),
-            _infoText('Intake', course['intake']),
-            _infoText('Annual Fee', course['fee']),
-            _infoText('Popularity', course['popularity']),
-            const SizedBox(height: 12),
-           InkWell(
-  onTap: () async {
-    final courseUrl = course['url']!;
-    final uri = Uri.parse(courseUrl);
-
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not open the course link.')),
-      );
-    }
-  },
-  child: Text(
-    'Visit Course Page →',
-    style: AppTextStyles.labelLarge.copyWith(
-      color: AppColors.primary,
-      fontWeight: FontWeight.bold,
-      decoration: TextDecoration.underline,
-    ),
-  ),
-),
-
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(
-              'Close',
-              style: AppTextStyles.labelLarge.copyWith(
-                color: AppColors.primary,
+      return Dialog(
+        insetPadding: EdgeInsets.all(MediaQuery.of(context).size.width < 600 ? 16 : 24),
+        child: Container(
+          constraints: BoxConstraints(
+            maxWidth: MediaQuery.of(context).size.width < 600 
+                ? MediaQuery.of(context).size.width - 32 
+                : 500,
+            maxHeight: MediaQuery.of(context).size.height * 0.7,
+          ),
+          decoration: BoxDecoration(
+            color: AppColors.backgroundCard,
+            borderRadius: BorderRadius.circular(AppConstants.radiusM),
+          ),
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: EdgeInsets.all(MediaQuery.of(context).size.width < 600 ? 16 : 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Header with close button
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          course['name']!,
+                          style: AppTextStyles.h4.copyWith(color: AppColors.textPrimary),
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        icon: const Icon(Icons.close),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  // Course details
+                  _infoText('Level', course['level']),
+                  _infoText('Duration', course['duration']),
+                  _infoText('Field of Study', course['field']),
+                  _infoText('Intake', course['intake']),
+                  _infoText('Annual Fee', course['fee']),
+                  _infoText('Popularity', course['popularity']),
+                  const SizedBox(height: 20),
+                  // Visit Course Page Button
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        final courseUrl = course['url']!;
+                        try {
+                          final uri = Uri.parse(courseUrl);
+                          bool launched = await launchUrl(
+                            uri,
+                            mode: LaunchMode.platformDefault,
+                          );
+                          if (!launched) {
+                            // Try alternative launch mode
+                            launched = await launchUrl(
+                              uri,
+                              mode: LaunchMode.externalApplication,
+                            );
+                          }
+                          if (!launched) {
+                            throw 'Could not launch URL';
+                          }
+                        } catch (e) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Could not open the course link: $e'),
+                                backgroundColor: AppColors.error,
+                              ),
+                            );
+                          }
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: AppColors.textOnPrimary,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppConstants.radiusS),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.open_in_new, size: 20),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Visit Course Page',
+                            style: AppTextStyles.labelLarge.copyWith(
+                              color: AppColors.textOnPrimary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
-        ],
+        ),
       );
     },
   );
@@ -1490,19 +1565,34 @@ void _viewCourse(String courseName) {
  void _applyToUniversity() async {
   final url = 'https://www.ox.ac.uk/admissions/undergraduate/applying-to-oxford'; // Replace with actual apply URL
 
-  final uri = Uri.parse(url);
-  if (await canLaunchUrl(uri)) {
-    await launchUrl(uri, mode: LaunchMode.externalApplication);
-  } else {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Could not open the application link.',
-          style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textOnPrimary),
-        ),
-        backgroundColor: AppColors.error,
-      ),
+  try {
+    final uri = Uri.parse(url);
+    bool launched = await launchUrl(
+      uri,
+      mode: LaunchMode.platformDefault,
     );
+    if (!launched) {
+      // Try alternative launch mode
+      launched = await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
+    }
+    if (!launched) {
+      throw 'Could not launch URL';
+    }
+  } catch (e) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Could not open the application link: $e',
+            style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textOnPrimary),
+          ),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    }
   }
   }
 }
