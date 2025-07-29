@@ -10,7 +10,6 @@ import '../../../../core/constants/asset_paths.dart';
 import '../../../../shared/widgets/common/section_header.dart';
 import '../../../../shared/widgets/inputs/modern_search_bar.dart';
 import '../../../../shared/widgets/cards/circular_destination_card.dart';
-import '../../../../shared/widgets/cards/course_card.dart';
 import '../../../../shared/widgets/cards/circular_university_card.dart';
 import '../../../../shared/widgets/buttons/modern_buttons.dart';
 
@@ -147,10 +146,6 @@ class _ModernHomePageState extends State<ModernHomePage>
                         title: 'In-demand Courses',
                         subtitle: 'Most popular courses this year',
                         icon: Icons.trending_up,
-                        actionText: 'Explore',
-                        onActionPressed: () {
-                          // Navigate to all courses
-                        },
                       ),
                       _buildCoursesSection(),
 
@@ -468,37 +463,89 @@ class _ModernHomePageState extends State<ModernHomePage>
   ];
 
   Widget _buildCoursesSection() {
+    final courses = [
+      {'name': 'Computer Science', 'field': 'Technology', 'level': 'Masters'},
+      {'name': 'International Business', 'field': 'Business', 'level': 'Masters'},
+      {'name': 'Mechanical Engineering', 'field': 'Engineering', 'level': 'Bachelors'},
+      {'name': 'Data Science', 'field': 'Technology', 'level': 'Masters'},
+      {'name': 'Medicine', 'field': 'Healthcare', 'level': 'Bachelors'},
+      {'name': 'Psychology', 'field': 'Social Sciences', 'level': 'Bachelors'},
+      {'name': 'Finance', 'field': 'Business', 'level': 'Masters'},
+      {'name': 'Electrical Engineering', 'field': 'Engineering', 'level': 'Bachelors'},
+      {'name': 'Marketing', 'field': 'Business', 'level': 'Bachelors'},
+      {'name': 'Biotechnology', 'field': 'Science', 'level': 'Masters'},
+    ];
+
     return SizedBox(
-      height: 220,
-      child: ListView(
+      height: 180,
+      child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: AppConstants.spaceM),
-        children: [
-          CourseCard(
-            courseName: 'MSc Future Vehicle Technologies',
-            universityName: '',
-            duration: '1 Year',
-            level: 'Masters',
-            imageUrl: AssetPaths.aston,
-            price: '',
-          ),
-          CourseCard(
-            courseName: 'MSc Computer Science',
-            universityName: '',
-            duration: '1 Year',
-            level: 'Masters',
-            imageUrl: AssetPaths.cambridge,
-            price: '',
-          ),
-          CourseCard(
-            courseName: 'MSc International Business',
-            universityName: '',
-            duration: '1 Year',
-            level: 'Masters',
-            imageUrl: AssetPaths.imperial,
-            price: '',
-          ),
-        ],
+        itemCount: courses.length,
+        itemBuilder: (context, index) {
+          final course = courses[index];
+          return Container(
+            width: 200,
+            margin: const EdgeInsets.only(right: AppConstants.spaceM),
+            padding: const EdgeInsets.all(AppConstants.spaceM),
+            decoration: BoxDecoration(
+              color: AppColors.backgroundCard,
+              borderRadius: BorderRadius.circular(AppConstants.radiusM),
+              boxShadow: const [
+                BoxShadow(
+                  color: AppColors.shadowLight,
+                  offset: Offset(0, 2),
+                  blurRadius: 8,
+                  spreadRadius: 0,
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      course['name']!,
+                      style: AppTextStyles.h4.copyWith(
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: AppConstants.spaceS),
+                    Text(
+                      'Field: ${course['field']!}',
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppConstants.spaceS,
+                    vertical: AppConstants.spaceXS,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(AppConstants.radiusS),
+                  ),
+                  child: Text(
+                    course['level']!,
+                    style: AppTextStyles.labelSmall.copyWith(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }

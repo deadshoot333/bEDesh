@@ -738,13 +738,31 @@ late final List<String> scholarships = scholarshipDetails.keys.toList();
               const SizedBox(height: 12),
               InkWell(
                 onTap: () async {
-                  final uri = Uri.parse(url);
-                  if (await canLaunchUrl(uri)) {
-                    await launchUrl(uri, mode: LaunchMode.externalApplication);
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Could not open the scholarship link.')),
+                  try {
+                    final uri = Uri.parse(url);
+                    bool launched = await launchUrl(
+                      uri,
+                      mode: LaunchMode.platformDefault,
                     );
+                    if (!launched) {
+                      // Try alternative launch mode
+                      launched = await launchUrl(
+                        uri,
+                        mode: LaunchMode.externalApplication,
+                      );
+                    }
+                    if (!launched) {
+                      throw 'Could not launch URL';
+                    }
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Could not open the scholarship link: $e'),
+                          backgroundColor: AppColors.error,
+                        ),
+                      );
+                    }
                   }
                 },
                 child: Text(
@@ -868,19 +886,34 @@ late final List<String> scholarships = scholarshipDetails.keys.toList();
   }
 
   void _launchURL(String url) async {
-    final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Could not open the link.',
-            style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textOnPrimary),
-          ),
-          backgroundColor: AppColors.error,
-        ),
+    try {
+      final uri = Uri.parse(url);
+      bool launched = await launchUrl(
+        uri,
+        mode: LaunchMode.platformDefault,
       );
+      if (!launched) {
+        // Try alternative launch mode
+        launched = await launchUrl(
+          uri,
+          mode: LaunchMode.externalApplication,
+        );
+      }
+      if (!launched) {
+        throw 'Could not launch URL';
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Could not open the link: $e',
+              style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textOnPrimary),
+            ),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
     }
   }
 
@@ -915,19 +948,34 @@ late final List<String> scholarships = scholarshipDetails.keys.toList();
  void _applyToUniversity() async {
   final url = 'https://www.swansea.ac.uk/apply/'; // Replace with actual apply URL
 
-  final uri = Uri.parse(url);
-  if (await canLaunchUrl(uri)) {
-    await launchUrl(uri, mode: LaunchMode.externalApplication);
-  } else {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Could not open the application link.',
-          style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textOnPrimary),
-        ),
-        backgroundColor: AppColors.error,
-      ),
+  try {
+    final uri = Uri.parse(url);
+    bool launched = await launchUrl(
+      uri,
+      mode: LaunchMode.platformDefault,
     );
+    if (!launched) {
+      // Try alternative launch mode
+      launched = await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
+    }
+    if (!launched) {
+      throw 'Could not launch URL';
+    }
+  } catch (e) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Could not open the application link: $e',
+            style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textOnPrimary),
+          ),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    }
   }
 }
 
