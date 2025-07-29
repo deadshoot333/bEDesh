@@ -3,13 +3,12 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../shared/widgets/buttons/modern_buttons.dart';
-import '../../../../shared/widgets/inputs/modern_search_bar.dart';
 import '../../../../shared/widgets/chips/modern_chip.dart';
 import '../widgets/post_card.dart';
 import '../widgets/create_post_dialog.dart';
 import '../widgets/comments_dialog.dart';
 import '../../domain/models/post.dart';
-import './user_profile_page.dart';
+import '../../../profile/presentation/pages/profile_page.dart';
 class CommunityFeedPage extends StatefulWidget {
   const CommunityFeedPage({super.key});
 
@@ -135,52 +134,12 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.backgroundPrimary,
-      appBar: AppBar(
-        backgroundColor: AppColors.backgroundCard,
-        elevation: 0,
-        title: Text(
-          'Community',
-          style: AppTextStyles.h3.copyWith(
-            color: AppColors.textPrimary,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(
-              Icons.search_outlined,
-              color: AppColors.textSecondary,
-            ),
-            onPressed: () {
-              _showSearchDialog(context);
-            },
-          ),
-          IconButton(
-            icon: const Icon(
-              Icons.notifications_outlined,
-              color: AppColors.textSecondary,
-            ),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    'Notifications feature coming soon!',
-                    style: AppTextStyles.bodyMedium.copyWith(
-                      color: AppColors.textOnPrimary,
-                    ),
-                  ),
-                  backgroundColor: AppColors.info,
-                ),
-              );
-            },
-          ),
-          const SizedBox(width: AppConstants.spaceS),
-        ],
-      ),
       body: FadeTransition(
         opacity: _fadeAnimation,
         child: Column(
           children: [
+            // Modern Header (like home page)
+            _buildModernHeader(),
             // Quick Actions Bar
             Container(
               color: AppColors.backgroundCard,
@@ -300,6 +259,82 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
     );
   }
 
+  Widget _buildModernHeader() {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [AppColors.primary, AppColors.primaryLight],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(AppConstants.spaceM),
+          child: Row(
+            children: [
+              // Back button
+              Container(
+                margin: const EdgeInsets.only(right: AppConstants.spaceM),
+                decoration: BoxDecoration(
+                  color: AppColors.textOnPrimary.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: IconButton(
+                  icon: Icon(
+                    Icons.arrow_back_ios_new,
+                    color: AppColors.textOnPrimary,
+                    size: 20,
+                  ),
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                ),
+              ),
+              // Community Feed title
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Community Feed',
+                      style: AppTextStyles.h2.copyWith(
+                        color: AppColors.textOnPrimary,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: AppConstants.spaceXS),
+                    Text(
+                      'Connect with students worldwide',
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        color: AppColors.textOnPrimary.withOpacity(0.9),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Action buttons
+              ModernIconButton(
+                icon: Icons.person_outline,
+                backgroundColor: AppColors.textOnPrimary.withOpacity(0.2),
+                iconColor: AppColors.textOnPrimary,
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const ProfilePage(),
+                    ),
+                  );
+                },
+                tooltip: 'Profile',
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildFilterChip(String filter) {
     final isSelected = _selectedFilter == filter;
     return Container(
@@ -344,56 +379,6 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => CommentsDialog(post: post),
-    );
-  }
-
-  void _showSearchDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.backgroundCard,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppConstants.radiusL),
-        ),
-        title: Text(
-          'Search Community',
-          style: AppTextStyles.h4.copyWith(
-            color: AppColors.textPrimary,
-          ),
-        ),
-        content: const ModernSearchBar(
-          hintText: 'Search posts, users, or topics...',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'Cancel',
-              style: AppTextStyles.labelMedium.copyWith(
-                color: AppColors.textSecondary,
-              ),
-            ),
-          ),
-          PrimaryButton(
-            text: 'Search',
-            size: ButtonSize.small,
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    'Search feature coming soon!',
-                    style: AppTextStyles.bodyMedium.copyWith(
-                      color: AppColors.textOnPrimary,
-                    ),
-                  ),
-                  backgroundColor: AppColors.info,
-                ),
-              );
-            },
-          ),
-        ],
-      ),
     );
   }
 

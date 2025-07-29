@@ -4,6 +4,7 @@ import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../shared/widgets/buttons/modern_buttons.dart';
 import '../../../../shared/widgets/inputs/modern_search_bar.dart';
+import '../../../profile/presentation/pages/profile_page.dart';
 
 class PeerConnectPage extends StatefulWidget {
   const PeerConnectPage({super.key});
@@ -34,29 +35,25 @@ class _PeerConnectPageState extends State<PeerConnectPage>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.backgroundPrimary,
-      appBar: AppBar(
-        title: Text(
-          "Peer Connect",
-          style: AppTextStyles.h3.copyWith(
-            color: AppColors.textPrimary,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        backgroundColor: AppColors.backgroundPrimary,
-        elevation: 0,
-        bottom: TabBar(
-          controller: _tabController,
-          labelColor: AppColors.primary,
-          unselectedLabelColor: AppColors.textSecondary,
-          indicatorColor: AppColors.primary,
-          tabs: const [
-            Tab(text: "University"),
-            Tab(text: "City"),
-          ],
-        ),
-      ),
       body: Column(
         children: [
+          // Modern Header (like home page)
+          _buildModernHeader(),
+          
+          // Tab Bar
+          Container(
+            color: AppColors.backgroundCard,
+            child: TabBar(
+              controller: _tabController,
+              labelColor: AppColors.primary,
+              unselectedLabelColor: AppColors.textSecondary,
+              indicatorColor: AppColors.primary,
+              tabs: const [
+                Tab(text: "University"),
+                Tab(text: "City"),
+              ],
+            ),
+          ),
           // Search bar
           Padding(
             padding: const EdgeInsets.all(AppConstants.spaceM),
@@ -80,6 +77,70 @@ class _PeerConnectPageState extends State<PeerConnectPage>
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildModernHeader() {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [AppColors.primary, AppColors.primaryLight],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(AppConstants.spaceM),
+          child: Row(
+            children: [
+              // Back button
+              Container(
+                margin: const EdgeInsets.only(right: AppConstants.spaceM),
+                decoration: BoxDecoration(
+                  color: AppColors.textOnPrimary.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: IconButton(
+                  icon: Icon(
+                    Icons.arrow_back_ios_new,
+                    color: AppColors.textOnPrimary,
+                    size: 20,
+                  ),
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                ),
+              ),
+              // Peer Connect title
+              Expanded(
+                child: Text(
+                  'Peer Connect',
+                  style: AppTextStyles.h2.copyWith(
+                    color: AppColors.textOnPrimary,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              // Profile button
+              ModernIconButton(
+                icon: Icons.person_outline,
+                backgroundColor: AppColors.textOnPrimary.withOpacity(0.2),
+                iconColor: AppColors.textOnPrimary,
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const ProfilePage(),
+                    ),
+                  );
+                },
+                tooltip: 'Profile',
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
