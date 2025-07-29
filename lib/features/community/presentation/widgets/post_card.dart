@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:io';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/app_constants.dart';
@@ -11,6 +12,7 @@ class PostCard extends StatelessWidget {
   final VoidCallback onLike;
   final VoidCallback onComment;
   final VoidCallback onShare;
+  final Function(String)? onTagTap;
 
   const PostCard({
     super.key,
@@ -18,6 +20,7 @@ class PostCard extends StatelessWidget {
     required this.onLike,
     required this.onComment,
     required this.onShare,
+    this.onTagTap,
   });
 
   @override
@@ -156,12 +159,9 @@ class PostCard extends StatelessWidget {
                     margin: const EdgeInsets.symmetric(
                       horizontal: AppConstants.spaceM,
                     ),
-                    decoration: BoxDecoration(
+                    child: ClipRRect(
                       borderRadius: BorderRadius.circular(AppConstants.radiusM),
-                      image: DecorationImage(
-                        image: NetworkImage(post.images![index]),
-                        fit: BoxFit.cover,
-                      ),
+                      child: _buildImage(post.images![index]),
                     ),
                   );
                 },
@@ -185,7 +185,9 @@ class PostCard extends StatelessWidget {
                           (tag) => ModernChip(
                             label: tag,
                             isSelected: false,
-                            onTap: () => _searchByTag(context, tag),
+                            onTap: () => onTagTap != null 
+                                ? onTagTap!(tag) 
+                                : _searchByTag(context, tag),
                             backgroundColor: AppColors.backgroundSecondary,
                             textColor: AppColors.textSecondary,
                           ),
@@ -306,8 +308,7 @@ class PostCard extends StatelessWidget {
       PageRouteBuilder(
         pageBuilder:
             (context, animation, secondaryAnimation) => UserProfilePage(
-              userId:
-                  post.id, // You might want to add a separate userId field to Post model
+              userId: post.userId, // Fixed: Use actual user ID instead of post ID
               userName: post.userName,
               userLocation: post.userLocation,
             ),
@@ -388,5 +389,54 @@ class PostCard extends StatelessWidget {
             ),
           ),
     );
+  }
+
+  Widget _buildImage(String imagePath) {
+    // Check if it's a local file path or network URL
+    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+      // Network image
+      return Image.network(
+        imagePath,
+        width: double.infinity,
+        height: 200,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return Container(
+            width: double.infinity,
+            height: 200,
+            color: AppColors.backgroundSecondary,
+            child: Center(
+              child: Icon(
+                Icons.broken_image,
+                color: AppColors.textTertiary,
+                size: 48,
+              ),
+            ),
+          );
+        },
+      );
+    } else {
+      // Local file
+      return Image.file(
+        File(imagePath),
+        width: double.infinity,
+        height: 200,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return Container(
+            width: double.infinity,
+            height: 200,
+            color: AppColors.backgroundSecondary,
+            child: Center(
+              child: Icon(
+                Icons.broken_image,
+                color: AppColors.textTertiary,
+                size: 48,
+              ),
+            ),
+          );
+        },
+      );
+    }
   }
 }
