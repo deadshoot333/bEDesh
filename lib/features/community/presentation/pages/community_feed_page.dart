@@ -21,7 +21,7 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
     with TickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
-  
+
   String _selectedFilter = 'All';
   final List<String> _filters = [
     'All',
@@ -31,7 +31,7 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
     'USA',
     'UK',
     'Canada',
-    'Australia'
+    'Australia',
   ];
 
   final List<Post> posts = [
@@ -115,13 +115,9 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
       duration: const Duration(milliseconds: 1000),
       vsync: this,
     );
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeInOut,
-    ));
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
     _animationController.forward();
   }
 
@@ -187,21 +183,30 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
               padding: const EdgeInsets.all(AppConstants.spaceM),
               child: Row(
                 children: [
-                  Container(
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: AppColors.primary.withOpacity(0.3),
-                        width: 2,
+                  GestureDetector(
+                    onTap:
+                        () => _navigateToUserProfile(
+                          context,
+                          'current_user_id', // Replace with actual current user ID
+                          'Your Name', // Replace with actual current user name
+                          'Your Location', // Replace with actual current user location
+                        ),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: AppColors.primary.withOpacity(0.3),
+                          width: 2,
+                        ),
                       ),
-                    ),
-                    child: CircleAvatar(
-                      radius: 20,
-                      backgroundColor: AppColors.primary.withOpacity(0.1),
-                      child: Icon(
-                        Icons.person,
-                        color: AppColors.primary,
-                        size: 24,
+                      child: CircleAvatar(
+                        radius: 20,
+                        backgroundColor: AppColors.primary.withOpacity(0.1),
+                        child: Icon(
+                          Icons.person,
+                          color: AppColors.primary,
+                          size: 24,
+                        ),
                       ),
                     ),
                   ),
@@ -216,7 +221,9 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
                         ),
                         decoration: BoxDecoration(
                           color: AppColors.backgroundSecondary,
-                          borderRadius: BorderRadius.circular(AppConstants.radiusXL),
+                          borderRadius: BorderRadius.circular(
+                            AppConstants.radiusXL,
+                          ),
                           border: Border.all(
                             color: AppColors.borderLight,
                             width: 1,
@@ -256,9 +263,10 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
                   vertical: AppConstants.spaceS,
                 ),
                 child: Row(
-                  children: _filters
-                      .map((filter) => _buildFilterChip(filter))
-                      .toList(),
+                  children:
+                      _filters
+                          .map((filter) => _buildFilterChip(filter))
+                          .toList(),
                 ),
               ),
             ),
@@ -266,21 +274,22 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
             // Posts Feed
             Expanded(
               child: ListView.separated(
-                padding: const EdgeInsets.symmetric(vertical: AppConstants.spaceS),
-                itemCount: posts.length,
-                separatorBuilder: (context, index) => const SizedBox(
-                  height: AppConstants.spaceS,
+                padding: const EdgeInsets.symmetric(
+                  vertical: AppConstants.spaceS,
                 ),
+                itemCount: posts.length,
+                separatorBuilder:
+                    (context, index) =>
+                        const SizedBox(height: AppConstants.spaceS),
                 itemBuilder: (context, index) {
                   return AnimatedContainer(
-                    duration: Duration(
-                      milliseconds: 300 + (index * 100),
-                    ),
+                    duration: Duration(milliseconds: 300 + (index * 100)),
                     curve: Curves.easeOutBack,
                     child: PostCard(
                       post: posts[index],
                       onLike: () => _toggleLike(index),
-                      onComment: () => _showCommentsDialog(context, posts[index]),
+                      onComment:
+                          () => _showCommentsDialog(context, posts[index]),
                       onShare: () => _sharePost(posts[index]),
                     ),
                   );
@@ -312,8 +321,10 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
             _selectedFilter = filter;
           });
         },
-        backgroundColor: isSelected ? AppColors.primary : AppColors.backgroundSecondary,
-        textColor: isSelected ? AppColors.textOnPrimary : AppColors.textSecondary,
+        backgroundColor:
+            isSelected ? AppColors.primary : AppColors.backgroundSecondary,
+        textColor:
+            isSelected ? AppColors.textOnPrimary : AppColors.textSecondary,
       ),
     );
   }
@@ -350,50 +361,49 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
   void _showSearchDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.backgroundCard,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppConstants.radiusL),
-        ),
-        title: Text(
-          'Search Community',
-          style: AppTextStyles.h4.copyWith(
-            color: AppColors.textPrimary,
-          ),
-        ),
-        content: const ModernSearchBar(
-          hintText: 'Search posts, users, or topics...',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'Cancel',
-              style: AppTextStyles.labelMedium.copyWith(
-                color: AppColors.textSecondary,
-              ),
+      builder:
+          (context) => AlertDialog(
+            backgroundColor: AppColors.backgroundCard,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppConstants.radiusL),
             ),
-          ),
-          PrimaryButton(
-            text: 'Search',
-            size: ButtonSize.small,
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    'Search feature coming soon!',
-                    style: AppTextStyles.bodyMedium.copyWith(
-                      color: AppColors.textOnPrimary,
-                    ),
+            title: Text(
+              'Search Community',
+              style: AppTextStyles.h4.copyWith(color: AppColors.textPrimary),
+            ),
+            content: const ModernSearchBar(
+              hintText: 'Search posts, users, or topics...',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(
+                  'Cancel',
+                  style: AppTextStyles.labelMedium.copyWith(
+                    color: AppColors.textSecondary,
                   ),
-                  backgroundColor: AppColors.info,
                 ),
-              );
-            },
+              ),
+              PrimaryButton(
+                text: 'Search',
+                size: ButtonSize.small,
+                onPressed: () {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        'Search feature coming soon!',
+                        style: AppTextStyles.bodyMedium.copyWith(
+                          color: AppColors.textOnPrimary,
+                        ),
+                      ),
+                      backgroundColor: AppColors.info,
+                    ),
+                  );
+                },
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 
@@ -412,6 +422,41 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
           textColor: AppColors.textOnPrimary,
           onPressed: () {},
         ),
+      ),
+    );
+  }
+
+  void _navigateToUserProfile(
+    BuildContext context,
+    String userId,
+    String userName,
+    String userLocation,
+  ) {
+    Navigator.push(
+      context,
+      PageRouteBuilder(
+        pageBuilder:
+            (context, animation, secondaryAnimation) => UserProfilePage(
+              userId: userId,
+              userName: userName,
+              userLocation: userLocation,
+            ),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          const begin = Offset(1.0, 0.0);
+          const end = Offset.zero;
+          const curve = Curves.easeInOut;
+
+          var tween = Tween(
+            begin: begin,
+            end: end,
+          ).chain(CurveTween(curve: curve));
+
+          return SlideTransition(
+            position: animation.drive(tween),
+            child: child,
+          );
+        },
+        transitionDuration: const Duration(milliseconds: 300),
       ),
     );
   }
