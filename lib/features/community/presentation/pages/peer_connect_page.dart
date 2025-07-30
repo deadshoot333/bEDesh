@@ -1,3 +1,4 @@
+import 'package:bedesh/features/community/presentation/pages/peer_messaging_page.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -39,7 +40,7 @@ class _PeerConnectPageState extends State<PeerConnectPage>
         children: [
           // Modern Header (like home page)
           _buildModernHeader(),
-          
+
           // Tab Bar
           Container(
             color: AppColors.backgroundCard,
@@ -48,10 +49,7 @@ class _PeerConnectPageState extends State<PeerConnectPage>
               labelColor: AppColors.primary,
               unselectedLabelColor: AppColors.textSecondary,
               indicatorColor: AppColors.primary,
-              tabs: const [
-                Tab(text: "University"),
-                Tab(text: "City"),
-              ],
+              tabs: const [Tab(text: "University"), Tab(text: "City")],
             ),
           ),
           // Search bar
@@ -341,10 +339,16 @@ class _PeerConnectPageState extends State<PeerConnectPage>
                                 ? ButtonSize.small
                                 : ButtonSize.medium,
                         onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text("Messaging ${peer['name']}"),
-                              backgroundColor: AppColors.primary,
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder:
+                                  (context) => PeerMessagingPage(
+                                    peerName: peer['name']!,
+                                    peerUniversity: peer['university']!,
+                                    peerCourse: peer['course']!,
+                                    peerYear: peer['year']!,
+                                  ),
                             ),
                           );
                         },

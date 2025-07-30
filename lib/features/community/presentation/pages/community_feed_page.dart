@@ -8,6 +8,7 @@ import '../widgets/post_card.dart';
 import '../widgets/create_post_dialog.dart';
 import '../widgets/comments_dialog.dart';
 import '../../domain/models/post.dart';
+import 'user_profile_page.dart';
 import '../../../profile/presentation/pages/profile_page.dart';
 class CommunityFeedPage extends StatefulWidget {
   const CommunityFeedPage({super.key});
@@ -46,7 +47,7 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
       likes: 24,
       comments: 8,
       isLiked: false,
-      tags: ['UK', 'Masters', 'Manchester'],
+      tags: ['UK', 'Masters', 'Manchester', 'Experiences'],
       postType: PostType.text,
     ),
     Post(
@@ -61,7 +62,7 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
       likes: 15,
       comments: 12,
       isLiked: true,
-      tags: ['Canada', 'SOP', 'Help'],
+      tags: ['Canada', 'SOP', 'Help', 'Questions'],
       postType: PostType.question,
     ),
     Post(
@@ -76,7 +77,7 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
       likes: 31,
       comments: 6,
       isLiked: false,
-      tags: ['Australia', 'Melbourne', 'Experience'],
+      tags: ['Australia', 'Melbourne', 'Experience', 'Experiences'],
       postType: PostType.text,
       images: [], // Removed missing image
     ),
@@ -107,10 +108,35 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
       likes: 18,
       comments: 15,
       isLiked: false,
-      tags: ['UK', 'London', 'Accommodation'],
+      tags: ['UK', 'London', 'Accommodation', 'Questions'],
       postType: PostType.question,
     ),
   ];
+
+  // Get filtered posts based on selected filter
+  List<Post> get filteredPosts {
+    if (_selectedFilter == 'All') {
+      return posts;
+    }
+
+    return posts.where((post) {
+      // Check if filter matches post type
+      if (_selectedFilter == 'Questions' && post.postType == PostType.question) {
+        return true;
+      }
+      if (_selectedFilter == 'Tips' && post.postType == PostType.tips) {
+        return true;
+      }
+      if (_selectedFilter == 'Experiences' && post.postType == PostType.text) {
+        return true;
+      }
+
+      // Check if filter matches any tag (case-insensitive)
+      return post.tags.any((tag) => 
+        tag.toLowerCase() == _selectedFilter.toLowerCase()
+      );
+    }).toList();
+  }
 
   @override
   void initState() {
@@ -151,9 +177,9 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
                     onTap:
                         () => _navigateToUserProfile(
                           context,
-                          'current_user_id', // Replace with actual current user ID
-                          'Your Name', // Replace with actual current user name
-                          'Your Location', // Replace with actual current user location
+                          'current_user_123', // Current logged in user
+                          'Alex Martinez', // Current user name
+                          'New York, USA', // Current user location
                         ),
                     child: Container(
                       decoration: BoxDecoration(
@@ -237,28 +263,33 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
 
             // Posts Feed
             Expanded(
-              child: ListView.separated(
-                padding: const EdgeInsets.symmetric(
-                  vertical: AppConstants.spaceS,
-                ),
-                itemCount: posts.length,
-                separatorBuilder:
-                    (context, index) =>
-                        const SizedBox(height: AppConstants.spaceS),
-                itemBuilder: (context, index) {
-                  return AnimatedContainer(
-                    duration: Duration(milliseconds: 300 + (index * 100)),
-                    curve: Curves.easeOutBack,
-                    child: PostCard(
-                      post: posts[index],
-                      onLike: () => _toggleLike(index),
-                      onComment:
-                          () => _showCommentsDialog(context, posts[index]),
-                      onShare: () => _sharePost(posts[index]),
+              child: filteredPosts.isEmpty
+                  ? _buildEmptyState()
+                  : ListView.separated(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: AppConstants.spaceS,
+                      ),
+                      itemCount: filteredPosts.length,
+                      separatorBuilder:
+                          (context, index) =>
+                              const SizedBox(height: AppConstants.spaceS),
+                      itemBuilder: (context, index) {
+                        final post = filteredPosts[index];
+                        final originalIndex = posts.indexOf(post);
+                        return AnimatedContainer(
+                          duration: Duration(milliseconds: 300 + (index * 100)),
+                          curve: Curves.easeOutBack,
+                          child: PostCard(
+                            post: post,
+                            onLike: () => _toggleLike(originalIndex),
+                            onComment:
+                                () => _showCommentsDialog(context, post),
+                            onShare: () => _sharePost(post),
+                            onTagTap: _filterByTag,
+                          ),
+                        );
+                      },
                     ),
-                  );
-                },
-              ),
             ),
           ],
         ),
@@ -319,7 +350,9 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
                     ),
                     const SizedBox(height: AppConstants.spaceXS),
                     Text(
-                      'Connect with students worldwide',
+                      _selectedFilter == 'All' 
+                          ? 'Connect with students worldwide'
+                          : 'Showing posts filtered by "$_selectedFilter"',
                       style: AppTextStyles.bodyMedium.copyWith(
                         color: AppColors.textOnPrimary.withOpacity(0.9),
                       ),
@@ -380,13 +413,71 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
     });
   }
 
+  void _filterByTag(String tag) {
+    setState(() {
+      _selectedFilter = tag;
+    });
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(AppConstants.spaceXL),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.search_off,
+              size: 64,
+              color: AppColors.textTertiary,
+            ),
+            const SizedBox(height: AppConstants.spaceL),
+            Text(
+              'No posts found',
+              style: AppTextStyles.h4.copyWith(
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: AppConstants.spaceM),
+            Text(
+              'No posts match the filter "$_selectedFilter".\nTry selecting a different filter or check back later.',
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: AppColors.textTertiary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: AppConstants.spaceXL),
+            PrimaryButton(
+              text: 'Clear Filter',
+              size: ButtonSize.medium,
+              onPressed: () {
+                setState(() {
+                  _selectedFilter = 'All';
+                });
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _showCreatePostDialog(BuildContext context) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => const CreatePostDialog(),
+      builder: (context) => CreatePostDialog(
+        onPostCreated: _addNewPost,
+      ),
     );
+  }
+
+  void _addNewPost(Post newPost) {
+    setState(() {
+      posts.insert(0, newPost); // Add to beginning of list
+    });
   }
 
   void _showCommentsDialog(BuildContext context, Post post) {
@@ -395,84 +486,6 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => CommentsDialog(post: post),
-    );
-  }
-
-  void _showSearchDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.backgroundCard,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppConstants.radiusL),
-        ),
-        title: Text(
-          'Search Community',
-          style: AppTextStyles.h4.copyWith(
-            color: AppColors.textPrimary,
-          ),
-        ),
-        content: Container(
-          width: double.maxFinite,
-          child: TextField(
-            decoration: InputDecoration(
-              hintText: 'Search posts, users, or topics...',
-              hintStyle: AppTextStyles.bodyMedium.copyWith(
-                color: AppColors.textTertiary,
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppConstants.radiusM),
-                borderSide: BorderSide(color: AppColors.borderLight),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppConstants.radiusM),
-                borderSide: BorderSide(color: AppColors.borderLight),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppConstants.radiusM),
-                borderSide: BorderSide(color: AppColors.primary, width: 2),
-              ),
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: AppConstants.spaceM,
-                vertical: AppConstants.spaceM,
-              ),
-              prefixIcon: Icon(
-                Icons.search,
-                color: AppColors.textSecondary,
-              ),
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'Cancel',
-              style: AppTextStyles.labelMedium.copyWith(
-                color: AppColors.textSecondary,
-              ),
-            ),
-          ),
-          PrimaryButton(
-            text: 'Search',
-            size: ButtonSize.small,
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    'Search feature coming soon!',
-                    style: AppTextStyles.bodyMedium.copyWith(
-                      color: AppColors.textOnPrimary,
-                    ),
-                  ),
-                  backgroundColor: AppColors.info,
-                ),
-              );
-            },
-          ),
-        ],
-      ),
     );
   }
 
@@ -505,7 +518,11 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
       context,
       PageRouteBuilder(
         pageBuilder:
-            (context, animation, secondaryAnimation) => const ProfilePage(),
+            (context, animation, secondaryAnimation) => UserProfilePage(
+              userId: userId,
+              userName: userName,
+              userLocation: userLocation,
+            ),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           const begin = Offset(1.0, 0.0);
           const end = Offset.zero;

@@ -37,6 +37,7 @@ class _UserProfilePageState extends State<UserProfilePage>
   // Mock user profile data
   late UserProfile userProfile;
   List<Post> userPosts = [];
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -68,32 +69,41 @@ class _UserProfilePageState extends State<UserProfilePage>
       curve: Curves.easeInOut,
     ));
     
-    _animationController.forward();
+    // Don't start animation immediately - wait for data to load
   }
 
   void _loadUserProfile() {
-    // Mock profile data - in real app, fetch from API
-    userProfile = UserProfile(
-      id: widget.userId,
-      name: widget.userName,
-      location: widget.userLocation,
-      bio: 'Computer Science student pursuing Masters in AI/ML. Passionate about technology and helping fellow students navigate their study abroad journey.',
-      joinedDate: 'March 2023',
-      followersCount: 245,
-      followingCount: 189,
-      postsCount: 23,
-      university: 'University of Manchester',
-      course: 'MSc Computer Science',
-      interests: ['AI/ML', 'Technology', 'Study Tips', 'Career Advice'],
-      achievements: [
-        'Dean\'s List - Fall 2023',
-        'Outstanding Student Award',
-        'Research Assistant - AI Lab'
-      ],
-      languages: ['English', 'Hindi', 'Bengali'],
-      profileImageUrl: '',
-      coverImageUrl: '',
-    );
+    // Create profile with passed parameters
+    Future.delayed(const Duration(milliseconds: 100), () {
+      if (mounted) {
+        setState(() {
+          userProfile = UserProfile(
+            id: widget.userId,
+            name: widget.userName,
+            location: widget.userLocation,
+            bio: 'Computer Science student pursuing Masters in AI/ML. Passionate about technology and helping fellow students navigate their study abroad journey.',
+            joinedDate: 'March 2023',
+            followersCount: 245,
+            followingCount: 189,
+            postsCount: 23,
+            university: 'University of Manchester',
+            course: 'MSc Computer Science',
+            interests: ['AI/ML', 'Technology', 'Study Tips', 'Career Advice'],
+            achievements: [
+              'Dean\'s List - Fall 2023',
+              'Outstanding Student Award',
+              'Research Assistant - AI Lab'
+            ],
+            languages: ['English', 'Hindi', 'Bengali'],
+            profileImageUrl: '',
+            coverImageUrl: '',
+          );
+          _isLoading = false;
+          // Start animations after data is loaded
+          _animationController.forward();
+        });
+      }
+    });
   }
 
   void _loadUserPosts() {
@@ -138,6 +148,33 @@ class _UserProfilePageState extends State<UserProfilePage>
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Scaffold(
+        backgroundColor: AppColors.backgroundPrimary,
+        appBar: AppBar(
+          backgroundColor: AppColors.primary,
+          title: Text(
+            widget.userName,
+            style: AppTextStyles.h3.copyWith(
+              color: AppColors.textOnPrimary,
+            ),
+          ),
+          leading: IconButton(
+            icon: const Icon(
+              Icons.arrow_back,
+              color: AppColors.textOnPrimary,
+            ),
+            onPressed: () => Navigator.pop(context),
+          ),
+        ),
+        body: Center(
+          child: CircularProgressIndicator(
+            color: AppColors.primary,
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: AppColors.backgroundPrimary,
       body: FadeTransition(
