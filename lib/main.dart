@@ -3,10 +3,14 @@ import 'package:flutter/services.dart';
 
 import 'core/theme/app_theme.dart';
 import 'core/constants/app_constants.dart';
+import 'core/services/storage_service.dart';
 import 'features/onboarding/presentation/pages/modern_onboarding_page.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize storage service
+  await StorageService.init();
   
   // Set system UI overlay style
   SystemChrome.setSystemUIOverlayStyle(
