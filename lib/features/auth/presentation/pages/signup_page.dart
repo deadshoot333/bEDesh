@@ -4,7 +4,8 @@ import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/constants/asset_paths.dart';
 import '../../../../shared/widgets/buttons/modern_buttons.dart';
-import '../../../../MainNavigationPage.dart';
+import '../../../../core/services/auth_service.dart';
+import '../../../../core/models/api_error.dart';
 import 'login_page.dart';
 
 class ModernSignupPage extends StatefulWidget {
@@ -24,6 +25,9 @@ class _ModernSignupPageState extends State<ModernSignupPage> {
 
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
+  bool _isLoading = false;
+
+  final AuthService _authService = AuthService();
 
   @override
   Widget build(BuildContext context) {
@@ -265,30 +269,10 @@ class _ModernSignupPageState extends State<ModernSignupPage> {
 
                           // Sign Up Button
                           PrimaryButton(
-                            text: 'Create Account',
+                            text: _isLoading ? 'Creating Account...' : 'Create Account',
                             isExpanded: true,
                             size: ButtonSize.large,
-                            onPressed: () {
-                              if (_formKey.currentState!.validate()) {
-                                Navigator.pushReplacement(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => const MainNavigationPage(),
-                                  ),
-                                );
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      'Welcome to ${AppConstants.appName}!',
-                                      style: AppTextStyles.bodyMedium.copyWith(
-                                        color: AppColors.textOnPrimary,
-                                      ),
-                                    ),
-                                    backgroundColor: AppColors.success,
-                                  ),
-                                );
-                              }
-                            },
+                            onPressed: _isLoading ? null : _handleSignup,
                           ),
 
                           const SizedBox(height: AppConstants.spaceL),
@@ -439,6 +423,72 @@ class _ModernSignupPageState extends State<ModernSignupPage> {
         ),
       ),
     );
+  }
+
+  Future<void> _handleSignup() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      // Call the signup API
+      await _authService.signup(
+        email: _emailController.text.trim(),
+        mobile: _phoneController.text.trim(),
+        password: _passwordController.text,
+      );
+
+      if (mounted) {
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Account created successfully! Please login.',
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: AppColors.textOnPrimary,
+              ),
+            ),
+            backgroundColor: AppColors.success,
+          ),
+        );
+
+        // Navigate to login page
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const LoginPage(),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        // Show error message
+        String errorMessage = 'Signup failed. Please try again.';
+        if (e is ApiError) {
+          errorMessage = e.message;
+        }
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              errorMessage,
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: AppColors.textOnPrimary,
+              ),
+            ),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   @override

@@ -4,6 +4,8 @@ import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/constants/asset_paths.dart';
 import '../../../../shared/widgets/buttons/modern_buttons.dart';
+import '../../../../core/services/auth_service.dart';
+import '../../../../core/models/api_error.dart';
 import '../../../../MainNavigationPage.dart';
 import 'signup_page.dart';
 
@@ -18,8 +20,10 @@ class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final AuthService _authService = AuthService();
 
   bool _obscurePassword = true;
+  bool _isLoading = false;
 
   @override
   Widget build(BuildContext context) {
@@ -176,27 +180,7 @@ class _LoginPageState extends State<LoginPage> {
                             text: 'Login',
                             isExpanded: true,
                             size: ButtonSize.large,
-                            onPressed: () {
-                              if (_formKey.currentState!.validate()) {
-                                Navigator.pushReplacement(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => const MainNavigationPage(),
-                                  ),
-                                );
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      'Welcome to ${AppConstants.appName}!',
-                                      style: AppTextStyles.bodyMedium.copyWith(
-                                        color: AppColors.textOnPrimary,
-                                      ),
-                                    ),
-                                    backgroundColor: AppColors.success,
-                                  ),
-                                );
-                              }
-                            },
+                            onPressed: _isLoading ? null : _handleLogin,
                           ),
 
                           const SizedBox(height: AppConstants.spaceL),
@@ -334,6 +318,71 @@ class _LoginPageState extends State<LoginPage> {
         ),
       ),
     );
+  }
+
+  Future<void> _handleLogin() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      // Call the login API
+      await _authService.login(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+      );
+
+      if (mounted) {
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Welcome to ${AppConstants.appName}!',
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: AppColors.textOnPrimary,
+              ),
+            ),
+            backgroundColor: AppColors.success,
+          ),
+        );
+
+        // Navigate to main navigation page
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const MainNavigationPage(),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        // Show error message
+        String errorMessage = 'Login failed. Please try again.';
+        if (e is ApiError) {
+          errorMessage = e.message;
+        }
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              errorMessage,
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: AppColors.textOnPrimary,
+              ),
+            ),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   @override
