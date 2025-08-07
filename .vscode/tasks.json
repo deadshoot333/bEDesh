@@ -1,0 +1,14 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Start Node.js Server",
+			"type": "shell",
+			"command": "npm start",
+			"group": "serve",
+			"isBackground": true,
+			"args": [],
+			"problemMatcher": []
+		}
+	]
+}
