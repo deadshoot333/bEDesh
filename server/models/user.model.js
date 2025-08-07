@@ -14,10 +14,10 @@ async function findUserByMobile(mobile) {
   return result.rows[0];
 }
 
-async function createUser(email, hashedPassword) {
+async function createUser(email,mobile, hashedPassword) {
   const result = await pool.query(
-    "INSERT INTO users (email, password) VALUES ($1, $2) RETURNING id, email",
-    [email, hashedPassword]
+    "INSERT INTO users (email,mobile_number, password) VALUES ($1, $2, $3) RETURNING id, email",
+    [email,mobile, hashedPassword]
   );
   return result.rows[0];
 }
@@ -45,6 +45,7 @@ async function deleteToken(refreshToken) {
 }
 module.exports = {
   findUserByEmail,
+  findUserByMobile,
   createUser,
   findUserById,
   insertToken,

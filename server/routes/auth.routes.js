@@ -6,9 +6,9 @@ const { getToken, deleteToken } = require('../models/user.model.js');
 
 // Signup
 router.post('/signup', async (req, res) => {
-  const { email, password } = req.body;
+  const { email,mobile, password } = req.body;
   try {
-    const user = await registerUser(email, password);
+    const user = await registerUser(email,mobile, password);
     res.status(201).json({ message: 'User created', user });
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -27,7 +27,6 @@ router.post('/login', async (req, res) => {
 });
 
 // Protected route
-//TODO:Token not Inserting in DB
 router.get('/me', authenticateToken, async (req, res) => {
   try {
     const user = await getProfile(req.user.id);
