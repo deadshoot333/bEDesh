@@ -7,6 +7,13 @@ async function findUserByEmail(email) {
   return result.rows[0];
 }
 
+async function findUserByMobile(mobile) {
+  const result = await pool.query("SELECT * FROM users WHERE mobile_number = $1", [
+    mobile,
+  ]);
+  return result.rows[0];
+}
+
 async function createUser(email, hashedPassword) {
   const result = await pool.query(
     "INSERT INTO users (email, password) VALUES ($1, $2) RETURNING id, email",
@@ -23,18 +30,18 @@ async function findUserById(id) {
 }
 
 async function getToken(refreshToken) {
-  const result = await pool.query("SELECT * FROM refresh_tokens WHERE token = $1",[refreshToken])
+  const result = await pool.query("SELECT * FROM rf_tokens WHERE token = $1",[refreshToken])
   return result
 }
 
 async function insertToken(token,userId) {
   const result = await pool.query(
-    "INSERT INTO refresh_tokens (token, userId) VALUES ($1, $2)'", [token, userId]
+    "INSERT INTO rf_tokens (token, user_id) VALUES ($1, $2)", [token, userId]
   )
 }
 
 async function deleteToken(refreshToken) {
-  await pool.query('DELETE FROM refresh_tokens WHERE token = $1', [refreshToken]);
+  await pool.query('DELETE FROM rf_tokens WHERE token = $1', [refreshToken]);
 }
 module.exports = {
   findUserByEmail,
