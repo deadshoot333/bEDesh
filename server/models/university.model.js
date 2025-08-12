@@ -11,6 +11,14 @@ async function getAllUniversity(){
   }
 }
 
+async function getCourseName(course){
+    try {
+        const result = await pool.query('SELECT * FROM public.universities WHERE ')
+    } catch (error) {
+        
+    }
+}
+
 module.exports = {
     getAllUniversity
 }
