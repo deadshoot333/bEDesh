@@ -542,7 +542,7 @@ class _DynamicUniversityPageState extends State<DynamicUniversityPage>
                 child: DynamicCourseCard(
                   course: course,
                   onTap: () {
-                    // Navigate to course details
+                    _showCourseDetailsDialog(course);
                   },
                 ),
               );
@@ -794,5 +794,170 @@ class _DynamicUniversityPageState extends State<DynamicUniversityPage>
         ],
       ),
     );
+  }
+
+  void _showCourseDetailsDialog(Course course) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.all(20),
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 400),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Header with close button
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: const BoxDecoration(
+                    borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          course.name,
+                          style: AppTextStyles.h3.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        icon: const Icon(Icons.close),
+                        color: AppColors.textSecondary,
+                      ),
+                    ],
+                  ),
+                ),
+                
+                // Course details
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Column(
+                    children: [
+                      _buildCourseDetailRow('Level:', course.level),
+                      _buildCourseDetailRow('Duration:', course.duration),
+                      _buildCourseDetailRow('Field of Study:', course.fieldOfStudy),
+                      _buildCourseDetailRow('Intake:', course.intake),
+                      _buildCourseDetailRow('Annual Fee:', course.annualFee),
+                      _buildCourseDetailRow('Popularity:', 'High'), // You can make this dynamic
+                    ],
+                  ),
+                ),
+                
+                // Visit Course Page button
+                Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () async {
+                        Navigator.of(context).pop(); // Close dialog first
+                        
+                        // Open course URL if available
+                        final url = course.url;
+                        if (url.isNotEmpty) {
+                          try {
+                            if (await canLaunchUrl(Uri.parse(url))) {
+                              await launchUrl(
+                                Uri.parse(url),
+                                mode: LaunchMode.externalApplication,
+                              );
+                            } else {
+                              _showErrorSnackBar('Could not open course page');
+                            }
+                          } catch (e) {
+                            _showErrorSnackBar('Error opening course page');
+                          }
+                        } else {
+                          _showErrorSnackBar('Course page URL not available');
+                        }
+                      },
+                      icon: const Icon(Icons.open_in_new, color: Colors.white),
+                      label: const Text(
+                        'Visit Course Page',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        padding: const EdgeInsets.symmetric(vertical: 15),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        elevation: 2,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildCourseDetailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 120,
+            child: Text(
+              label,
+              style: AppTextStyles.bodyMedium.copyWith(
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showErrorSnackBar(String message) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.all(20),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+        ),
+      );
+    }
   }
 }
