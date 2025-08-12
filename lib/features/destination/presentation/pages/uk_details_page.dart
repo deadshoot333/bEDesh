@@ -1,6 +1,5 @@
-import 'package:bedesh/features/university/presentation/pages/Cambridge_University_Page.dart';
-import 'package:bedesh/features/university/presentation/pages/oxford_university_page.dart';
 import 'package:bedesh/features/university/presentation/pages/university_list_page.dart';
+import 'package:bedesh/features/university/presentation/pages/dynamic_university_page.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -8,11 +7,8 @@ import '../../../../core/constants/app_constants.dart';
 import '../../../../core/constants/asset_paths.dart';
 import '../../../../shared/widgets/buttons/modern_buttons.dart';
 import '../../../../shared/widgets/cards/circular_university_card.dart';
-import '../../../../shared/widgets/chips/modern_chip.dart';
 import '../../../../shared/widgets/common/section_header.dart';
 import '../widgets/destination_stat_card.dart';
-import '../widgets/start_date_card.dart';
-import '../widgets/faq_section.dart';
 import 'package:share_plus/share_plus.dart';
 
 
@@ -554,38 +550,15 @@ class _UKDetailsPageState extends State<UKDetailsPage>
 
 
   void _navigateToUniversity(String universityName) {
-  if (universityName == 'Oxford University') {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => OxfordUniversityPage()),
-    );
-  }
-  else if (universityName == 'Cambridge University') {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const CambridgeUniversityPage()),
-    );
-  }
-   else {
-    // You can later add more conditions for other universities here
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          '$universityName details coming soon!',
-          style: AppTextStyles.bodyMedium.copyWith(
-            color: AppColors.textOnPrimary,
-          ),
-        ),
-        backgroundColor: AppColors.info,
-        action: SnackBarAction(
-          label: 'OK',
-          textColor: AppColors.textOnPrimary,
-          onPressed: () {},
+      MaterialPageRoute(
+        builder: (context) => DynamicUniversityPage(
+          universityName: universityName,
         ),
       ),
     );
   }
-}
 
 
   void _searchProgram(String program) {
