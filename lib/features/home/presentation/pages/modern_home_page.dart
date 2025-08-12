@@ -1,7 +1,6 @@
 import 'package:bedesh/features/accommodation/presentation/pages/accommodation_page.dart';
 import 'package:bedesh/features/community/presentation/pages/community_feed_page.dart';
 import 'package:bedesh/features/destination/presentation/pages/uk_details_page.dart';
-import 'package:bedesh/features/university/presentation/pages/Cambridge_University_Page.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -14,8 +13,7 @@ import '../../../../shared/widgets/cards/circular_university_card.dart';
 import '../../../../shared/widgets/buttons/modern_buttons.dart';
 
 // Import the existing pages for navigation
-import '../../../university/presentation/pages/oxford_university_page.dart';
-import '../../../university/presentation/pages/swansea_university_page.dart';
+import '../../../university/presentation/pages/dynamic_university_page.dart';
 import '../../../destination/presentation/pages/australia_details_page.dart';
 import '../../../university/presentation/pages/university_list_page.dart';
 import '../../../profile/presentation/pages/profile_page.dart';
@@ -313,7 +311,7 @@ class _ModernHomePageState extends State<ModernHomePage>
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const SwanseaUniversityPage()),
+                MaterialPageRoute(builder: (context) => const DynamicUniversityPage(universityName: 'Swansea University')),
               );
             },
           ),
@@ -586,7 +584,7 @@ class _ModernHomePageState extends State<ModernHomePage>
       'onTap': () {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) =>  OxfordUniversityPage()),
+          MaterialPageRoute(builder: (context) => const DynamicUniversityPage(universityName: 'Oxford University')),
         );
       },
     },
@@ -600,7 +598,7 @@ class _ModernHomePageState extends State<ModernHomePage>
       'onTap': () {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) =>  CambridgeUniversityPage()),
+          MaterialPageRoute(builder: (context) => const DynamicUniversityPage(universityName: 'University of Cambridge')),
         );
       },
     },

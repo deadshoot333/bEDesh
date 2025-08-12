@@ -8,7 +8,7 @@ import '../../../../shared/widgets/chips/modern_chip.dart';
 import '../../../../shared/widgets/cards/university_card.dart';
 import '../../../../shared/widgets/buttons/modern_buttons.dart';
 import '../../../../shared/widgets/common/section_header.dart';
-import 'oxford_university_page.dart';
+import 'dynamic_university_page.dart';
 
 class UniversityListPage extends StatefulWidget {
   final String country;
@@ -560,30 +560,15 @@ class _UniversityListPageState extends State<UniversityListPage>
   }
 
   void _navigateToUniversity(Map<String, dynamic> university) {
-    if (university['name'] == 'University of Oxford') {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) =>  OxfordUniversityPage()),
-      );
-    } else {
-      // For now, show a coming soon message
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            '${university['name']} details coming soon!',
-            style: AppTextStyles.bodyMedium.copyWith(
-              color: AppColors.textOnPrimary,
-            ),
-          ),
-          backgroundColor: AppColors.info,
-          behavior: SnackBarBehavior.floating,
-          margin: const EdgeInsets.all(AppConstants.spaceM),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppConstants.radiusM),
-          ),
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => DynamicUniversityPage(
+          universityName: university['name'],
         ),
-      );
-    }
+      ),
+    );
+  }
   }
 
   // Sample data for UK universities
@@ -623,5 +608,4 @@ class _UniversityListPageState extends State<UniversityListPage>
     },
     
     
-  ];
-}
+];
