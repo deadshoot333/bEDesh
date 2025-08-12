@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/app_constants.dart';
@@ -584,11 +585,13 @@ class _DynamicUniversityPageState extends State<DynamicUniversityPage>
           const SizedBox(height: AppConstants.spaceL),
           PrimaryButton(
             text: 'Apply Now',
-            onPressed: () {
-              // Open university application URL
-              if (university!.websiteUrl.isNotEmpty) {
-                // Launch URL
-              }
+            onPressed: () async {
+              const url = 'https://www.ox.ac.uk/';
+    if (await canLaunchUrl(Uri.parse(url))) {
+      await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+    } else {
+      throw 'Could not launch $url';
+    }
             },
             backgroundColor: Colors.white,
             textColor: AppColors.primary,
