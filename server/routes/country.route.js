@@ -5,6 +5,7 @@ const {
 
 const router = express.Router()
 
+
 router.get('/all-countries',async(req,res)=>{
     try {
         const countries = await getAllCountry();
