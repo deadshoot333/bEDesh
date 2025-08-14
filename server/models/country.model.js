@@ -12,6 +12,16 @@ async function getAllCountry() {
     
 }
 
+async function getCountryByName(countryName){
+    try {
+        const result = await pool.query("SELECT * FROM public.countries WHERE name=$1",[countryName])
+        return result.rows[0]
+    } catch (error) {
+        throw error;
+    }
+}
+
 module.exports = {
-    getAllCountry
+    getAllCountry,
+    getCountryByName
 }
