@@ -34,7 +34,7 @@ class Scholarship {
       description: json['description'] ?? '',
       eligibility: json['eligibility'] ?? '',
       deadline: json['deadline'] ?? '',
-      applicationUrl: json['application_url'] ?? '',
+      applicationUrl: json['url_scolarship'] ?? json['application_url'] ?? '',
     );
   }
 
@@ -49,7 +49,7 @@ class Scholarship {
       'description': description,
       'eligibility': eligibility,
       'deadline': deadline,
-      'application_url': applicationUrl,
+      'url_scolarship': applicationUrl,
     };
   }
 

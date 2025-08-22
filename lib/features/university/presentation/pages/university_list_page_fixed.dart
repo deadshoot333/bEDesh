@@ -108,17 +108,11 @@ class _UniversityListPageState extends State<UniversityListPage>
 
       List<University> universities;
       
-      // Map country codes to full names
-      String searchCountry = widget.country;
-      if (widget.country.toLowerCase() == 'uk') {
-        searchCountry = 'United Kingdom';
-      }
-      
-      // Try to get universities by country search
+      // Try to get universities by country first
       try {
-        universities = await UniversityApiService.getUniversitiesByCountry(searchCountry);
+        universities = await UniversityApiService.getUniversitiesByCountry(widget.country);
       } catch (e) {
-        // If search fails, try with the original country name
+        // If by-country fails, try search with country name
         universities = await UniversityApiService.searchUniversities(widget.country);
       }
 
@@ -515,26 +509,25 @@ class _UniversityListPageState extends State<UniversityListPage>
               borderRadius: BorderRadius.circular(2),
             ),
           ),
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(AppConstants.spaceL),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Filter Universities',
-                    style: AppTextStyles.h3.copyWith(
-                      color: AppColors.textPrimary,
-                      fontWeight: FontWeight.bold,
-                    ),
+          Padding(
+            padding: const EdgeInsets.all(AppConstants.spaceL),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Filter Universities',
+                  style: AppTextStyles.h3.copyWith(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.bold,
                   ),
-                  const SizedBox(height: AppConstants.spaceL),
-                  
-                  // Level Filter
-                  const SectionHeader(
-                    title: 'Study Level',
-                    icon: Icons.school_outlined,
-                  ),
+                ),
+                const SizedBox(height: AppConstants.spaceL),
+                
+                // Level Filter
+                const SectionHeader(
+                  title: 'Study Level',
+                  icon: Icons.school_outlined,
+                ),
                 const SizedBox(height: AppConstants.spaceM),
                 Wrap(
                   spacing: AppConstants.spaceS,
@@ -604,7 +597,6 @@ class _UniversityListPageState extends State<UniversityListPage>
                   ],
                 ),
               ],
-            ),
             ),
           ),
         ],
