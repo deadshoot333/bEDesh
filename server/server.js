@@ -3,8 +3,8 @@ const express = require('express');
 const cors = require('cors');
 
 const authRoutes = require('./routes/auth.routes');
-const uniRoutes = require('./routes/university.route')
-const countryRoutes = require("./routes/country.route")
+const uniRoutes = require('./routes/university.route');
+const countryRoutes = require('./routes/country.route');
 const app = express();
 
 // Debug middleware - log all incoming requests

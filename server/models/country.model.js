@@ -9,14 +9,15 @@ async function getAllCountry() {
         console.error('❌ DATABASE ERROR :', error.message);
         throw error;
     }
-    
 }
 
 async function getCountryByName(countryName){
     try {
         const result = await pool.query("SELECT * FROM public.countries WHERE name=$1",[countryName])
-        return result.rows[0]
+        console.log('📊 Country query result - rows found:', result.rows.length);
+        return result.rows[0] || null;
     } catch (error) {
+        console.error('❌ DATABASE ERROR :', error.message);
         throw error;
     }
 }
