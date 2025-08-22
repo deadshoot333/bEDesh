@@ -1,6 +1,6 @@
 import 'package:bedesh/features/accommodation/presentation/pages/accommodation_page.dart';
 import 'package:bedesh/features/community/presentation/pages/community_feed_page.dart';
-import 'package:bedesh/features/destination/presentation/pages/uk_details_page.dart';
+import 'package:bedesh/features/destination/presentation/pages/dynamic_country_details_page.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -428,10 +428,14 @@ class _ModernHomePageState extends State<ModernHomePage>
       'count': 108,
       'imageAsset': AssetPaths.ukFlag,
       'onTap': () {
-   Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const UKDetailsPage()),
-      );
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const DynamicCountryDetailsPage(
+              countryName: 'United Kingdom',
+            ),
+          ),
+        );
       },
     },
     {
@@ -439,7 +443,14 @@ class _ModernHomePageState extends State<ModernHomePage>
       'count': 137,
       'imageAsset': AssetPaths.abroad13,
       'onTap': () {
-        // Navigate to US details
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const DynamicCountryDetailsPage(
+              countryName: 'United States',
+            ),
+          ),
+        );
       },
     },
     {
@@ -447,7 +458,14 @@ class _ModernHomePageState extends State<ModernHomePage>
       'count': 39,
       'imageAsset': AssetPaths.canadaFlag,
       'onTap': () {
-        // Navigate to Canada details
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const DynamicCountryDetailsPage(
+              countryName: 'Canada',
+            ),
+          ),
+        );
       },
     },
     {
@@ -455,7 +473,14 @@ class _ModernHomePageState extends State<ModernHomePage>
       'count': 15,
       'imageAsset': AssetPaths.australiaFlag,
       'onTap': () {
-        // Navigate to Australia details
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const DynamicCountryDetailsPage(
+              countryName: 'Australia',
+            ),
+          ),
+        );
       },
     },
   ];
