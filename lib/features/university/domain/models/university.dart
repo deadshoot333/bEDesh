@@ -35,7 +35,7 @@ class University {
       location: json['location'] ?? '${json['name'] ?? ''}, ${json['country'] ?? ''}',
       country: json['country'] ?? '',
       imageUrl: json['image_url'] ?? json['imageUrl'] ?? '',
-      worldRanking: json['world_ranking'] ?? json['worldRanking'] ?? 1,
+      worldRanking: int.tryParse(json['Rank']?.toString() ?? '') ?? json['world_ranking'] ?? json['worldRanking'] ?? 1,
       totalStudents: json['total_students'] ?? json['totalStudents'] ?? 20000,
       internationalPercentage: (json['international_percentage'] ?? json['internationalPercentage'] ?? 30.0).toDouble(),
       establishedYear: json['established_year'] ?? json['establishedYear'] ?? '1000',
