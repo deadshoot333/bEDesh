@@ -116,23 +116,41 @@ class _UniversityCardState extends State<UniversityCard>
                           topLeft: Radius.circular(AppConstants.radiusL),
                           topRight: Radius.circular(AppConstants.radiusL),
                         ),
-                        child: Image.asset(
-                          widget.imageUrl,
-                          height: 140, // Reduced from 160 to leave more space for content
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Container(
-                              height: 140, // Updated to match the new image height
-                              color: AppColors.backgroundSecondary,
-                              child: const Icon(
-                                Icons.school,
-                                size: 48,
-                                color: AppColors.textTertiary,
-                              ),
-                            );
-                          },
-                        ),
+                        child: widget.imageUrl.startsWith('http')
+                          ? Image.network(
+                              widget.imageUrl,
+                              height: 140,
+                              width: double.infinity,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  height: 140,
+                                  color: AppColors.backgroundSecondary,
+                                  child: const Icon(
+                                    Icons.school,
+                                    size: 48,
+                                    color: AppColors.textTertiary,
+                                  ),
+                                );
+                              },
+                            )
+                          : Image.asset(
+                              widget.imageUrl,
+                              height: 140,
+                              width: double.infinity,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  height: 140,
+                                  color: AppColors.backgroundSecondary,
+                                  child: const Icon(
+                                    Icons.school,
+                                    size: 48,
+                                    color: AppColors.textTertiary,
+                                  ),
+                                );
+                              },
+                            ),
                       ),
                       
                       // Gradient overlay

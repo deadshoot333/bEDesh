@@ -137,4 +137,14 @@ class UniversityApiService {
       throw Exception('Error searching universities: $e');
     }
   }
+
+  // Get universities by country
+  static Future<List<University>> getUniversitiesByCountry(String country) async {
+    try {
+      // Use search endpoint to find universities by country
+      return await searchUniversities(country);
+    } catch (e) {
+      throw Exception('Error fetching universities by country: $e');
+    }
+  }
 }

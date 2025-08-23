@@ -56,7 +56,7 @@ async function getScholarshipsByUniversity(universityName) {
 async function searchUniversities(query) {
     try {
         const result = await pool.query(
-            "SELECT * FROM public.universities WHERE university ILIKE $1 OR country ILIKE $1", 
+            "SELECT * FROM public.universities WHERE name ILIKE $1 OR country ILIKE $1", 
             [`%${query}%`]
         );
         console.log('📊 Search query result - rows found:', result.rows.length);

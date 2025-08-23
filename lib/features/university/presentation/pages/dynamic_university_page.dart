@@ -490,7 +490,7 @@ class _DynamicUniversityPageState extends State<DynamicUniversityPage>
                   child: ScholarshipCard(
                     scholarship: filteredScholarships[index],
                     onTap: () {
-                      // Navigate to scholarship details
+                      _showScholarshipDetails(filteredScholarships[index]);
                     },
                   ),
                 );
@@ -959,5 +959,376 @@ class _DynamicUniversityPageState extends State<DynamicUniversityPage>
         ),
       );
     }
+  }
+
+  void _showScholarshipDetails(Scholarship scholarship) {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: EdgeInsets.all(MediaQuery.of(context).size.width < 600 ? 16 : 24),
+          child: Container(
+            constraints: BoxConstraints(
+              maxWidth: MediaQuery.of(context).size.width < 600 
+                  ? MediaQuery.of(context).size.width - 32 
+                  : 600,
+              maxHeight: MediaQuery.of(context).size.height * 0.85,
+            ),
+            decoration: BoxDecoration(
+              color: AppColors.backgroundPrimary,
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(24),
+              child: Column(
+                children: [
+                  // Header Section
+                  Container(
+                    padding: const EdgeInsets.all(24),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            scholarship.name,
+                            style: AppTextStyles.h2.copyWith(
+                              color: AppColors.textPrimary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          icon: Icon(Icons.close, color: AppColors.textSecondary),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                        ),
+                      ],
+                    ),
+                  ),
+                  
+                  // Scrollable Content
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Offered by
+                          Text(
+                            'Offered by ${scholarship.universityName}',
+                            style: AppTextStyles.bodyMedium.copyWith(
+                              color: AppColors.textSecondary,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          
+                          // Tags section
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              // Degree level chip
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(color: AppColors.primary.withOpacity(0.3)),
+                                ),
+                                child: Text(
+                                  scholarship.degreeType.isNotEmpty ? scholarship.degreeType : 'Masters',
+                                  style: AppTextStyles.labelSmall.copyWith(
+                                    color: AppColors.primary,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                              
+                              // Funding type chip
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: AppColors.success.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(color: AppColors.success.withOpacity(0.3)),
+                                ),
+                                child: Text(
+                                  scholarship.weightage.isNotEmpty ? scholarship.weightage : 'Full Funding',
+                                  style: AppTextStyles.labelSmall.copyWith(
+                                    color: AppColors.success,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                              
+                              // Type chip
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: AppColors.warning.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(color: AppColors.warning.withOpacity(0.3)),
+                                ),
+                                child: Text(
+                                  scholarship.type.isNotEmpty ? scholarship.type : 'International',
+                                  style: AppTextStyles.labelSmall.copyWith(
+                                    color: AppColors.warning,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 20),
+                          
+                          // Description
+                          if (scholarship.description.isNotEmpty) ...[
+                            Text(
+                              scholarship.description,
+                              style: AppTextStyles.bodyMedium.copyWith(
+                                color: AppColors.textPrimary,
+                                height: 1.5,
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                          ],
+                          
+                          // Information grid
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: AppColors.backgroundCard,
+                              borderRadius: BorderRadius.circular(AppConstants.radiusM),
+                              border: Border.all(color: AppColors.borderLight),
+                            ),
+                            child: Column(
+                              children: [
+                                // Fields of study
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Icon(Icons.school, size: 20, color: AppColors.textSecondary),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Fields of Study',
+                                            style: AppTextStyles.labelMedium.copyWith(
+                                              color: AppColors.textPrimary,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Wrap(
+                                            spacing: 6,
+                                            runSpacing: 4,
+                                            children: ['All Disciplines', 'Liberal Arts', 'Sciences', 'Social Sciences']
+                                                .map((field) => Container(
+                                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                                      decoration: BoxDecoration(
+                                                        color: AppColors.backgroundTertiary,
+                                                        borderRadius: BorderRadius.circular(12),
+                                                        border: Border.all(color: AppColors.borderLight),
+                                                      ),
+                                                      child: Text(
+                                                        field,
+                                                        style: AppTextStyles.labelSmall.copyWith(
+                                                          color: AppColors.textSecondary,
+                                                        ),
+                                                      ),
+                                                    ))
+                                                .toList(),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 16),
+                                
+                                // Amount and deadline
+                                Row(
+                                  children: [
+                                    Icon(Icons.monetization_on, size: 20, color: AppColors.textSecondary),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Amount',
+                                            style: AppTextStyles.labelMedium.copyWith(
+                                              color: AppColors.textPrimary,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                          Text(
+                                            '£18,180/year + stipend',
+                                            style: AppTextStyles.bodySmall.copyWith(
+                                              color: AppColors.textSecondary,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.warning.withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(16),
+                                      ),
+                                      child: Text(
+                                        scholarship.deadline.isNotEmpty ? scholarship.deadline : 'Ongoing',
+                                        style: AppTextStyles.labelSmall.copyWith(
+                                          color: AppColors.warning,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          
+                          // Eligibility Requirements
+                          Text(
+                            'Eligibility Requirements',
+                            style: AppTextStyles.h5.copyWith(
+                              color: AppColors.textPrimary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          if (scholarship.eligibility.isNotEmpty)
+                            ...scholarship.eligibility.split(',').map((requirement) => Padding(
+                                  padding: const EdgeInsets.only(bottom: 6),
+                                  child: Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text('• ', style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary)),
+                                      Expanded(
+                                        child: Text(
+                                          requirement.trim(),
+                                          style: AppTextStyles.bodySmall.copyWith(
+                                            color: AppColors.textSecondary,
+                                            height: 1.4,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ))
+                          else
+                            ...[
+                              'Outstanding academic achievement',
+                              'Leadership potential and commitment to service',
+                              'Age between 18-24 years',
+                              'Citizens of eligible countries',
+                              'English language proficiency'
+                            ].map((requirement) => Padding(
+                                  padding: const EdgeInsets.only(bottom: 6),
+                                  child: Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text('• ', style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary)),
+                                      Expanded(
+                                        child: Text(
+                                          requirement,
+                                          style: AppTextStyles.bodySmall.copyWith(
+                                            color: AppColors.textSecondary,
+                                            height: 1.4,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                )),
+                          const SizedBox(height: 20),
+                          
+                          // Application process
+                          Text(
+                            'Application Process',
+                            style: AppTextStyles.h5.copyWith(
+                              color: AppColors.textPrimary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Submit online application through scholarship portal. Requires academic transcripts, personal statement, letters of recommendation, and interview.',
+                            style: AppTextStyles.bodySmall.copyWith(
+                              color: AppColors.textSecondary,
+                              height: 1.4,
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                        ],
+                      ),
+                    ),
+                  ),
+                  
+                  // Bottom button section
+                  Container(
+                    padding: const EdgeInsets.all(24),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: PrimaryButton(
+                        text: 'Visit Official Page',
+                        icon: Icons.open_in_new,
+                        isExpanded: true,
+                        onPressed: scholarship.applicationUrl.isNotEmpty ? () async {
+                          final url = scholarship.applicationUrl;
+                          try {
+                            final uri = Uri.parse(url);
+                            bool launched = await launchUrl(
+                              uri,
+                              mode: LaunchMode.platformDefault,
+                            );
+                            if (!launched) {
+                              // Try alternative launch mode
+                              launched = await launchUrl(
+                                uri,
+                                mode: LaunchMode.externalApplication,
+                              );
+                            }
+                            if (!launched) {
+                              throw 'Could not launch URL';
+                            }
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Could not open the scholarship link: $e'),
+                                  backgroundColor: AppColors.error,
+                                ),
+                              );
+                            }
+                          }
+                        } : null,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 }
