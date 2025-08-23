@@ -5,6 +5,7 @@ const cors = require('cors');
 const authRoutes = require('./routes/auth.routes');
 const uniRoutes = require('./routes/university.route');
 const countryRoutes = require('./routes/country.route');
+const peerRoutes = require('./routes/peers.route')
 const app = express();
 
 // Debug middleware - log all incoming requests
@@ -26,5 +27,6 @@ app.get("/",async (req,res) =>{
 app.use('/auth', authRoutes);
 app.use("/api/university", uniRoutes)
 app.use("/api/country",countryRoutes)
+app.use("/api/peer",peerRoutes)
 const PORT = process.env.PORT || 3000;
 app.listen(PORT,"0.0.0.0", () => console.log(`Server running on port ${PORT}`));
