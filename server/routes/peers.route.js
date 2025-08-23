@@ -1,5 +1,5 @@
 const express = require("express");
-const { sentRequest, respondRequest } = require("../models/peers.model");
+const { sentRequest, respondRequest, getPeersCity,getPeersUni } = require("../models/peers.model");
 const router = express.Router();
 
 router.post("/connect", async (req, res) => {
@@ -22,5 +22,22 @@ router.post("/respond", async (req, res) => {
      res.status(500).json({ error: "Failed to respond to request" });
   }
 });
-
+router.get("/get-peer-cities",async (req,res) => {
+  const {city} = req.body;
+  try {
+    const peersCity = await getPeersCity(city)
+    res.json({peersCity})
+  } catch (error) {
+    res.status(500).json({ error: "Failed to get peers of same city" });
+  }
+})
+router.get("/get-peer-universities",async(req,res) => {
+  const {university} = req.body
+  try {
+    const peersUni = await getPeersUni(university)
+    res.json({peersUni})
+  } catch (error) {
+    res.status(500).json({ error: "Failed to get peers of same university" });
+  }
+})
 module.exports = router;

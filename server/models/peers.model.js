@@ -14,10 +14,28 @@ async function respondRequest(connectionId, action) {
     "UPDATE peer_connections SET status = $1 WHERE id = $2",
     [status, connectionId]
   );
-//   const message = `Request ${status}`
-  return `Request ${status}`
+  //   const message = `Request ${status}`
+  return `Request ${status}`;
+}
+
+async function getPeersCity(city) {
+  const result = await pool.query(
+    "SELECT email FROM public.users WHERE city=$1",
+    [city]
+  );
+  return result.rows;
+}
+
+async function getPeersUni(uni){
+  const result = await pool.query(
+    "SELECT email FROM public.users WHERE university=$1",
+    [uni]
+  );
+  return result.rows;
 }
 module.exports = {
   sentRequest,
-  respondRequest
+  respondRequest,
+  getPeersCity,
+  getPeersUni
 };

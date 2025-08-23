@@ -14,4 +14,4 @@
     "password":"123456",
     "university":"MIT",
     "city":"Cambridge"
-}
+}--->http://localhost:5000/auth/signup
