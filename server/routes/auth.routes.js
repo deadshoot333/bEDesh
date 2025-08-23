@@ -10,7 +10,7 @@ router.post('/signup', async (req, res) => {
   console.log('📥 Request body:', JSON.stringify(req.body, null, 2));
   console.log('📋 Request headers:', JSON.stringify(req.headers, null, 2));
   
-  const { email, mobile, password } = req.body;
+  const { email, mobile, password,university,city } = req.body;
   
   console.log('🔍 Extracted fields:');
   console.log('  - email:', email, '(type:', typeof email, ')');
@@ -42,7 +42,7 @@ router.post('/signup', async (req, res) => {
   console.log('✅ All validations passed, calling registerUser...');
   
   try {
-    const user = await registerUser(email, mobile, password);
+    const user = await registerUser(email, mobile, password,university,city);
     console.log('✅ User created successfully:', user);
     res.status(201).json({ message: 'User created', user });
   } catch (err) {

@@ -7,3 +7,11 @@
 //  "connectionId":"6acb0a9b-f803-4a8f-9b3e-089a56d3381b",
 //  "action":""
 //}--->http://localhost:5000/api/peer/respond
+
+{
+    "email":"arqam343almas@gmail.com",
+    "mobile":"+8801841225706",
+    "password":"123456",
+    "university":"MIT",
+    "city":"Cambridge"
+}
