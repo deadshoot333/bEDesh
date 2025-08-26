@@ -17,6 +17,7 @@ import '../../../university/presentation/pages/dynamic_university_page.dart';
 import '../../../destination/presentation/pages/australia_details_page.dart';
 import '../../../university/presentation/pages/university_list_page.dart';
 import '../../../profile/presentation/pages/profile_page.dart';
+import '../../../onboarding/presentation/pages/modern_onboarding_page.dart';
 
 class ModernHomePage extends StatefulWidget {
   const ModernHomePage({super.key});
@@ -33,8 +34,18 @@ class _ModernHomePageState extends State<ModernHomePage>
   late Animation<double> _heroFadeAnimation;
   late Animation<Offset> _heroSlideAnimation;
 
-  void _navigateToOnboarding() {
-    Navigator.of(context).pushReplacementNamed('/onboarding');
+  void _handleBackNavigation() {
+    // Check if we can pop (go back to previous page)
+    if (Navigator.of(context).canPop()) {
+      Navigator.of(context).pop();
+    } else {
+      // If no previous page, go to onboarding
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (context) => const ModernOnboardingPage(),
+        ),
+      );
+    }
   }
 
   final PageController _bannerController = PageController(viewportFraction: 0.85);
@@ -95,8 +106,15 @@ class _ModernHomePageState extends State<ModernHomePage>
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: () async {
-        _navigateToOnboarding();
-        return false;
+        // Check if this page can go back in navigation stack
+        if (Navigator.of(context).canPop()) {
+          Navigator.of(context).pop();
+          return false;
+        } else {
+          // If no navigation stack, go to onboarding
+          _handleBackNavigation();
+          return false;
+        }
       },
       child: Scaffold(
         backgroundColor: AppColors.backgroundPrimary,
@@ -225,7 +243,7 @@ class _ModernHomePageState extends State<ModernHomePage>
                               color: AppColors.textOnPrimary,
                               size: 20,
                             ),
-                            onPressed: _navigateToOnboarding,
+                            onPressed: _handleBackNavigation,
                           ),
                         ),
                         // App name and description
