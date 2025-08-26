@@ -788,7 +788,7 @@ class _AccommodationPageState extends State<AccommodationPage>
                             // Accommodation title
                             Text(
                               'Accommodation',
-                              style: AppTextStyles.h2.copyWith(
+                              style: AppTextStyles.h3.copyWith(
                                 color: AppColors.textOnPrimary,
                                 fontWeight: FontWeight.w800,
                               ),
