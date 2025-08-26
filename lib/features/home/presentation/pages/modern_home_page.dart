@@ -132,7 +132,7 @@ class _ModernHomePageState extends State<ModernHomePage>
                       // Popular Destinations
                       SectionHeader(
                         title: 'Popular Destinations',
-                        subtitle: 'Discover top study abroad destinations',
+                        subtitle: 'Explore top study abroad destinations',
                         icon: Icons.public,
                         actionText: 'View All',
                         onActionPressed: () {
