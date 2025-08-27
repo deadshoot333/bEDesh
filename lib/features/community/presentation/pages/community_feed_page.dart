@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -10,6 +11,9 @@ import '../widgets/comments_dialog.dart';
 import '../../domain/models/post.dart';
 import 'user_profile_page.dart';
 import '../../../profile/presentation/pages/profile_page.dart';
+import 'package:http/http.dart' as http;
+import '../../../../core/constants/api_constants.dart';
+
 class CommunityFeedPage extends StatefulWidget {
   const CommunityFeedPage({super.key});
 
@@ -21,7 +25,7 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
     with TickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
-
+  static const String _baseUrl = ApiConstants.baseUrl;
   String _selectedFilter = 'All';
   final List<String> _filters = [
     'All',
@@ -33,85 +37,91 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
     'Canada',
     'Australia',
   ];
+  List<Post> posts = [];
+  bool isLoading = false;
+  // void initState() {
+  //   super.initState();
+  //   _animationController = AnimationController(
+  //     duration: const Duration(milliseconds: 400),
+  //     vsync: this,
+  //   );
+  //   _fadeAnimation = CurvedAnimation(
+  //     parent: _animationController,
+  //     curve: Curves.easeIn,
+  //   );
+  //   _animationController.forward();
+  //   fetchPosts();
+  // }
 
-  final List<Post> posts = [
-    Post(
-      id: '1',
-      userId: 'userId_1',
-      userImage: '', // Will use placeholder
-      userName: 'Rahul Sharma',
-      userLocation: 'Mumbai, India',
-      timeAgo: '2h ago',
-      content:
-          'Just received my acceptance letter from University of Manchester! 🎉 The journey was tough but totally worth it. Happy to share my experience with anyone planning to apply.',
-      likes: 24,
-      comments: 8,
-      isLiked: false,
-      tags: ['UK', 'Masters', 'Manchester', 'Experiences'],
-      postType: PostType.text,
-    ),
-    Post(
-      id: '2',
-      userId: 'userId_2',
-      userImage: '', // Will use placeholder
-      userName: 'Priya Patel',
-      userLocation: 'Delhi, India',
-      timeAgo: '4h ago',
-      content:
-          'Can anyone help me with SOP writing for Canadian universities? I\'m struggling with the structure and would love some guidance.',
-      likes: 15,
-      comments: 12,
-      isLiked: true,
-      tags: ['Canada', 'SOP', 'Help', 'Questions'],
-      postType: PostType.question,
-    ),
-    Post(
-      id: '3',
-      userId: 'userId_3',
-      userImage: '', // Will use placeholder
-      userName: 'Ahmed Khan',
-      userLocation: 'Dhaka, Bangladesh',
-      timeAgo: '6h ago',
-      content:
-          'Finally landed in Melbourne! First week at university has been amazing. The campus is beautiful and people are so welcoming. Missing home food though 😅',
-      likes: 31,
-      comments: 6,
-      isLiked: false,
-      tags: ['Australia', 'Melbourne', 'Experience', 'Experiences'],
-      postType: PostType.text,
-      images: [], // Removed missing image
-    ),
-    Post(
-      id: '4',
-      userId: 'userId_4',
-      userImage: '', // Will use placeholder
-      userName: 'Sarah Johnson',
-      userLocation: 'Toronto, Canada',
-      timeAgo: '8h ago',
-      content:
-          'Top 5 mistakes to avoid while applying to US universities:\n1. Not researching properly\n2. Generic essays\n3. Missing deadlines\n4. Not preparing for interviews\n5. Ignoring financial planning',
-      likes: 67,
-      comments: 23,
-      isLiked: true,
-      tags: ['USA', 'Tips', 'Application'],
-      postType: PostType.tips,
-    ),
-    Post(
-      id: '5',
-      userId: 'userId_5',
-      userImage: '', // Will use placeholder
-      userName: 'Michael Chen',
-      userLocation: 'London, UK',
-      timeAgo: '12h ago',
-      content:
-          'Anyone else struggling with accommodation costs in London? Looking for shared apartments near Imperial College. Budget is £800-1000/month.',
-      likes: 18,
-      comments: 15,
-      isLiked: false,
-      tags: ['UK', 'London', 'Accommodation', 'Questions'],
-      postType: PostType.question,
-    ),
-  ];
+  Future<void> fetchPosts() async {
+    setState(() {
+      isLoading = true;
+    });
+    try {
+      final response = await http.get(
+        Uri.parse(
+          '$_baseUrl/api/community/get-posts?user_id=1fa5ba70-6a6c-473c-97c2-d0d4e33dea1e',
+        ),
+      );
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final List<dynamic> postsJson = data['posts'];
+        setState(() {
+          posts = postsJson.map((json) => Post.fromJson(json)).toList();
+        });
+      } else {
+        // Handle error
+        // ignore: use_build_context_synchronously
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to load posts')));
+      }
+    } catch (e) {
+      // ignore: use_build_context_synchronously
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: $e')));
+    }
+  }
+
+  Future<void> addPost(Post post) async {
+    final url = Uri.parse('$_baseUrl/api/community/post');
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(post.toJson()),
+      );
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final newPost = Post.fromJson(data['post']);
+        setState(() {
+          posts.insert(0, newPost);
+        });
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Post added!')));
+      } else {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to add post')));
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: $e')));
+    }
+  }
+
+  void _onCreatePost() async {
+    final newPost = await showDialog<Post>(
+      context: context,
+      builder: (context) => CreatePostDialog(),
+    );
+    if (newPost != null) {
+      await addPost(newPost);
+    }
+  }
 
   // Get filtered posts based on selected filter
   List<Post> get filteredPosts {
@@ -121,7 +131,8 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
 
     return posts.where((post) {
       // Check if filter matches post type
-      if (_selectedFilter == 'Questions' && post.postType == PostType.question) {
+      if (_selectedFilter == 'Questions' &&
+          post.postType == PostType.question) {
         return true;
       }
       if (_selectedFilter == 'Tips' && post.postType == PostType.tips) {
@@ -132,8 +143,8 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
       }
 
       // Check if filter matches any tag (case-insensitive)
-      return post.tags.any((tag) => 
-        tag.toLowerCase() == _selectedFilter.toLowerCase()
+      return post.tags.any(
+        (tag) => tag.toLowerCase() == _selectedFilter.toLowerCase(),
       );
     }).toList();
   }
@@ -149,6 +160,7 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
       CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
     _animationController.forward();
+    fetchPosts();
   }
 
   @override
@@ -177,9 +189,9 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
                     onTap:
                         () => _navigateToUserProfile(
                           context,
-                          'current_user_123', // Current logged in user
-                          'Alex Martinez', // Current user name
-                          'New York, USA', // Current user location
+                          '1fa5ba70-6a6c-473c-97c2-d0d4e33dea1e', // Current logged in user
+                          'Arqam Bin Almas', // Current user name
+                          'Cambridge, USA', // Current user location
                         ),
                     child: Container(
                       decoration: BoxDecoration(
@@ -263,33 +275,36 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
 
             // Posts Feed
             Expanded(
-              child: filteredPosts.isEmpty
-                  ? _buildEmptyState()
-                  : ListView.separated(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: AppConstants.spaceS,
+              child:
+                  filteredPosts.isEmpty
+                      ? _buildEmptyState()
+                      : ListView.separated(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: AppConstants.spaceS,
+                        ),
+                        itemCount: filteredPosts.length,
+                        separatorBuilder:
+                            (context, index) =>
+                                const SizedBox(height: AppConstants.spaceS),
+                        itemBuilder: (context, index) {
+                          final post = filteredPosts[index];
+                          final originalIndex = posts.indexOf(post);
+                          return AnimatedContainer(
+                            duration: Duration(
+                              milliseconds: 300 + (index * 100),
+                            ),
+                            curve: Curves.easeOutBack,
+                            child: PostCard(
+                              post: post,
+                              onLike: () => _toggleLike(originalIndex),
+                              onComment:
+                                  () => _showCommentsDialog(context, post),
+                              onShare: () => _sharePost(post),
+                              onTagTap: _filterByTag,
+                            ),
+                          );
+                        },
                       ),
-                      itemCount: filteredPosts.length,
-                      separatorBuilder:
-                          (context, index) =>
-                              const SizedBox(height: AppConstants.spaceS),
-                      itemBuilder: (context, index) {
-                        final post = filteredPosts[index];
-                        final originalIndex = posts.indexOf(post);
-                        return AnimatedContainer(
-                          duration: Duration(milliseconds: 300 + (index * 100)),
-                          curve: Curves.easeOutBack,
-                          child: PostCard(
-                            post: post,
-                            onLike: () => _toggleLike(originalIndex),
-                            onComment:
-                                () => _showCommentsDialog(context, post),
-                            onShare: () => _sharePost(post),
-                            onTagTap: _filterByTag,
-                          ),
-                        );
-                      },
-                    ),
             ),
           ],
         ),
@@ -350,7 +365,7 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
                     ),
                     const SizedBox(height: AppConstants.spaceXS),
                     Text(
-                      _selectedFilter == 'All' 
+                      _selectedFilter == 'All'
                           ? 'Connect with students worldwide'
                           : 'Showing posts filtered by "$_selectedFilter"',
                       style: AppTextStyles.bodyMedium.copyWith(
@@ -426,11 +441,7 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.search_off,
-              size: 64,
-              color: AppColors.textTertiary,
-            ),
+            Icon(Icons.search_off, size: 64, color: AppColors.textTertiary),
             const SizedBox(height: AppConstants.spaceL),
             Text(
               'No posts found',
@@ -468,9 +479,7 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => CreatePostDialog(
-        onPostCreated: _addNewPost,
-      ),
+      builder: (context) => CreatePostDialog(onPostCreated: _addNewPost),
     );
   }
 

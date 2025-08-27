@@ -3,7 +3,7 @@ const { getAllPosts, addPost } = require("../models/post.model");
 const router = express.Router();
 
 router.get("/get-posts", async (req, res) => {
-  const { user_id } = req.body;
+  const { user_id } = req.query;
   try {
     const posts = await getAllPosts(user_id);
     res.json({ posts });

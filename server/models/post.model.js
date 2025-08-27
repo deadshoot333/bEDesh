@@ -2,7 +2,7 @@ const { pool } = require("../config/connection");
 
 async function getAllPosts() {
   const result = await pool.query(
-    "SELECT p.id, p.content, p.post_type, p.tags, p.images, p.likes, p.comments_count, p.is_liked, p.created_at, u.id AS user_id, u.user_name, u.user_image, u.user_location FROM public.posts p JOIN public.users u ON p.user_id = u.id ORDER BY p.created_at DESC"
+    "SELECT p.id, p.content, p.post_type, p.tags, p.images, p.likes, p.comments_count, p.is_liked, p.created_at, u.id AS user_id, u.name, u.image, u.city FROM public.posts p JOIN public.users u ON p.user_id = u.id ORDER BY p.created_at DESC"
   );
   return result.rows;
 }
