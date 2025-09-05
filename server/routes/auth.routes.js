@@ -10,20 +10,26 @@ router.post('/signup', async (req, res) => {
   console.log('📥 Request body:', JSON.stringify(req.body, null, 2));
   console.log('📋 Request headers:', JSON.stringify(req.headers, null, 2));
   
-  const { email, mobile, password } = req.body;
+  const { email, mobile, password, countryApplyingFrom, universityCountry, universityCity } = req.body;
   
   console.log('🔍 Extracted fields:');
   console.log('  - email:', email, '(type:', typeof email, ')');
   console.log('  - mobile:', mobile, '(type:', typeof mobile, ')');
   console.log('  - password:', password ? '[REDACTED]' : 'undefined', '(type:', typeof password, ')');
+  console.log('  - countryApplyingFrom:', countryApplyingFrom, '(type:', typeof countryApplyingFrom, ')');
+  console.log('  - universityCountry:', universityCountry, '(type:', typeof universityCountry, ')');
+  console.log('  - universityCity:', universityCity, '(type:', typeof universityCity, ')');
   
   // Validate required fields
-  if (!email || !mobile || !password) {
+  if (!email || !mobile || !password || !countryApplyingFrom || !universityCountry || !universityCity) {
     console.log('❌ VALIDATION FAILED: Missing required fields');
     console.log('  - email present:', !!email);
     console.log('  - mobile present:', !!mobile);
     console.log('  - password present:', !!password);
-    return res.status(400).json({ error: 'Email, mobile, and password are required' });
+    console.log('  - countryApplyingFrom present:', !!countryApplyingFrom);
+    console.log('  - universityCountry present:', !!universityCountry);
+    console.log('  - universityCity present:', !!universityCity);
+    return res.status(400).json({ error: 'All fields are required' });
   }
   
   // Basic email validation
@@ -42,7 +48,7 @@ router.post('/signup', async (req, res) => {
   console.log('✅ All validations passed, calling registerUser...');
   
   try {
-    const user = await registerUser(email, mobile, password);
+    const user = await registerUser(email, mobile, password, countryApplyingFrom, universityCountry, universityCity);
     console.log('✅ User created successfully:', user);
     res.status(201).json({ message: 'User created', user });
   } catch (err) {

@@ -22,6 +22,9 @@ class _ModernSignupPageState extends State<ModernSignupPage> {
   final TextEditingController _phoneController = TextEditingController(text: '+880');
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController = TextEditingController();
+  final TextEditingController _countryApplyingFromController = TextEditingController();
+  final TextEditingController _universityCountryController = TextEditingController();
+  final TextEditingController _universityCityController = TextEditingController();
 
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
@@ -191,6 +194,60 @@ class _ModernSignupPageState extends State<ModernSignupPage> {
                               }
                               return null;
                             },
+                          ),
+                          const SizedBox(height: AppConstants.spaceL),
+
+                          // Country Applying From Field
+                          TextFormField(
+                            controller: _countryApplyingFromController,
+                            textCapitalization: TextCapitalization.words,
+                            style: AppTextStyles.bodyMedium.copyWith(
+                              color: AppColors.textPrimary,
+                            ),
+                            decoration: _modernInputDecoration(
+                              'Country Applying From',
+                              Icons.flag_outlined,
+                            ),
+                            validator: (value) =>
+                                value == null || value.trim().isEmpty
+                                    ? 'Enter your country'
+                                    : null,
+                          ),
+                          const SizedBox(height: AppConstants.spaceL),
+
+                          // University Country Field
+                          TextFormField(
+                            controller: _universityCountryController,
+                            textCapitalization: TextCapitalization.words,
+                            style: AppTextStyles.bodyMedium.copyWith(
+                              color: AppColors.textPrimary,
+                            ),
+                            decoration: _modernInputDecoration(
+                              'University Country',
+                              Icons.school_outlined,
+                            ),
+                            validator: (value) =>
+                                value == null || value.trim().isEmpty
+                                    ? 'Enter university country'
+                                    : null,
+                          ),
+                          const SizedBox(height: AppConstants.spaceL),
+
+                          // University City Field
+                          TextFormField(
+                            controller: _universityCityController,
+                            textCapitalization: TextCapitalization.words,
+                            style: AppTextStyles.bodyMedium.copyWith(
+                              color: AppColors.textPrimary,
+                            ),
+                            decoration: _modernInputDecoration(
+                              'University City',
+                              Icons.location_city_outlined,
+                            ),
+                            validator: (value) =>
+                                value == null || value.trim().isEmpty
+                                    ? 'Enter university city'
+                                    : null,
                           ),
                           const SizedBox(height: AppConstants.spaceL),
 
@@ -438,6 +495,9 @@ class _ModernSignupPageState extends State<ModernSignupPage> {
         email: _emailController.text.trim(),
         mobile: _phoneController.text.trim(),
         password: _passwordController.text,
+        countryApplyingFrom: _countryApplyingFromController.text.trim(),
+        universityCountry: _universityCountryController.text.trim(),
+        universityCity: _universityCityController.text.trim(),
       );
 
       if (mounted) {
@@ -498,6 +558,9 @@ class _ModernSignupPageState extends State<ModernSignupPage> {
     _phoneController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+    _countryApplyingFromController.dispose();
+    _universityCountryController.dispose();
+    _universityCityController.dispose();
     super.dispose();
   }
 }

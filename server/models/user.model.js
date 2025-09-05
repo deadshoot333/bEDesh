@@ -28,18 +28,21 @@ async function findUserByMobile(mobile) {
   }
 }
 
-async function createUser(email, mobile, hashedPassword) {
+async function createUser(email, mobile, hashedPassword, countryApplyingFrom, universityCountry, universityCity) {
   console.log('\n🗄️  DATABASE - createUser called');
   console.log('📝 Parameters:');
   console.log('  - email:', email);
   console.log('  - mobile:', mobile);
   console.log('  - hashedPassword:', hashedPassword ? '[REDACTED]' : 'undefined');
+  console.log('  - countryApplyingFrom:', countryApplyingFrom);
+  console.log('  - universityCountry:', universityCountry);
+  console.log('  - universityCity:', universityCity);
   
   try {
     console.log('💾 Executing INSERT query...');
     const result = await pool.query(
-      "INSERT INTO public.users (email, mobile_number, password) VALUES ($1, $2, $3) RETURNING id, email",
-      [email, mobile, hashedPassword]
+      "INSERT INTO public.users (email, mobile_number, password, country_applying_from, university, city) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, email",
+      [email, mobile, hashedPassword, countryApplyingFrom, universityCountry, universityCity]
     );
     console.log('✅ User inserted successfully:', result.rows[0]);
     return result.rows[0];

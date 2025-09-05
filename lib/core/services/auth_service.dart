@@ -18,12 +18,18 @@ class AuthService {
     required String email,
     required String mobile,
     required String password,
+    required String countryApplyingFrom,
+    required String universityCountry,
+    required String universityCity,
   }) async {
     print('\n🚀 FLUTTER - AuthService.signup called');
     print('📝 Parameters:');
     print('  - email: $email');
     print('  - mobile: $mobile');
     print('  - password: ${password.isNotEmpty ? '[REDACTED]' : 'EMPTY'}');
+    print('  - countryApplyingFrom: $countryApplyingFrom');
+    print('  - universityCountry: $universityCountry');
+    print('  - universityCity: $universityCity');
     
     try {
       print('🌐 Calling API...');
@@ -33,6 +39,9 @@ class AuthService {
           'email': email,
           'mobile': mobile,
           'password': password,
+          'countryApplyingFrom': countryApplyingFrom,
+          'universityCountry': universityCountry,
+          'universityCity': universityCity,
         },
       );
       
