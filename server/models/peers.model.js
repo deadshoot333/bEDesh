@@ -7,7 +7,17 @@ async function sentRequest(requesterId, receiverId) {
   );
   return result.rows[0];
 }
-
+async function getUsersfromQuery(q){
+ 
+  const { query } = q;
+  const result = await pool.query(
+    `SELECT id, name, image, city, university,
+     FROM public.users
+     WHERE name ILIKE $1 OR university ILIKE $1`,
+    [`%${query}%`]
+  );
+  return result.rows;
+}
 async function respondRequest(connectionId, action) {
   const status = action === "accept" ? "accepted" : "rejected";
   const result = await pool.query(
@@ -37,5 +47,6 @@ module.exports = {
   sentRequest,
   respondRequest,
   getPeersCity,
-  getPeersUni
+  getPeersUni,
+  getUsersfromQuery
 };
