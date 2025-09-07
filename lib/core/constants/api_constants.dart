@@ -1,7 +1,8 @@
 class ApiConstants {
   // Base URL for the Node.js backend
-  static const String baseUrl = 'http://10.103.133.199:5000';
-  // static const String baseUrl = 'http://10.0.2.2:5000';
+  // static const String baseUrl = 'http://10.103.133.199:5000'; // Old IP
+  static const String baseUrl = 'http://localhost:5000'; // For web testing
+  // static const String baseUrl = 'http://10.0.2.2:5000'; // For Android emulator
 
   // Authentication endpoints
   static const String signupEndpoint = '/auth/signup';

@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/app_constants.dart';
+import '../../../../core/constants/api_constants.dart';
+import '../../../../core/services/auth_storage.dart';
 import '../../../../shared/widgets/buttons/modern_buttons.dart';
 
 class PeerMessagingPage extends StatefulWidget {
@@ -9,6 +13,7 @@ class PeerMessagingPage extends StatefulWidget {
   final String peerUniversity;
   final String peerCourse;
   final String peerYear;
+  final String? peerId; // Add peer ID for API calls
 
   const PeerMessagingPage({
     super.key,
@@ -16,6 +21,7 @@ class PeerMessagingPage extends StatefulWidget {
     required this.peerUniversity,
     required this.peerCourse,
     required this.peerYear,
+    this.peerId,
   });
 
   @override
@@ -26,31 +32,68 @@ class _PeerMessagingPageState extends State<PeerMessagingPage> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final FocusNode _messageFocusNode = FocusNode();
+  bool _isLoading = false;
+  
+  // Will store the real user ID from authentication
+  String? _currentUserId;
+  
+  List<Message> messages = [];
 
-  List<Message> messages = [
-    Message(
-      text: "Hey! I saw your profile on Peer Connect. Nice to meet you!",
-      isMe: false,
-      timestamp: DateTime.now().subtract(const Duration(hours: 2)),
-    ),
-    Message(
-      text: "Hi there! Nice to meet you too. How are you finding your studies?",
-      isMe: true,
-      timestamp: DateTime.now().subtract(const Duration(hours: 1, minutes: 45)),
-    ),
-    Message(
-      text:
-          "It's been quite challenging but exciting! I love the practical projects we're working on. What about you?",
-      isMe: false,
-      timestamp: DateTime.now().subtract(const Duration(hours: 1, minutes: 30)),
-    ),
-    Message(
-      text:
-          "Same here! The coursework is intense but really rewarding. Are you planning to join any study groups?",
-      isMe: true,
-      timestamp: DateTime.now().subtract(const Duration(minutes: 45)),
-    ),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _initializeUser();
+  }
+
+  // Initialize user and load messages
+  Future<void> _initializeUser() async {
+    await _getCurrentUserId();
+    if (_currentUserId != null) {
+      await _testBackendConnection();
+      await _loadMessages();
+    } else {
+      print('❌ [DEBUG] No user ID found - user not logged in');
+      _showErrorDialog('Please log in to send messages');
+    }
+  }
+
+  // Get current user ID from storage
+  Future<void> _getCurrentUserId() async {
+    try {
+      _currentUserId = await AuthStorage.getCurrentUserId();
+      if (_currentUserId == null) {
+        print('🧪 [DEBUG] No stored user ID, setting demo user...');
+        await AuthStorage.setDemoUserId();
+        _currentUserId = await AuthStorage.getCurrentUserId();
+      }
+      print('👤 [DEBUG] Current User ID: $_currentUserId');
+    } catch (e) {
+      print('❌ [DEBUG] Error getting user ID: $e');
+    }
+  }
+
+  // Test backend connection
+  Future<void> _testBackendConnection() async {
+    print('🔍 [DEBUG] Testing backend connection...');
+    try {
+      final response = await http.get(
+        Uri.parse('${ApiConstants.baseUrl}/'),
+        headers: {'Content-Type': 'application/json'},
+      );
+      
+      print('🔍 [DEBUG] Backend test - Status: ${response.statusCode}');
+      print('🔍 [DEBUG] Backend test - Response: ${response.body}');
+      
+      if (response.statusCode == 200) {
+        print('✅ [DEBUG] Backend is connected and responding!');
+      } else {
+        print('⚠️ [DEBUG] Backend responded but with error code: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('❌ [DEBUG] Backend connection failed: $e');
+      print('❌ [DEBUG] Make sure the server is running on ${ApiConstants.baseUrl}');
+    }
+  }
 
   @override
   void dispose() {
@@ -60,20 +103,176 @@ class _PeerMessagingPageState extends State<PeerMessagingPage> {
     super.dispose();
   }
 
-  void _sendMessage() {
-    if (_messageController.text.trim().isNotEmpty) {
-      setState(() {
-        messages.add(
-          Message(
-            text: _messageController.text.trim(),
-            isMe: true,
-            timestamp: DateTime.now(),
-          ),
-        );
-      });
-      _messageController.clear();
-      _scrollToBottom();
+  // Load messages from backend when page opens
+  Future<void> _loadMessages() async {
+    print('🔄 [DEBUG] Starting to load messages...');
+    print('🔄 [DEBUG] Current User ID: $_currentUserId');
+    print('🔄 [DEBUG] Peer ID: ${widget.peerId ?? 'fffccdd9-ce55-41cf-8eaa-1964dc730329'}');
+    
+    // Check if user is logged in
+    if (_currentUserId == null) {
+      print('❌ [DEBUG] No user ID available for loading messages');
+      _loadDummyMessages();
+      return;
     }
+    
+    try {
+      setState(() {
+        _isLoading = true;
+      });
+
+      final String peerId = widget.peerId ?? "fffccdd9-ce55-41cf-8eaa-1964dc730329"; // Use real Ayaan UUID fallback
+      final String url = '${ApiConstants.baseUrl}/api/message/$_currentUserId/$peerId';
+      print('🌐 [DEBUG] API URL: $url');
+      
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      print('📡 [DEBUG] Response Status Code: ${response.statusCode}');
+      print('📡 [DEBUG] Response Body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final List<dynamic> messageData = json.decode(response.body);
+        print('✅ [DEBUG] Messages loaded successfully: ${messageData.length} messages');
+        
+        setState(() {
+          messages = messageData.map((msg) {
+            print('📝 [DEBUG] Processing message: ${msg['content']} from sender: ${msg['sender_id']}');
+            return Message(
+              text: msg['content'] ?? '',
+              isMe: msg['sender_id'] == _currentUserId,
+              timestamp: DateTime.tryParse(msg['created_at'] ?? '') ?? DateTime.now(),
+            );
+          }).toList();
+        });
+        
+        print('✅ [DEBUG] Messages set in UI: ${messages.length} messages');
+        
+        // Scroll to bottom after loading messages
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _scrollToBottom();
+        });
+      } else {
+        print('❌ [DEBUG] Failed to load messages: ${response.statusCode}');
+        print('❌ [DEBUG] Error response: ${response.body}');
+        _loadDummyMessages(); // Load dummy data if API fails
+      }
+    } catch (e) {
+      print('💥 [DEBUG] Error loading messages: $e');
+      print('💥 [DEBUG] Error type: ${e.runtimeType}');
+      _loadDummyMessages(); // Load dummy data on error
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+      print('🏁 [DEBUG] Load messages completed');
+    }
+  }
+
+  // Load dummy messages as fallback
+  void _loadDummyMessages() {
+    setState(() {
+      messages = [
+        Message(
+          text: "Hey! I saw your profile on Peer Connect. Nice to meet you!",
+          isMe: false,
+          timestamp: DateTime.now().subtract(const Duration(hours: 2)),
+        ),
+        Message(
+          text: "Hi there! Nice to meet you too. How are you finding your studies?",
+          isMe: true,
+          timestamp: DateTime.now().subtract(const Duration(hours: 1, minutes: 45)),
+        ),
+        Message(
+          text: "It's been quite challenging but exciting! I love the practical projects we're working on. What about you?",
+          isMe: false,
+          timestamp: DateTime.now().subtract(const Duration(hours: 1, minutes: 30)),
+        ),
+      ];
+    });
+  }
+
+  // Send message to backend
+  Future<void> _sendMessage() async {
+    if (_messageController.text.trim().isEmpty) return;
+    
+    // Check if user is logged in
+    if (_currentUserId == null) {
+      _showErrorDialog('Please log in to send messages');
+      return;
+    }
+
+    final messageText = _messageController.text.trim();
+    _messageController.clear();
+
+    // Add message to UI immediately for better user experience
+    setState(() {
+      messages.add(
+        Message(
+          text: messageText,
+          isMe: true,
+          timestamp: DateTime.now(),
+        ),
+      );
+    });
+    _scrollToBottom();
+
+    // Send to backend
+    try {
+      final String peerId = widget.peerId ?? "fffccdd9-ce55-41cf-8eaa-1964dc730329"; // Use real Ayaan UUID fallback
+      print('📤 [DEBUG] Sending message to backend...');
+      print('📤 [DEBUG] Sender ID: $_currentUserId');
+      print('📤 [DEBUG] Receiver ID: $peerId');
+      print('📤 [DEBUG] Message: $messageText');
+      
+      final response = await http.post(
+        Uri.parse('${ApiConstants.baseUrl}/api/message'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'senderId': _currentUserId,
+          'receiverId': peerId,
+          'content': messageText,
+        }),
+      );
+
+      print('📤 [DEBUG] Send Response Status: ${response.statusCode}');
+      print('📤 [DEBUG] Send Response Body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        print('✅ [DEBUG] Message sent successfully!');
+        // Optionally refresh messages to get server response
+        // _loadMessages();
+      } else {
+        print('❌ [DEBUG] Failed to send message: ${response.statusCode}');
+        print('❌ [DEBUG] Error response: ${response.body}');
+        // Could show an error indicator or retry option
+      }
+    } catch (e) {
+      print('💥 [DEBUG] Error sending message: $e');
+      print('💥 [DEBUG] Error type: ${e.runtimeType}');
+      // Could show an error indicator on the message
+    }
+  }
+
+  // Show error dialog
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Error'),
+          content: Text(message),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void _scrollToBottom() {
@@ -116,22 +315,26 @@ class _PeerMessagingPageState extends State<PeerMessagingPage> {
                 children: [
                   // Chat messages
                   Expanded(
-                    child: ListView.builder(
-                      controller: _scrollController,
-                      padding: EdgeInsets.all(
-                        isSmallScreen
-                            ? AppConstants.spaceS
-                            : AppConstants.spaceM,
-                      ),
-                      itemCount: messages.length,
-                      itemBuilder: (context, index) {
-                        return _buildMessageBubble(
-                          messages[index],
-                          isSmallScreen,
-                          screenWidth,
-                        );
-                      },
-                    ),
+                    child: _isLoading
+                        ? const Center(
+                            child: CircularProgressIndicator(),
+                          )
+                        : ListView.builder(
+                            controller: _scrollController,
+                            padding: EdgeInsets.all(
+                              isSmallScreen
+                                  ? AppConstants.spaceS
+                                  : AppConstants.spaceM,
+                            ),
+                            itemCount: messages.length,
+                            itemBuilder: (context, index) {
+                              return _buildMessageBubble(
+                                messages[index],
+                                isSmallScreen,
+                                screenWidth,
+                              );
+                            },
+                          ),
                   ),
 
                   // Message input

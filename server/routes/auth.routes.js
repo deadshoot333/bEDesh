@@ -111,4 +111,18 @@ router.delete('/logout',async(req,res)=>{
   }
 })
 
+// Get sample users for testing (DEV ONLY)
+router.get('/test-users', async (req, res) => {
+  try {
+    const { pool } = require('../config/connection');
+    const result = await pool.query('SELECT id, email, university FROM public.users LIMIT 5');
+    res.json({ 
+      message: 'Sample users for testing',
+      users: result.rows 
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

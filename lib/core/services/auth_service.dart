@@ -5,6 +5,8 @@ import '../models/user.dart';
 import '../models/api_error.dart';
 import 'api_service.dart';
 import 'storage_service.dart';
+import 'auth_storage.dart';
+import 'dart:convert';
 
 class AuthService {
   static final AuthService _instance = AuthService._internal();
@@ -69,10 +71,43 @@ class AuthService {
         authResponse.refreshToken,
       );
 
+      // Extract and save user ID from JWT token
+      final userId = _extractUserIdFromToken(authResponse.accessToken);
+      if (userId != null) {
+        await AuthStorage.storeUserId(userId);
+        print('✅ [AUTH] User ID extracted and stored: $userId');
+      }
+
       return authResponse;
     } catch (e) {
       if (e is ApiError) rethrow;
       throw ApiError(message: 'Login failed: ${e.toString()}');
+    }
+  }
+
+  // Extract user ID from JWT token
+  String? _extractUserIdFromToken(String token) {
+    try {
+      // JWT has 3 parts separated by dots: header.payload.signature
+      final parts = token.split('.');
+      if (parts.length != 3) return null;
+      
+      // Decode the payload (second part)
+      String payload = parts[1];
+      
+      // Add padding if needed (JWT base64 encoding might not have padding)
+      while (payload.length % 4 != 0) {
+        payload += '=';
+      }
+      
+      // Decode base64
+      final decoded = utf8.decode(base64Decode(payload));
+      final Map<String, dynamic> tokenData = json.decode(decoded);
+      
+      return tokenData['userId'] as String?;
+    } catch (e) {
+      print('❌ [AUTH] Error extracting user ID from token: $e');
+      return null;
     }
   }
 

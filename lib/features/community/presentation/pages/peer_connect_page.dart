@@ -1,4 +1,5 @@
 import 'package:bedesh/features/community/presentation/pages/peer_messaging_page.dart';
+import 'package:bedesh/features/community/presentation/pages/backend_test_page.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -136,6 +137,22 @@ class _PeerConnectPageState extends State<PeerConnectPage>
                 },
                 tooltip: 'Profile',
               ),
+              const SizedBox(width: AppConstants.spaceS),
+              // Backend Test button (for debugging)
+              ModernIconButton(
+                icon: Icons.wifi_tethering,
+                backgroundColor: AppColors.textOnPrimary.withOpacity(0.2),
+                iconColor: AppColors.textOnPrimary,
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const BackendTestPage(),
+                    ),
+                  );
+                },
+                tooltip: 'Test Backend',
+              ),
             ],
           ),
         ),
@@ -144,9 +161,10 @@ class _PeerConnectPageState extends State<PeerConnectPage>
   }
 
   Widget buildStudentList(BuildContext context, String filterType) {
-    // Dummy data
+    // Using real user UUIDs from database
     final List<Map<String, String>> peers = [
       {
+        'id': 'fffccdd9-ce55-41cf-8eaa-1964dc730329', // Real UUID for Ayaan (second test user)
         'name': 'Ayaan Khan',
         'university': 'University of Glasgow',
         'city': 'Glasgow',
@@ -154,6 +172,7 @@ class _PeerConnectPageState extends State<PeerConnectPage>
         'year': '2nd Year',
       },
       {
+        'id': '95abd4be-a17b-4b6c-bd5f-81d6a8309749', // Real UUID from database (Nanjeeba)
         'name': 'Zara Rahman',
         'university': 'University of Toronto',
         'city': 'Toronto',
@@ -161,6 +180,7 @@ class _PeerConnectPageState extends State<PeerConnectPage>
         'year': '3rd Year',
       },
       {
+        'id': 'a635a938-646c-4b68-87be-6c4fba70f718', // Real UUID from database (Anika)
         'name': 'Tanisha Chowdhury',
         'university': 'University of Sydney',
         'city': 'Sydney',
@@ -168,6 +188,7 @@ class _PeerConnectPageState extends State<PeerConnectPage>
         'year': '1st Year',
       },
       {
+        'id': 'peer4',
         'name': 'Rafi Ahmed',
         'university': 'University of Edinburgh',
         'city': 'Edinburgh',
@@ -175,6 +196,7 @@ class _PeerConnectPageState extends State<PeerConnectPage>
         'year': '4th Year',
       },
       {
+        'id': 'peer5',
         'name': 'Samira Hassan',
         'university': 'University of Manchester',
         'city': 'Manchester',
@@ -348,6 +370,7 @@ class _PeerConnectPageState extends State<PeerConnectPage>
                                     peerUniversity: peer['university']!,
                                     peerCourse: peer['course']!,
                                     peerYear: peer['year']!,
+                                    peerId: peer['id']!, // Pass the peer ID for API calls
                                   ),
                             ),
                           );
