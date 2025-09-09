@@ -313,7 +313,7 @@ class _PeerConnectPageState extends State<PeerConnectPage>
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Text(
-                                    "Connection request sent to ${peer['user_name']}",
+                                    "Connection request sent to ${peer['name']}",
                                   ),
                                   backgroundColor: AppColors.success,
                                 ),
