@@ -38,25 +38,25 @@ router.post("/respond", async (req, res) => {
   }
 });
 router.get("/city/:id", async (req, res) => {
-  const { id } = req.body;
+  const { id } = req.params;
   const user = await findUserById(id);
   console.log(user)
   const city = user.city;
   try {
     const peersCity = await getPeersCity(city);
-    res.json({ peersCity });
+    res.json( peersCity );
   } catch (error) {
     res.status(500).json({ error: "Failed to get peers of same city" });
   }
 });
 router.get("/university/:id", async (req, res) => {
-  const { id } = req.body;
+  const { id } = req.params;
   const user = await findUserById(id);
   console.log(user)
   const university = user.university;
   try {
     const peersUni = await getPeersUni(university);
-    res.json({ peersUni });
+    res.json( peersUni );
   } catch (error) {
     res.status(500).json({ error: "Failed to get peers of same university" });
   }

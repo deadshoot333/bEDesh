@@ -30,7 +30,7 @@ async function respondRequest(connectionId, action) {
 
 async function getPeersCity(city) {
   const result = await pool.query(
-    "SELECT email FROM public.users WHERE city=$1",
+    "SELECT * FROM public.users WHERE city=$1",
     [city]
   );
   return result.rows;
@@ -38,7 +38,7 @@ async function getPeersCity(city) {
 
 async function getPeersUni(uni){
   const result = await pool.query(
-    "SELECT email FROM public.users WHERE university=$1",
+    "SELECT * FROM public.users WHERE university=$1",
     [uni]
   );
   return result.rows;

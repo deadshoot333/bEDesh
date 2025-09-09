@@ -25,16 +25,15 @@ class _PeerConnectPageState extends State<PeerConnectPage>
   late TabController _tabController;
   final TextEditingController _searchController = TextEditingController();
 
-  String? currentUserId;
   // 🔹 Replace this with your logged-in userId from auth/session
-  // final String currentUserId = "c67c2c6f-8286-4eef-bd0a-9af880dcf329";
-  User? currentUser;
+  final String currentUserId = "1fa5ba70-6a6c-473c-97c2-d0d4e33dea1e";
+  // User? currentUser;
   @override
   void initState() {
     _tabController = TabController(length: 2, vsync: this);
     super.initState();
     // fetch user from StorageService
-    currentUser = StorageService.getUserData();
+    // currentUser = StorageService.getUserData();
   }
 
   @override
@@ -45,10 +44,10 @@ class _PeerConnectPageState extends State<PeerConnectPage>
   }
 
   Future<List<Map<String, dynamic>>> fetchPeers(String filterType) async {
-    if (currentUser == null) return [];
+    // if (currentUser == null) return [];
 
     final url = Uri.parse(
-      "${ApiConstants.baseUrl}/api/peer/$filterType/${currentUser!.id}",
+      "${ApiConstants.baseUrl}/api/peer/$filterType/$currentUserId",
     );
 
     final response = await http.get(
@@ -186,15 +185,14 @@ class _PeerConnectPageState extends State<PeerConnectPage>
         }
 
         final peers = snapshot.data ?? [];
-
+        print(peers);
         // Apply search filtering
         final query = _searchController.text.toLowerCase();
         final filteredPeers =
             peers.where((peer) {
-              return peer['name'].toLowerCase().contains(query) ||
-                  peer['university'].toLowerCase().contains(query) ||
-                  peer['city'].toLowerCase().contains(query) ||
-                  peer['course'].toLowerCase().contains(query);
+              return peer['name'].contains(query) ||
+                  peer['university'].contains(query) ||
+                  peer['city'].contains(query);
             }).toList();
 
         if (filteredPeers.isEmpty) {
@@ -341,7 +339,7 @@ class _PeerConnectPageState extends State<PeerConnectPage>
                                         peerId: peer['id'],
                                         peerName: peer['name'],
                                         peerUniversity: peer['university'],
-                                        currentUserId: currentUser!.id,
+                                        currentUserId: currentUserId,
                                       ),
                                 ),
                               );
