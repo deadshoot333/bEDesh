@@ -65,8 +65,17 @@ router.post('/login', async (req, res) => {
   }
   
   try {
-    const {accessToken,refreshToken} = await loginUser(email, password);
-    res.json({accessToken,refreshToken});
+    const {accessToken, refreshToken, user} = await loginUser(email, password);
+    res.json({accessToken,
+      refreshToken,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        image: user.image,
+        city: user.city,
+        university:user.university
+      }});
   } catch (err) {
     console.error('Login error:', err.message);
     res.status(401).json({ error: err.message });

@@ -27,13 +27,22 @@ class _PeerConnectPageState extends State<PeerConnectPage>
 
   // 🔹 Replace this with your logged-in userId from auth/session
   final String currentUserId = "1fa5ba70-6a6c-473c-97c2-d0d4e33dea1e";
-  // User? currentUser;
+  User? currentUser;
   @override
   void initState() {
-    _tabController = TabController(length: 2, vsync: this);
     super.initState();
+    _tabController = TabController(length: 2, vsync: this);
     // fetch user from StorageService
-    // currentUser = StorageService.getUserData();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final user = StorageService.getUserData();
+      if (user != null) {
+        setState(() {
+          currentUser = user;
+        });
+      } else {
+        print("⚠️ No user data found in StorageService");
+      }
+    });
   }
 
   @override
@@ -45,21 +54,27 @@ class _PeerConnectPageState extends State<PeerConnectPage>
 
   Future<List<Map<String, dynamic>>> fetchPeers(String filterType) async {
     // if (currentUser == null) return [];
-
+    if (currentUser == null) {
+      print("⚠️ currentUser is null, cannot fetch peers");
+      return [];
+    }
     final url = Uri.parse(
-      "${ApiConstants.baseUrl}/api/peer/$filterType/$currentUserId",
+      "${ApiConstants.baseUrl}/api/peer/$filterType/${currentUser!.id}",
     );
-
+    final token = StorageService.getAccessToken();
+    if (token == null) {
+      throw Exception("No access token found");
+    }
     final response = await http.get(
       url,
-      headers: {"Authorization": "Bearer ${StorageService.getAccessToken()}"},
+      headers: {"Authorization": "Bearer $token"},
     );
-
+    print("Calling $url with token: $token");
+    print("Response ${response.statusCode}: ${response.body}");
     if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      return List<Map<String, dynamic>>.from(data);
+      return List<Map<String, dynamic>>.from(jsonDecode(response.body));
     } else {
-      throw Exception("Failed to load peers");
+      throw Exception("Failed to load peers: ${response.body}");
     }
   }
 

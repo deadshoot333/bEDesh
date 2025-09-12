@@ -64,7 +64,7 @@ async function findUserById(id) {
   console.log("\n🗄️  DATABASE - findUserById called with:", id);
   try {
     const result = await pool.query(
-      "SELECT id, email,city,university,name,image FROM public.users WHERE id = $1",
+      "SELECT * FROM public.users WHERE id = $1",
       [id]
     );
     console.log("📊 Query result - rows found:", result.rows.length);

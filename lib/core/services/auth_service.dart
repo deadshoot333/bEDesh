@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import '../constants/api_constants.dart';
 import '../models/auth_response.dart';
 import '../models/signup_response.dart';
@@ -24,18 +26,15 @@ class AuthService {
     print('  - email: $email');
     print('  - mobile: $mobile');
     print('  - password: ${password.isNotEmpty ? '[REDACTED]' : 'EMPTY'}');
-    
+
     try {
       print('🌐 Calling API...');
-      final response = await _apiService.post(
-        ApiConstants.signupEndpoint,
-        {
-          'email': email,
-          'mobile': mobile,
-          'password': password,
-        },
-      );
-      
+      final response = await _apiService.post(ApiConstants.signupEndpoint, {
+        'email': email,
+        'mobile': mobile,
+        'password': password,
+      });
+
       print('✅ API call successful, response: $response');
       return SignupResponse.fromJson(response);
     } catch (e) {
@@ -53,22 +52,19 @@ class AuthService {
     required String password,
   }) async {
     try {
-      final response = await _apiService.post(
-        ApiConstants.loginEndpoint,
-        {
-          'email': email,
-          'password': password,
-        },
-      );
-
+      final response = await _apiService.post(ApiConstants.loginEndpoint, {
+        'email': email,
+        'password': password,
+      });
       final authResponse = AuthResponse.fromJson(response);
-      
+
       // Save tokens to storage
       await StorageService.saveTokens(
         authResponse.accessToken,
         authResponse.refreshToken,
       );
-
+      final user = User.fromJson(response['user']);
+      await StorageService.saveUserData(user);
       return authResponse;
     } catch (e) {
       if (e is ApiError) rethrow;
@@ -85,10 +81,10 @@ class AuthService {
       );
 
       final user = User.fromJson(response['user'] as Map<String, dynamic>);
-      
+
       // Save user data to storage
       await StorageService.saveUserData(user);
-      
+
       return user;
     } catch (e) {
       if (e is ApiError) rethrow;
@@ -104,16 +100,15 @@ class AuthService {
         throw ApiError(message: 'No refresh token found', statusCode: 401);
       }
 
-      final response = await _apiService.post(
-        ApiConstants.refreshEndpoint,
-        {'refreshToken': refreshToken},
-      );
+      final response = await _apiService.post(ApiConstants.refreshEndpoint, {
+        'refreshToken': refreshToken,
+      });
 
       final newAccessToken = response['accessToken'] as String;
-      
+
       // Save new access token
       await StorageService.saveAccessToken(newAccessToken);
-      
+
       return newAccessToken;
     } catch (e) {
       if (e is ApiError) rethrow;
@@ -125,14 +120,13 @@ class AuthService {
   Future<void> logout() async {
     try {
       final refreshToken = StorageService.getRefreshToken();
-      
+
       if (refreshToken != null) {
         // Attempt to logout from backend
         try {
-          await _apiService.delete(
-            ApiConstants.logoutEndpoint,
-            {'refreshToken': refreshToken},
-          );
+          await _apiService.delete(ApiConstants.logoutEndpoint, {
+            'refreshToken': refreshToken,
+          });
         } catch (e) {
           // Continue with local logout even if backend call fails
           print('Backend logout failed: $e');

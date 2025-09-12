@@ -7,6 +7,7 @@ const {
   getUsersfromQuery,
 } = require("../models/peers.model");
 const { findUserById } = require("../models/user.model");
+const  authenticateToken  = require("../middlewares/auth.middleware.js");
 const router = express.Router();
 
 router.get("/", async (req, res) => {
@@ -37,26 +38,26 @@ router.post("/respond", async (req, res) => {
     res.status(500).json({ error: "Failed to respond to request" });
   }
 });
-router.get("/city/:id", async (req, res) => {
+router.get("/city/:id", authenticateToken,async (req, res) => {
   const { id } = req.params;
   const user = await findUserById(id);
-  console.log(user)
+  console.log(user);
   const city = user.city;
   try {
     const peersCity = await getPeersCity(city);
-    res.json( peersCity );
+    res.json(peersCity);
   } catch (error) {
     res.status(500).json({ error: "Failed to get peers of same city" });
   }
 });
-router.get("/university/:id", async (req, res) => {
+router.get("/university/:id",authenticateToken, async (req, res) => {
   const { id } = req.params;
   const user = await findUserById(id);
-  console.log(user)
+  console.log(user);
   const university = user.university;
   try {
     const peersUni = await getPeersUni(university);
-    res.json( peersUni );
+    res.json(peersUni);
   } catch (error) {
     res.status(500).json({ error: "Failed to get peers of same university" });
   }
