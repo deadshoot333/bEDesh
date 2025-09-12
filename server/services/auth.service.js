@@ -28,7 +28,7 @@ if (!JWT_SECRET) {
 }
 console.log("✅ JWT_SECRET validated, continuing...");
 
-async function registerUser(email, mobile, password, university, city) {
+async function registerUser(name,email, mobile, password, university, city) {
   console.log("\n🔧 AUTH SERVICE - registerUser called");
   console.log("📝 Parameters:");
   console.log("  - email:", email);
@@ -36,6 +36,7 @@ async function registerUser(email, mobile, password, university, city) {
   console.log("  - password:", password ? "[REDACTED]" : "undefined");
   console.log("  - university:", university);
   console.log("  - city", city);
+  console.log("  - name", name);
 
   try {
     console.log("🔍 Checking if user exists by email...");
@@ -67,6 +68,7 @@ async function registerUser(email, mobile, password, university, city) {
 
     console.log("💾 Creating user in database...");
     const result = await createUser(
+      name,
       email,
       mobile,
       hashedPassword,

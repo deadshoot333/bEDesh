@@ -19,9 +19,14 @@ class _ModernSignupPageState extends State<ModernSignupPage> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _phoneController = TextEditingController(text: '+880');
+  final TextEditingController _phoneController = TextEditingController(
+    text: '+880',
+  );
+  final TextEditingController _universityController = TextEditingController();
+  final TextEditingController _cityController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController = TextEditingController();
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
 
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
@@ -93,7 +98,9 @@ class _ModernSignupPageState extends State<ModernSignupPage> {
             child: Center(
               child: SingleChildScrollView(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: AppConstants.spaceL),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppConstants.spaceL,
+                  ),
                   child: Container(
                     padding: const EdgeInsets.all(AppConstants.spaceXL),
                     decoration: BoxDecoration(
@@ -141,10 +148,11 @@ class _ModernSignupPageState extends State<ModernSignupPage> {
                               'Full Name',
                               Icons.person_outline,
                             ),
-                            validator: (value) =>
-                                value == null || value.trim().isEmpty
-                                    ? 'Enter your full name'
-                                    : null,
+                            validator:
+                                (value) =>
+                                    value == null || value.trim().isEmpty
+                                        ? 'Enter your full name'
+                                        : null,
                           ),
                           const SizedBox(height: AppConstants.spaceL),
 
@@ -163,7 +171,8 @@ class _ModernSignupPageState extends State<ModernSignupPage> {
                               if (value == null || value.trim().isEmpty) {
                                 return 'Enter your email address';
                               }
-                              if (!value.contains('@') || !value.contains('.')) {
+                              if (!value.contains('@') ||
+                                  !value.contains('.')) {
                                 return 'Enter a valid email address';
                               }
                               return null;
@@ -186,8 +195,55 @@ class _ModernSignupPageState extends State<ModernSignupPage> {
                               if (value == null || value.trim().isEmpty) {
                                 return 'Enter your phone number';
                               }
-                              if (!value.startsWith('+880') || value.length < 14) {
+                              if (!value.startsWith('+880') ||
+                                  value.length < 14) {
                                 return 'Enter valid +880 phone number';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: AppConstants.spaceL),
+
+                          // University Field
+                          TextFormField(
+                            controller: _universityController,
+                            textCapitalization: TextCapitalization.words,
+                            style: AppTextStyles.bodyMedium.copyWith(
+                              color: AppColors.textPrimary,
+                            ),
+                            decoration: _modernInputDecoration(
+                              'University',
+                              Icons.school_outlined,
+                            ),
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return 'Enter your university';
+                              }
+                              if (value.trim().length < 3) {
+                                return 'University name is too short';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: AppConstants.spaceL),
+
+                          // City Field
+                          TextFormField(
+                            controller: _cityController,
+                            textCapitalization: TextCapitalization.words,
+                            style: AppTextStyles.bodyMedium.copyWith(
+                              color: AppColors.textPrimary,
+                            ),
+                            decoration: _modernInputDecoration(
+                              'City',
+                              Icons.location_city_outlined,
+                            ),
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return 'Enter your city';
+                              }
+                              if (value.trim().length < 2) {
+                                return 'City name is too short';
                               }
                               return null;
                             },
@@ -249,7 +305,8 @@ class _ModernSignupPageState extends State<ModernSignupPage> {
                                 ),
                                 onPressed: () {
                                   setState(() {
-                                    _obscureConfirmPassword = !_obscureConfirmPassword;
+                                    _obscureConfirmPassword =
+                                        !_obscureConfirmPassword;
                                   });
                                 },
                               ),
@@ -269,7 +326,10 @@ class _ModernSignupPageState extends State<ModernSignupPage> {
 
                           // Sign Up Button
                           PrimaryButton(
-                            text: _isLoading ? 'Creating Account...' : 'Create Account',
+                            text:
+                                _isLoading
+                                    ? 'Creating Account...'
+                                    : 'Create Account',
                             isExpanded: true,
                             size: ButtonSize.large,
                             onPressed: _isLoading ? null : _handleSignup,
@@ -331,16 +391,18 @@ class _ModernSignupPageState extends State<ModernSignupPage> {
                                 ),
                               ),
                               TextButton(
-                                onPressed: () => Navigator.pushReplacement(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => const LoginPage(),
-                                  ),
-                                ),
+                                onPressed:
+                                    () => Navigator.pushReplacement(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => const LoginPage(),
+                                      ),
+                                    ),
                                 style: TextButton.styleFrom(
                                   padding: EdgeInsets.zero,
                                   minimumSize: Size.zero,
-                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                  tapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
                                 ),
                                 child: Text(
                                   'Login',
@@ -375,11 +437,7 @@ class _ModernSignupPageState extends State<ModernSignupPage> {
       hintStyle: AppTextStyles.bodyMedium.copyWith(
         color: AppColors.textTertiary,
       ),
-      prefixIcon: Icon(
-        prefixIcon,
-        color: AppColors.textSecondary,
-        size: 20,
-      ),
+      prefixIcon: Icon(prefixIcon, color: AppColors.textSecondary, size: 20),
       suffixIcon: suffixIcon,
       filled: true,
       fillColor: AppColors.backgroundSecondary.withOpacity(0.8),
@@ -389,38 +447,23 @@ class _ModernSignupPageState extends State<ModernSignupPage> {
       ),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppConstants.radiusM),
-        borderSide: const BorderSide(
-          color: AppColors.borderLight,
-          width: 1.5,
-        ),
+        borderSide: const BorderSide(color: AppColors.borderLight, width: 1.5),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppConstants.radiusM),
-        borderSide: const BorderSide(
-          color: AppColors.borderLight,
-          width: 1.5,
-        ),
+        borderSide: const BorderSide(color: AppColors.borderLight, width: 1.5),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppConstants.radiusM),
-        borderSide: const BorderSide(
-          color: AppColors.primary,
-          width: 2,
-        ),
+        borderSide: const BorderSide(color: AppColors.primary, width: 2),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppConstants.radiusM),
-        borderSide: const BorderSide(
-          color: AppColors.error,
-          width: 1.5,
-        ),
+        borderSide: const BorderSide(color: AppColors.error, width: 1.5),
       ),
       focusedErrorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppConstants.radiusM),
-        borderSide: const BorderSide(
-          color: AppColors.error,
-          width: 2,
-        ),
+        borderSide: const BorderSide(color: AppColors.error, width: 2),
       ),
     );
   }
@@ -433,10 +476,13 @@ class _ModernSignupPageState extends State<ModernSignupPage> {
     });
 
     try {
-      // Call the signup API
+      // Call the signup API with all the fields
       await _authService.signup(
+        name: _nameController.text.trim(),
         email: _emailController.text.trim(),
         mobile: _phoneController.text.trim(),
+        university: _universityController.text.trim(),
+        city: _cityController.text.trim(),
         password: _passwordController.text,
       );
 
@@ -457,9 +503,7 @@ class _ModernSignupPageState extends State<ModernSignupPage> {
         // Navigate to login page
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(
-            builder: (context) => const LoginPage(),
-          ),
+          MaterialPageRoute(builder: (context) => const LoginPage()),
         );
       }
     } catch (e) {
@@ -496,6 +540,8 @@ class _ModernSignupPageState extends State<ModernSignupPage> {
     _nameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
+    _universityController.dispose();
+    _cityController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
