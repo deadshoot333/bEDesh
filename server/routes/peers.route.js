@@ -5,9 +5,11 @@ const {
   getPeersCity,
   getPeersUni,
   getUsersfromQuery,
+  listReceived,
+  listSent,
 } = require("../models/peers.model");
 const { findUserById } = require("../models/user.model");
-const  authenticateToken  = require("../middlewares/auth.middleware.js");
+const authenticateToken = require("../middlewares/auth.middleware.js");
 const router = express.Router();
 
 router.get("/", async (req, res) => {
@@ -38,25 +40,45 @@ router.post("/respond", async (req, res) => {
     res.status(500).json({ error: "Failed to respond to request" });
   }
 });
-router.get("/city/:id", authenticateToken,async (req, res) => {
+router.get("/requests/received/:userId", async (req, res) => {
+  const { userId } = req.params;
+  try {
+    const rows = await listReceived(userId);
+    return res.json(rows);
+  } catch (error) {
+    console.error("received error:", err);
+    return res.status(500).json({ error: "Failed to fetch received requests" });
+  }
+});
+router.get("/requests/sent/:userId", async (req, res) => {
+  const { userId } = req.params;
+  try {
+    const rows = await listSent(userId);
+    return res.json(rows);
+  } catch (error) {
+    console.error("sent error:", err);
+    return res.status(500).json({ error: "Failed to fetch sent requests" });
+  }
+});
+router.get("/city/:id", authenticateToken, async (req, res) => {
   const { id } = req.params;
   const user = await findUserById(id);
   console.log(user);
   const city = user.city;
   try {
-    const peersCity = await getPeersCity(city);
+    const peersCity = await getPeersCity(city,id);
     res.json(peersCity);
   } catch (error) {
     res.status(500).json({ error: "Failed to get peers of same city" });
   }
 });
-router.get("/university/:id",authenticateToken, async (req, res) => {
+router.get("/university/:id", authenticateToken, async (req, res) => {
   const { id } = req.params;
   const user = await findUserById(id);
   console.log(user);
   const university = user.university;
   try {
-    const peersUni = await getPeersUni(university);
+    const peersUni = await getPeersUni(university,id);
     res.json(peersUni);
   } catch (error) {
     res.status(500).json({ error: "Failed to get peers of same university" });
