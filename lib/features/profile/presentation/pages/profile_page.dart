@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/app_constants.dart';
@@ -23,7 +26,7 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage>
-    with TickerProviderStateMixin {
+    with TickerProviderStateMixin, WidgetsBindingObserver {
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
@@ -38,9 +41,14 @@ class _ProfilePageState extends State<ProfilePage>
   int _connectionsCount = 0;
   int _savedCount = 0;
 
+  // Profile photo state
+  String? _profileImagePath;
+  final ImagePicker _imagePicker = ImagePicker();
+
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 1000),
       vsync: this,
@@ -62,7 +70,18 @@ class _ProfilePageState extends State<ProfilePage>
     
     // Load user data when page initializes
     _loadUserProfile();
+    _loadProfileImage();
     _animationController.forward();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    // Refresh stats when app comes back to foreground
+    if (state == AppLifecycleState.resumed && _currentUser?.id != null) {
+      print('🔄 ProfilePage: App resumed, refreshing stats...');
+      _refreshStats();
+    }
   }
 
   Future<void> _loadUserProfile() async {
@@ -124,9 +143,19 @@ class _ProfilePageState extends State<ProfilePage>
   }
 
   Future<void> _refreshStats() async {
+    print('🔄 ProfilePage: Refreshing stats...');
     if (_currentUser?.id != null) {
       await _loadUserStatistics(_currentUser!.id);
     }
+  }
+
+  Future<void> _refreshFavoritesCount() async {
+    print('🔄 ProfilePage: Refreshing favorites count only...');
+    final savedCount = FavoritesService.getFavoritesCount();
+    setState(() {
+      _savedCount = savedCount;
+    });
+    print('📊 ProfilePage: Favorites count refreshed: $savedCount');
   }
 
   Future<void> _loadUserStatistics(String userId) async {
@@ -139,8 +168,10 @@ class _ProfilePageState extends State<ProfilePage>
       // Load connections count  
       final connectionsCount = await profileService.getUserConnectionsCount(userId);
       
-      // Load favorites count from FavoritesService
+      // Load favorites count from FavoritesService with debugging
+      print('🔍 ProfilePage: Loading favorites count...');
       final savedCount = FavoritesService.getFavoritesCount();
+      print('📊 ProfilePage: Favorites count loaded: $savedCount');
       
       setState(() {
         _postsCount = postsCount;
@@ -148,14 +179,17 @@ class _ProfilePageState extends State<ProfilePage>
         _savedCount = savedCount;
       });
       
+      print('✅ ProfilePage: User statistics updated - Posts: $_postsCount, Connections: $_connectionsCount, Saved: $_savedCount');
+      
     } catch (e) {
       // If stats loading fails, just keep default values
-      print('Failed to load user statistics: $e');
+      print('❌ Failed to load user statistics: $e');
     }
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _animationController.dispose();
     super.dispose();
   }
@@ -168,8 +202,14 @@ class _ProfilePageState extends State<ProfilePage>
         opacity: _fadeAnimation,
         child: SlideTransition(
           position: _slideAnimation,
-          child: CustomScrollView(
-            slivers: [
+          child: RefreshIndicator(
+            onRefresh: () async {
+              print('🔄 ProfilePage: Pull-to-refresh triggered');
+              await _loadUserProfile();
+            },
+            color: AppColors.primary,
+            child: CustomScrollView(
+              slivers: [
               // Modern App Bar with Profile Header
               SliverAppBar(
                 expandedHeight: 280,
@@ -217,11 +257,12 @@ class _ProfilePageState extends State<ProfilePage>
                                 child: CircleAvatar(
                                   radius: 50,
                                   backgroundColor: AppColors.primary.withOpacity(0.1),
-                                  child: Icon(
+                                  backgroundImage: _getProfileImageProvider(),
+                                  child: _profileImagePath == null ? Icon(
                                     Icons.person,
                                     color: AppColors.primary,
                                     size: 50,
-                                  ),
+                                  ) : null,
                                 ),
                               ),
                               Positioned(
@@ -546,6 +587,7 @@ class _ProfilePageState extends State<ProfilePage>
                 ),
               ),
             ],
+            ),
           ),
         ),
       ),
@@ -590,6 +632,151 @@ class _ProfilePageState extends State<ProfilePage>
     );
   }
 
+  // Profile photo methods
+  void _loadProfileImage() {
+    final savedPath = StorageService.getProfilePhotoPath();
+    if (savedPath != null) {
+      setState(() {
+        _profileImagePath = savedPath;
+      });
+    }
+  }
+
+  Future<void> _pickImageFromSource(ImageSource source) async {
+    try {
+      final XFile? pickedFile = await _imagePicker.pickImage(
+        source: source,
+        maxWidth: 512,
+        maxHeight: 512,
+        imageQuality: 80,
+      );
+
+      if (pickedFile != null) {
+        await StorageService.setProfilePhotoPath(pickedFile.path);
+        setState(() {
+          _profileImagePath = pickedFile.path;
+        });
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Profile photo updated successfully!',
+                style: AppTextStyles.bodyMedium.copyWith(
+                  color: AppColors.backgroundPrimary,
+                ),
+              ),
+              backgroundColor: AppColors.success,
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Failed to pick image. Please try again.',
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: AppColors.backgroundPrimary,
+              ),
+            ),
+            backgroundColor: AppColors.error,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    }
+  }
+
+  void _showImageSourceDialog() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.backgroundCard,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppConstants.radiusL),
+        ),
+      ),
+      builder: (context) => Container(
+        padding: EdgeInsets.all(AppConstants.spaceL),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              margin: EdgeInsets.only(bottom: AppConstants.spaceL),
+              decoration: BoxDecoration(
+                color: AppColors.textSecondary.withOpacity(0.3),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            Text(
+              'Select Profile Photo',
+              style: AppTextStyles.h4.copyWith(
+                color: AppColors.textPrimary,
+              ),
+            ),
+            SizedBox(height: AppConstants.spaceL),
+            Column(
+              children: [
+                // Camera option - always show, handle platform limitations gracefully
+                ListTile(
+                  leading: const Icon(
+                    Icons.camera_alt_outlined,
+                    color: AppColors.primary,
+                  ),
+                  title: Text(
+                    'Camera',
+                    style: AppTextStyles.bodyLarge.copyWith(
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _pickImageFromSource(ImageSource.camera);
+                  },
+                ),
+                // Gallery/File picker option
+                ListTile(
+                  leading: const Icon(
+                    Icons.photo_library_outlined,
+                    color: AppColors.primary,
+                  ),
+                  title: Text(
+                    'Gallery',
+                    style: AppTextStyles.bodyLarge.copyWith(
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _pickImageFromSource(ImageSource.gallery);
+                  },
+                ),
+              ],
+            ),
+            SizedBox(height: AppConstants.spaceM),
+          ],
+        ),
+      ),
+    );
+  }
+
+  ImageProvider _getProfileImageProvider() {
+    if (_profileImagePath != null) {
+      if (kIsWeb) {
+        // For web, use NetworkImage or handle differently
+        return AssetImage('assets/img.png'); // Fallback for web
+      } else {
+        return FileImage(File(_profileImagePath!));
+      }
+    }
+    return const AssetImage('assets/img.png'); // Default image
+  }
+
   void _showEditProfileDialog() {
     showDialog(
       context: context,
@@ -604,17 +791,53 @@ class _ProfilePageState extends State<ProfilePage>
             color: AppColors.textPrimary,
           ),
         ),
-        content: Text(
-          'Profile editing feature coming soon!',
-          style: AppTextStyles.bodyMedium.copyWith(
-            color: AppColors.textSecondary,
-          ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Profile photo section
+            GestureDetector(
+              onTap: _showImageSourceDialog,
+              child: Container(
+                width: 100,
+                height: 100,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: AppColors.primary,
+                    width: 2,
+                  ),
+                  image: DecorationImage(
+                    image: _getProfileImageProvider(),
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                child: Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppColors.textSecondary.withOpacity(0.3),
+                  ),
+                  child: const Icon(
+                    Icons.camera_alt_outlined,
+                    color: AppColors.backgroundPrimary,
+                    size: 30,
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(height: AppConstants.spaceM),
+            Text(
+              'Tap to change profile photo',
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text(
-              'OK',
+              'Done',
               style: AppTextStyles.labelMedium.copyWith(
                 color: AppColors.primary,
               ),

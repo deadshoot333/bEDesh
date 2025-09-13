@@ -47,10 +47,13 @@ class _FavoritesPageState extends State<FavoritesPage>
   }
 
   Future<void> _loadFavorites() async {
+    print('🔄 FavoritesPage: Loading favorites...');
     setState(() => _isLoading = true);
     
     try {
       final favorites = FavoritesService.getFavoriteUniversities();
+      print('📊 FavoritesPage: Loaded ${favorites.length} favorites');
+      
       setState(() {
         _favoriteUniversities = favorites;
         _isLoading = false;
@@ -58,6 +61,7 @@ class _FavoritesPageState extends State<FavoritesPage>
       
       _animationController.forward();
     } catch (e) {
+      print('❌ FavoritesPage: Error loading favorites - $e');
       setState(() => _isLoading = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

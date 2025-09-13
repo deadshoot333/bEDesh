@@ -8,7 +8,17 @@ class FavoritesService {
 
   /// Initialize the service
   static Future<void> init() async {
-    _prefs = await SharedPreferences.getInstance();
+    try {
+      _prefs = await SharedPreferences.getInstance();
+      print('✅ FavoritesService: Initialized successfully');
+      
+      // Debug: Check if there are existing favorites
+      final existingFavorites = getFavoriteUniversities();
+      print('🔍 FavoritesService: Found ${existingFavorites.length} existing favorites');
+    } catch (e) {
+      print('❌ FavoritesService: Failed to initialize - $e');
+      rethrow;
+    }
   }
 
   static SharedPreferences get _instance {
@@ -42,12 +52,19 @@ class FavoritesService {
   static List<Map<String, dynamic>> getFavoriteUniversities() {
     try {
       final favoritesJson = _instance.getString(_favoritesKey);
-      if (favoritesJson == null) return [];
+      print('🔍 FavoritesService: Getting favorites from storage - $favoritesJson');
+      
+      if (favoritesJson == null || favoritesJson.isEmpty) {
+        print('📝 FavoritesService: No favorites found in storage');
+        return [];
+      }
       
       final favoritesList = jsonDecode(favoritesJson) as List;
-      return favoritesList.cast<Map<String, dynamic>>();
+      final result = favoritesList.cast<Map<String, dynamic>>();
+      print('✅ FavoritesService: Successfully loaded ${result.length} favorites');
+      return result;
     } catch (e) {
-      print('Error getting favorite universities: $e');
+      print('❌ Error getting favorite universities: $e');
       return [];
     }
   }
@@ -68,10 +85,12 @@ class FavoritesService {
     String? description,
   }) async {
     try {
+      print('➕ FavoritesService: Adding university to favorites - $name ($universityId)');
       final favorites = getFavoriteUniversities();
       
       // Check if already exists
       if (favorites.any((fav) => fav['id'] == universityId)) {
+        print('⚠️ FavoritesService: University already in favorites');
         return false; // Already in favorites
       }
 
@@ -88,11 +107,20 @@ class FavoritesService {
       favorites.add(newFavorite);
       
       final favoritesJson = jsonEncode(favorites);
-      await _instance.setString(_favoritesKey, favoritesJson);
+      final success = await _instance.setString(_favoritesKey, favoritesJson);
       
-      return true;
+      if (success) {
+        print('✅ FavoritesService: Successfully added to favorites. Total: ${favorites.length}');
+        // Verify storage
+        final verification = _instance.getString(_favoritesKey);
+        print('🔍 FavoritesService: Verification - stored data: $verification');
+      } else {
+        print('❌ FavoritesService: Failed to save to SharedPreferences');
+      }
+      
+      return success;
     } catch (e) {
-      print('Error adding to favorites: $e');
+      print('❌ Error adding to favorites: $e');
       return false;
     }
   }
@@ -100,21 +128,29 @@ class FavoritesService {
   /// Remove university from favorites
   static Future<bool> removeFromFavorites(String universityId) async {
     try {
+      print('➖ FavoritesService: Removing university from favorites - $universityId');
       final favorites = getFavoriteUniversities();
       final initialLength = favorites.length;
       
       favorites.removeWhere((fav) => fav['id'] == universityId);
       
       if (favorites.length == initialLength) {
+        print('⚠️ FavoritesService: University was not in favorites');
         return false; // University was not in favorites
       }
 
       final favoritesJson = jsonEncode(favorites);
-      await _instance.setString(_favoritesKey, favoritesJson);
+      final success = await _instance.setString(_favoritesKey, favoritesJson);
       
-      return true;
+      if (success) {
+        print('✅ FavoritesService: Successfully removed from favorites. Total: ${favorites.length}');
+      } else {
+        print('❌ FavoritesService: Failed to save after removal');
+      }
+      
+      return success;
     } catch (e) {
-      print('Error removing from favorites: $e');
+      print('❌ Error removing from favorites: $e');
       return false;
     }
   }
