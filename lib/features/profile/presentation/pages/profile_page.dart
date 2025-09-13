@@ -9,7 +9,6 @@ import '../../../../core/services/favorites_service.dart';
 import '../../../../shared/widgets/buttons/modern_buttons.dart';
 import '../widgets/profile_stat_card.dart';
 import '../widgets/profile_option_card.dart';
-import '../../../home/presentation/pages/modern_home_page.dart';
 import '../../../community/presentation/pages/community_feed_page.dart';
 import '../../../community/presentation/pages/peer_connect_page.dart';
 import '../../../../core/services/storage_service.dart';
@@ -413,12 +412,12 @@ class _ProfilePageState extends State<ProfilePage>
                     tooltip: 'Refresh Profile',
                   ),
                   IconButton(
-                    onPressed: _showSettings,
+                    onPressed: _handleLogout,
                     icon: const Icon(
-                      Icons.settings_outlined,
+                      Icons.logout,
                       color: AppColors.textOnPrimary,
                     ),
-                    tooltip: 'Settings',
+                    tooltip: 'Logout',
                   ),
                   const SizedBox(width: AppConstants.spaceS),
                 ],
@@ -487,14 +486,6 @@ class _ProfilePageState extends State<ProfilePage>
                               children: [
                                 Expanded(
                                   child: SecondaryButton(
-                                    text: 'Apply Now',
-                                    icon: Icons.edit_outlined,
-                                    onPressed: () => _navigateToHome(),
-                                  ),
-                                ),
-                                const SizedBox(width: AppConstants.spaceM),
-                                Expanded(
-                                  child: SecondaryButton(
                                     text: 'View Community',
                                     icon: Icons.people_outline,
                                     onPressed: () => _navigateToCommunityFeed(),
@@ -544,40 +535,7 @@ class _ProfilePageState extends State<ProfilePage>
                               subtitle: "View your saved universities (${FavoritesService.getFavoritesCount()})",
                               onTap: () => _navigateToFavorites(),
                             ),
-                            const Divider(color: AppColors.borderLight, height: 1),
-                            ProfileOptionCard(
-                              icon: Icons.notifications_outlined,
-                              title: "Notifications",
-                              subtitle: "Manage your preferences",
-                              onTap: () => _showFeatureComingSoon('Notifications'),
-                            ),
                           ],
-                        ),
-                      ),
-
-                      const SizedBox(height: AppConstants.spaceL),
-
-                      // Logout Section
-                      Container(
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          color: AppColors.backgroundCard,
-                          borderRadius: BorderRadius.circular(AppConstants.radiusL),
-                          boxShadow: const [
-                            BoxShadow(
-                              color: AppColors.shadowLight,
-                              offset: Offset(0, 2),
-                              blurRadius: 8,
-                              spreadRadius: 0,
-                            ),
-                          ],
-                        ),
-                        child: ProfileOptionCard(
-                          icon: Icons.logout_outlined,
-                          title: "Logout",
-                          subtitle: "Sign out of your account",
-                          isDestructive: true,
-                          onTap: _showLogoutDialog,
                         ),
                       ),
 
@@ -590,15 +548,6 @@ class _ProfilePageState extends State<ProfilePage>
             ),
           ),
         ),
-      ),
-    );
-  }
-
-  void _navigateToHome() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const ModernHomePage(),
       ),
     );
   }
@@ -848,8 +797,129 @@ class _ProfilePageState extends State<ProfilePage>
     );
   }
 
-  void _showSettings() {
-    _showFeatureComingSoon('Settings');
+  void _handleLogout() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.backgroundCard,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppConstants.radiusL),
+        ),
+        title: Row(
+          children: [
+            Icon(
+              Icons.logout,
+              color: AppColors.error,
+              size: 24,
+            ),
+            SizedBox(width: AppConstants.spaceS),
+            Text(
+              'Logout',
+              style: AppTextStyles.h4.copyWith(
+                color: AppColors.textPrimary,
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          'Are you sure you want to logout?',
+          style: AppTextStyles.bodyMedium.copyWith(
+            color: AppColors.textSecondary,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'Cancel',
+              style: AppTextStyles.labelMedium.copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await _performLogout();
+            },
+            child: Text(
+              'Logout',
+              style: AppTextStyles.labelMedium.copyWith(
+                color: AppColors.error,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _performLogout() async {
+    try {
+      // Show loading indicator
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => Center(
+          child: Container(
+            padding: EdgeInsets.all(AppConstants.spaceL),
+            decoration: BoxDecoration(
+              color: AppColors.backgroundCard,
+              borderRadius: BorderRadius.circular(AppConstants.radiusM),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(
+                  color: AppColors.primary,
+                ),
+                SizedBox(height: AppConstants.spaceM),
+                Text(
+                  'Logging out...',
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+
+      // Perform logout
+      final AuthService authService = AuthService();
+      await authService.logout();
+
+      // Close loading dialog
+      if (mounted) Navigator.pop(context);
+
+      // Navigate to login screen (replace with your login route)
+      if (mounted) {
+        Navigator.of(context).pushNamedAndRemoveUntil(
+          '/', // Replace with your login route
+          (route) => false,
+        );
+      }
+    } catch (e) {
+      // Close loading dialog
+      if (mounted) Navigator.pop(context);
+      
+      // Show error message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Logout failed. Please try again.',
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: AppColors.backgroundPrimary,
+              ),
+            ),
+            backgroundColor: AppColors.error,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    }
   }
 
   void _showFeatureComingSoon(String feature) {
@@ -869,80 +939,5 @@ class _ProfilePageState extends State<ProfilePage>
         ),
       ),
     );
-  }
-
-  void _showLogoutDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.backgroundCard,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppConstants.radiusL),
-        ),
-        title: Text(
-          'Logout',
-          style: AppTextStyles.h4.copyWith(
-            color: AppColors.textPrimary,
-          ),
-        ),
-        content: Text(
-          'Are you sure you want to logout?',
-          style: AppTextStyles.bodyMedium.copyWith(
-            color: AppColors.textSecondary,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'Cancel',
-              style: AppTextStyles.labelMedium.copyWith(
-                color: AppColors.textSecondary,
-              ),
-            ),
-          ),
-          PrimaryButton(
-            text: 'Logout',
-            size: ButtonSize.small,
-            backgroundColor: AppColors.error,
-            onPressed: () async {
-              Navigator.pop(context);
-              await _handleLogout();
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _handleLogout() async {
-    try {
-      // Clear all authentication data
-      await StorageService.clearAuthData();
-      
-      // Navigate to onboarding page
-      if (mounted) {
-        Navigator.pushNamedAndRemoveUntil(
-          context,
-          '/',
-          (route) => false,
-        );
-      }
-    } catch (e) {
-      // Show error if logout fails
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Logout failed. Please try again.',
-              style: AppTextStyles.bodyMedium.copyWith(
-                color: AppColors.textOnPrimary,
-              ),
-            ),
-            backgroundColor: AppColors.error,
-          ),
-        );
-      }
-    }
   }
 }
