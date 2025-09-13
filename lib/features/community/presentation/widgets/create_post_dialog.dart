@@ -9,8 +9,17 @@ import '../../domain/models/post.dart';
 
 class CreatePostDialog extends StatefulWidget {
   final Function(Post)? onPostCreated;
+  final String userName;
+  final String userId;
+  final String userLocation;
 
-  const CreatePostDialog({super.key, this.onPostCreated});
+  const CreatePostDialog({
+    super.key, 
+    this.onPostCreated,
+    required this.userName,
+    required this.userId,
+    required this.userLocation,
+  });
 
   @override
   State<CreatePostDialog> createState() => _CreatePostDialogState();
@@ -138,10 +147,12 @@ class _CreatePostDialogState extends State<CreatePostDialog>
                     child: CircleAvatar(
                       radius: 20,
                       backgroundColor: AppColors.primary.withOpacity(0.1),
-                      child: Icon(
-                        Icons.person,
-                        color: AppColors.primary,
-                        size: 20,
+                      child: Text(
+                        widget.userName.isNotEmpty ? widget.userName[0].toUpperCase() : 'U',
+                        style: AppTextStyles.bodyLarge.copyWith(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),
@@ -150,7 +161,7 @@ class _CreatePostDialogState extends State<CreatePostDialog>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Your Name',
+                        widget.userName,
                         style: AppTextStyles.labelLarge.copyWith(
                           color: AppColors.textPrimary,
                           fontWeight: FontWeight.w600,
@@ -459,10 +470,10 @@ class _CreatePostDialogState extends State<CreatePostDialog>
     // Create new post
     final newPost = Post(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
-      userId: 'current_user_id', // In real app, get from auth service
+      userId: widget.userId,
       userImage: '',
-      userName: 'Your Name', // In real app, get from auth service
-      userLocation: _selectedLocation ?? 'Your Location',
+      userName: widget.userName,
+      userLocation: _selectedLocation ?? widget.userLocation,
       timeAgo: 'Just now',
       content: _contentController.text.trim(),
       likes: 0,
