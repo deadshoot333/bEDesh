@@ -8,6 +8,10 @@ import '../widgets/profile_option_card.dart';
 import '../../../home/presentation/pages/modern_home_page.dart';
 import '../../../community/presentation/pages/community_feed_page.dart';
 import '../../../community/presentation/pages/peer_connect_page.dart';
+import '../../../../core/services/storage_service.dart';
+import '../../../../core/services/auth_service.dart';
+import '../../../../core/models/user.dart';
+import '../../services/profile_service.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -21,6 +25,16 @@ class _ProfilePageState extends State<ProfilePage>
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
+
+  // User data state
+  User? _currentUser;
+  bool _isLoading = true;
+  String? _errorMessage;
+  
+  // Profile statistics (can be fetched from API later)
+  int _postsCount = 0;
+  int _connectionsCount = 0;
+  int _savedCount = 0;
 
   @override
   void initState() {
@@ -43,7 +57,93 @@ class _ProfilePageState extends State<ProfilePage>
       parent: _animationController,
       curve: Curves.easeOutCubic,
     ));
+    
+    // Load user data when page initializes
+    _loadUserProfile();
     _animationController.forward();
+  }
+
+  Future<void> _loadUserProfile() async {
+    try {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+      });
+
+      // First try to get user from local storage
+      User? localUser = StorageService.getUserData();
+      
+      if (localUser != null) {
+        setState(() {
+          _currentUser = localUser;
+        });
+      }
+
+      // Then try to fetch fresh profile data from server
+      try {
+        final AuthService authService = AuthService();
+        final User freshUser = await authService.getProfile();
+        
+        setState(() {
+          _currentUser = freshUser;
+        });
+        
+        // Update local storage with fresh data
+        await StorageService.saveUserData(freshUser);
+        
+        // Fetch user statistics
+        await _loadUserStatistics(freshUser.id);
+        
+      } catch (e) {
+        // If server call fails but we have local data, use that
+        if (localUser != null) {
+          setState(() {
+            _currentUser = localUser;
+          });
+          // Try to load stats even if profile fetch failed
+          await _loadUserStatistics(localUser.id);
+        } else {
+          setState(() {
+            _errorMessage = 'Failed to load profile data';
+          });
+        }
+      }
+      
+      setState(() {
+        _isLoading = false;
+      });
+      
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Failed to load profile data';
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _loadUserStatistics(String userId) async {
+    try {
+      final ProfileService profileService = ProfileService();
+      
+      // Load posts count
+      final postsCount = await profileService.getUserPostsCount(userId);
+      
+      // Load connections count  
+      final connectionsCount = await profileService.getUserConnectionsCount(userId);
+      
+      // For now, saved count is hardcoded - you can implement this later
+      const savedCount = 0;
+      
+      setState(() {
+        _postsCount = postsCount;
+        _connectionsCount = connectionsCount;
+        _savedCount = savedCount;
+      });
+      
+    } catch (e) {
+      // If stats loading fails, just keep default values
+      print('Failed to load user statistics: $e');
+    }
   }
 
   @override
@@ -143,21 +243,111 @@ class _ProfilePageState extends State<ProfilePage>
                             ],
                           ),
                           const SizedBox(height: AppConstants.spaceM),
-                          // Name and Email
-                          Text(
-                            "Arqam Bin Almas",
-                            style: AppTextStyles.h3.copyWith(
-                              color: AppColors.textOnPrimary,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          const SizedBox(height: AppConstants.spaceXS),
-                          Text(
-                            "arqam@email.com",
-                            style: AppTextStyles.bodyMedium.copyWith(
-                              color: AppColors.textOnPrimary.withOpacity(0.8),
-                            ),
-                          ),
+                          // Name and Email - Dynamic Data
+                          _isLoading
+                              ? Column(
+                                  children: [
+                                    Container(
+                                      width: 150,
+                                      height: 24,
+                                      decoration: BoxDecoration(
+                                        color: AppColors.textOnPrimary.withOpacity(0.3),
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                    ),
+                                    const SizedBox(height: AppConstants.spaceXS),
+                                    Container(
+                                      width: 120,
+                                      height: 16,
+                                      decoration: BoxDecoration(
+                                        color: AppColors.textOnPrimary.withOpacity(0.2),
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                    ),
+                                  ],
+                                )
+                              : _currentUser != null
+                                  ? Column(
+                                      children: [
+                                        Text(
+                                          _currentUser!.name,
+                                          style: AppTextStyles.h3.copyWith(
+                                            color: AppColors.textOnPrimary,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                        const SizedBox(height: AppConstants.spaceXS),
+                                        Text(
+                                          _currentUser!.email,
+                                          style: AppTextStyles.bodyMedium.copyWith(
+                                            color: AppColors.textOnPrimary.withOpacity(0.8),
+                                          ),
+                                        ),
+                                        // Show university and city if available
+                                        if (_currentUser!.university != null || _currentUser!.city != null) ...[
+                                          const SizedBox(height: AppConstants.spaceXS),
+                                          Row(
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            children: [
+                                              if (_currentUser!.university != null) ...[
+                                                Icon(
+                                                  Icons.school_outlined,
+                                                  size: 16,
+                                                  color: AppColors.textOnPrimary.withOpacity(0.7),
+                                                ),
+                                                const SizedBox(width: 4),
+                                                Text(
+                                                  _currentUser!.university!,
+                                                  style: AppTextStyles.bodySmall.copyWith(
+                                                    color: AppColors.textOnPrimary.withOpacity(0.7),
+                                                  ),
+                                                ),
+                                              ],
+                                              if (_currentUser!.university != null && _currentUser!.city != null)
+                                                Text(
+                                                  ' • ',
+                                                  style: AppTextStyles.bodySmall.copyWith(
+                                                    color: AppColors.textOnPrimary.withOpacity(0.7),
+                                                  ),
+                                                ),
+                                              if (_currentUser!.city != null) ...[
+                                                Icon(
+                                                  Icons.location_on_outlined,
+                                                  size: 16,
+                                                  color: AppColors.textOnPrimary.withOpacity(0.7),
+                                                ),
+                                                const SizedBox(width: 4),
+                                                Text(
+                                                  _currentUser!.city!,
+                                                  style: AppTextStyles.bodySmall.copyWith(
+                                                    color: AppColors.textOnPrimary.withOpacity(0.7),
+                                                  ),
+                                                ),
+                                              ],
+                                            ],
+                                          ),
+                                        ],
+                                      ],
+                                    )
+                                  : Column(
+                                      children: [
+                                        Text(
+                                          'Profile Loading...',
+                                          style: AppTextStyles.h3.copyWith(
+                                            color: AppColors.textOnPrimary,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                        const SizedBox(height: AppConstants.spaceXS),
+                                        if (_errorMessage != null)
+                                          Text(
+                                            _errorMessage!,
+                                            style: AppTextStyles.bodyMedium.copyWith(
+                                              color: AppColors.error,
+                                            ),
+                                          ),
+                                      ],
+                                    ),
                           const SizedBox(height: AppConstants.spaceS),
                         ],
                       ),
@@ -166,11 +356,20 @@ class _ProfilePageState extends State<ProfilePage>
                 ),
                 actions: [
                   IconButton(
+                    onPressed: _loadUserProfile,
+                    icon: const Icon(
+                      Icons.refresh,
+                      color: AppColors.textOnPrimary,
+                    ),
+                    tooltip: 'Refresh Profile',
+                  ),
+                  IconButton(
                     onPressed: _showSettings,
                     icon: const Icon(
                       Icons.settings_outlined,
                       color: AppColors.textOnPrimary,
                     ),
+                    tooltip: 'Settings',
                   ),
                   const SizedBox(width: AppConstants.spaceS),
                 ],
@@ -199,10 +398,10 @@ class _ProfilePageState extends State<ProfilePage>
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceAround,
-                          children: const [
-                            ProfileStatCard(label: "Posts", value: "8"),
-                            ProfileStatCard(label: "Connections", value: "42"),
-                            ProfileStatCard(label: "Saved", value: "12"),
+                          children: [
+                            ProfileStatCard(label: "Posts", value: "$_postsCount"),
+                            ProfileStatCard(label: "Connections", value: "$_connectionsCount"),
+                            ProfileStatCard(label: "Saved", value: "$_savedCount"),
                           ],
                         ),
                       ),
@@ -464,13 +663,44 @@ class _ProfilePageState extends State<ProfilePage>
             text: 'Logout',
             size: ButtonSize.small,
             backgroundColor: AppColors.error,
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(context);
-              Navigator.pushReplacementNamed(context, '/login');
+              await _handleLogout();
             },
           ),
         ],
       ),
     );
+  }
+
+  Future<void> _handleLogout() async {
+    try {
+      // Clear all authentication data
+      await StorageService.clearAuthData();
+      
+      // Navigate to onboarding page
+      if (mounted) {
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          '/',
+          (route) => false,
+        );
+      }
+    } catch (e) {
+      // Show error if logout fails
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Logout failed. Please try again.',
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: AppColors.textOnPrimary,
+              ),
+            ),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
   }
 }

@@ -7,6 +7,7 @@ const {
   getUsersfromQuery,
   listReceived,
   listSent,
+  getUserConnectionsCount,
 } = require("../models/peers.model");
 const { findUserById } = require("../models/user.model");
 const authenticateToken = require("../middlewares/auth.middleware.js");
@@ -84,4 +85,17 @@ router.get("/university/:id", authenticateToken, async (req, res) => {
     res.status(500).json({ error: "Failed to get peers of same university" });
   }
 });
+
+// Get user connections count
+router.get("/connections/:userId/count", authenticateToken, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const count = await getUserConnectionsCount(userId);
+    res.json({ count });
+  } catch (error) {
+    console.error("Error getting user connections count:", error);
+    res.status(500).json({ error: "Failed to get connections count" });
+  }
+});
+
 module.exports = router;
