@@ -36,9 +36,19 @@ async function addPost(data) {
 
   return result.rows[0];
 }
+
+async function getUserPostsCount(userId) {
+  const result = await pool.query(
+    "SELECT COUNT(*) as count FROM public.posts WHERE user_id = $1",
+    [userId]
+  );
+  return parseInt(result.rows[0].count) || 0;
+}
+
 module.exports = {
   getAllPosts,
   likePost,
   unlikePost,
-  addPost
+  addPost,
+  getUserPostsCount
 };

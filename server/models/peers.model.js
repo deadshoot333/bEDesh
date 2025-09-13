@@ -69,6 +69,18 @@ async function getPeersUni(uni, id) {
   );
   return result.rows;
 }
+
+async function getUserConnectionsCount(userId) {
+  const result = await pool.query(
+    `SELECT COUNT(*) as count 
+     FROM peer_connections 
+     WHERE (requester_id = $1 OR receiver_id = $1) 
+     AND status = 'accepted'`,
+    [userId]
+  );
+  return parseInt(result.rows[0].count) || 0;
+}
+
 module.exports = {
   sentRequest,
   respondRequest,
@@ -77,4 +89,5 @@ module.exports = {
   getUsersfromQuery,
   listReceived,
   listSent,
+  getUserConnectionsCount,
 };
