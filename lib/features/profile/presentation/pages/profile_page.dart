@@ -23,7 +23,7 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage>
-    with TickerProviderStateMixin {
+    with TickerProviderStateMixin, WidgetsBindingObserver {
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
@@ -41,6 +41,7 @@ class _ProfilePageState extends State<ProfilePage>
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 1000),
       vsync: this,
@@ -63,6 +64,16 @@ class _ProfilePageState extends State<ProfilePage>
     // Load user data when page initializes
     _loadUserProfile();
     _animationController.forward();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    // Refresh stats when app comes back to foreground
+    if (state == AppLifecycleState.resumed && _currentUser?.id != null) {
+      print('🔄 ProfilePage: App resumed, refreshing stats...');
+      _refreshStats();
+    }
   }
 
   Future<void> _loadUserProfile() async {
@@ -124,9 +135,19 @@ class _ProfilePageState extends State<ProfilePage>
   }
 
   Future<void> _refreshStats() async {
+    print('🔄 ProfilePage: Refreshing stats...');
     if (_currentUser?.id != null) {
       await _loadUserStatistics(_currentUser!.id);
     }
+  }
+
+  Future<void> _refreshFavoritesCount() async {
+    print('🔄 ProfilePage: Refreshing favorites count only...');
+    final savedCount = FavoritesService.getFavoritesCount();
+    setState(() {
+      _savedCount = savedCount;
+    });
+    print('📊 ProfilePage: Favorites count refreshed: $savedCount');
   }
 
   Future<void> _loadUserStatistics(String userId) async {
@@ -139,8 +160,10 @@ class _ProfilePageState extends State<ProfilePage>
       // Load connections count  
       final connectionsCount = await profileService.getUserConnectionsCount(userId);
       
-      // Load favorites count from FavoritesService
+      // Load favorites count from FavoritesService with debugging
+      print('🔍 ProfilePage: Loading favorites count...');
       final savedCount = FavoritesService.getFavoritesCount();
+      print('📊 ProfilePage: Favorites count loaded: $savedCount');
       
       setState(() {
         _postsCount = postsCount;
@@ -148,14 +171,17 @@ class _ProfilePageState extends State<ProfilePage>
         _savedCount = savedCount;
       });
       
+      print('✅ ProfilePage: User statistics updated - Posts: $_postsCount, Connections: $_connectionsCount, Saved: $_savedCount');
+      
     } catch (e) {
       // If stats loading fails, just keep default values
-      print('Failed to load user statistics: $e');
+      print('❌ Failed to load user statistics: $e');
     }
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _animationController.dispose();
     super.dispose();
   }
@@ -168,8 +194,14 @@ class _ProfilePageState extends State<ProfilePage>
         opacity: _fadeAnimation,
         child: SlideTransition(
           position: _slideAnimation,
-          child: CustomScrollView(
-            slivers: [
+          child: RefreshIndicator(
+            onRefresh: () async {
+              print('🔄 ProfilePage: Pull-to-refresh triggered');
+              await _loadUserProfile();
+            },
+            color: AppColors.primary,
+            child: CustomScrollView(
+              slivers: [
               // Modern App Bar with Profile Header
               SliverAppBar(
                 expandedHeight: 280,
@@ -546,6 +578,7 @@ class _ProfilePageState extends State<ProfilePage>
                 ),
               ),
             ],
+            ),
           ),
         ),
       ),
