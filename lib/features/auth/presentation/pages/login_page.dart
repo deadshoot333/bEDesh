@@ -121,7 +121,7 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                             validator: (value) =>
                                 value == null || !value.contains('@')
-                                    ? 'Enter valid email'
+                                    ? 'Enter valid edu mail'
                                     : null,
                           ),
                           const SizedBox(height: AppConstants.spaceL),

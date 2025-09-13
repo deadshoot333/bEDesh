@@ -47,29 +47,20 @@ class _ModernOnboardingPageState extends State<ModernOnboardingPage>
     );
 
     // Initialize animations
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _fadeController,
-      curve: Curves.easeInOut,
-    ));
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _fadeController, curve: Curves.easeInOut),
+    );
 
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, 0.5),
       end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _slideController,
-      curve: Curves.easeOutBack,
-    ));
+    ).animate(
+      CurvedAnimation(parent: _slideController, curve: Curves.easeOutBack),
+    );
 
-    _scaleAnimation = Tween<double>(
-      begin: 0.8,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _scaleController,
-      curve: Curves.elasticOut,
-    ));
+    _scaleAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
+      CurvedAnimation(parent: _scaleController, curve: Curves.elasticOut),
+    );
 
     // Start animations
     _startAnimations();
@@ -122,11 +113,13 @@ class _ModernOnboardingPageState extends State<ModernOnboardingPage>
                         ),
                         backgroundColor: AppColors.primary.withOpacity(0.8),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppConstants.radiusL),
+                          borderRadius: BorderRadius.circular(
+                            AppConstants.radiusL,
+                          ),
                         ),
                       ),
                       child: Text(
-                        'Skip for now',
+                        'Guest User',
                         style: AppTextStyles.labelMedium.copyWith(
                           color: AppColors.textOnDark,
                           fontWeight: FontWeight.w600,
@@ -136,7 +129,7 @@ class _ModernOnboardingPageState extends State<ModernOnboardingPage>
                   ],
                 ),
               ),
-              
+
               // Hero Image Section
               Expanded(
                 flex: 2,
@@ -173,7 +166,10 @@ class _ModernOnboardingPageState extends State<ModernOnboardingPage>
                             return Container(
                               decoration: const BoxDecoration(
                                 gradient: LinearGradient(
-                                  colors: [AppColors.primary, AppColors.primaryLight],
+                                  colors: [
+                                    AppColors.primary,
+                                    AppColors.primaryLight,
+                                  ],
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
                                 ),
@@ -181,7 +177,7 @@ class _ModernOnboardingPageState extends State<ModernOnboardingPage>
                             );
                           },
                         ),
-                        
+
                         // Gradient Overlay
                         Container(
                           decoration: BoxDecoration(
@@ -195,7 +191,7 @@ class _ModernOnboardingPageState extends State<ModernOnboardingPage>
                             ),
                           ),
                         ),
-                        
+
                         // Floating Elements Animation
                         Positioned.fill(
                           child: AnimatedBuilder(
@@ -228,7 +224,9 @@ class _ModernOnboardingPageState extends State<ModernOnboardingPage>
                       return SingleChildScrollView(
                         physics: const BouncingScrollPhysics(),
                         child: ConstrainedBox(
-                          constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                          constraints: BoxConstraints(
+                            minHeight: constraints.maxHeight,
+                          ),
                           child: IntrinsicHeight(
                             child: Padding(
                               padding: const EdgeInsets.symmetric(
@@ -238,119 +236,159 @@ class _ModernOnboardingPageState extends State<ModernOnboardingPage>
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                          // Title and Description
-                          ScaleTransition(
-                            scale: _scaleAnimation,
-                            child: Column(
-                              children: [
-                                Text(
-                                  'Welcome to ${AppConstants.appName}',
-                                  style: AppTextStyles.h1.copyWith(
-                                    color: AppColors.textPrimary,
-                                    fontWeight: FontWeight.w800,
+                                  // Title and Description
+                                  ScaleTransition(
+                                    scale: _scaleAnimation,
+                                    child: Column(
+                                      children: [
+                                        Text(
+                                          'Welcome to ${AppConstants.appName}',
+                                          style: AppTextStyles.h1.copyWith(
+                                            color: AppColors.textPrimary,
+                                            fontWeight: FontWeight.w800,
+                                          ),
+                                          textAlign: TextAlign.center,
+                                        ),
+
+                                        const SizedBox(
+                                          height: AppConstants.spaceM,
+                                        ),
+
+                                        Text(
+                                          'Your gateway to world-class education. Discover universities, connect with peers, and start your study abroad journey.',
+                                          style: AppTextStyles.bodyLarge
+                                              .copyWith(
+                                                color: AppColors.textSecondary,
+                                                height: 1.5,
+                                              ),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                  textAlign: TextAlign.center,
-                                ),
-                                
-                                const SizedBox(height: AppConstants.spaceM),
-                                
-                                Text(
-                                  'Your gateway to world-class education. Discover universities, connect with peers, and start your study abroad journey.',
-                                  style: AppTextStyles.bodyLarge.copyWith(
-                                    color: AppColors.textSecondary,
-                                    height: 1.5,
+
+                                  const SizedBox(height: AppConstants.spaceXL),
+
+                                  // Action Buttons
+                                  ScaleTransition(
+                                    scale: _scaleAnimation,
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        // Get Started Button
+                                        PrimaryButton(
+                                          text: 'Sign Up',
+                                          isExpanded: true,
+                                          size: ButtonSize.large,
+                                          onPressed: () {
+                                            Navigator.pushReplacement(
+                                              context,
+                                              PageRouteBuilder(
+                                                pageBuilder:
+                                                    (
+                                                      context,
+                                                      animation,
+                                                      secondaryAnimation,
+                                                    ) =>
+                                                        const ModernSignupPage(),
+                                                transitionsBuilder: (
+                                                  context,
+                                                  animation,
+                                                  secondaryAnimation,
+                                                  child,
+                                                ) {
+                                                  return SlideTransition(
+                                                    position: Tween<Offset>(
+                                                      begin: const Offset(
+                                                        1.0,
+                                                        0.0,
+                                                      ),
+                                                      end: Offset.zero,
+                                                    ).animate(
+                                                      CurvedAnimation(
+                                                        parent: animation,
+                                                        curve: Curves.easeInOut,
+                                                      ),
+                                                    ),
+                                                    child: child,
+                                                  );
+                                                },
+                                                transitionDuration:
+                                                    const Duration(
+                                                      milliseconds: 300,
+                                                    ),
+                                              ),
+                                            );
+                                          },
+                                        ),
+
+                                        const SizedBox(
+                                          height: AppConstants.spaceM,
+                                        ),
+
+                                        // Login Button
+                                        SecondaryButton(
+                                          text: 'I already have an account',
+                                          isExpanded: true,
+                                          size: ButtonSize.large,
+                                          onPressed: () {
+                                            Navigator.pushReplacement(
+                                              context,
+                                              PageRouteBuilder(
+                                                pageBuilder:
+                                                    (
+                                                      context,
+                                                      animation,
+                                                      secondaryAnimation,
+                                                    ) => const LoginPage(),
+                                                transitionsBuilder: (
+                                                  context,
+                                                  animation,
+                                                  secondaryAnimation,
+                                                  child,
+                                                ) {
+                                                  return SlideTransition(
+                                                    position: Tween<Offset>(
+                                                      begin: const Offset(
+                                                        -1.0,
+                                                        0.0,
+                                                      ),
+                                                      end: Offset.zero,
+                                                    ).animate(
+                                                      CurvedAnimation(
+                                                        parent: animation,
+                                                        curve: Curves.easeInOut,
+                                                      ),
+                                                    ),
+                                                    child: child,
+                                                  );
+                                                },
+                                                transitionDuration:
+                                                    const Duration(
+                                                      milliseconds: 300,
+                                                    ),
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                  textAlign: TextAlign.center,
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                           ),
-
-                          const SizedBox(height: AppConstants.spaceXL),
-
-                          // Action Buttons
-                          ScaleTransition(
-                            scale: _scaleAnimation,
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                              // Get Started Button
-                              PrimaryButton(
-                                text: 'Get Started',
-                                isExpanded: true,
-                                size: ButtonSize.large,
-                                onPressed: () {
-                                  Navigator.pushReplacement(
-                                    context,
-                                    PageRouteBuilder(
-                                      pageBuilder: (context, animation, secondaryAnimation) =>
-                                          const ModernSignupPage(),
-                                      transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                                        return SlideTransition(
-                                          position: Tween<Offset>(
-                                            begin: const Offset(1.0, 0.0),
-                                            end: Offset.zero,
-                                          ).animate(CurvedAnimation(
-                                            parent: animation,
-                                            curve: Curves.easeInOut,
-                                          )),
-                                          child: child,
-                                        );
-                                      },
-                                      transitionDuration: const Duration(milliseconds: 300),
-                                    ),
-                                  );
-                                },
-                              ),
-
-                              const SizedBox(height: AppConstants.spaceM),
-
-                              // Login Button
-                              SecondaryButton(
-                                text: 'I already have an account',
-                                isExpanded: true,
-                                size: ButtonSize.large,
-                                onPressed: () {
-                                  Navigator.pushReplacement(
-                                    context,
-                                    PageRouteBuilder(
-                                      pageBuilder: (context, animation, secondaryAnimation) =>
-                                          const LoginPage(),
-                                      transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                                        return SlideTransition(
-                                          position: Tween<Offset>(
-                                            begin: const Offset(-1.0, 0.0),
-                                            end: Offset.zero,
-                                          ).animate(CurvedAnimation(
-                                            parent: animation,
-                                            curve: Curves.easeInOut,
-                                          )),
-                                          child: child,
-                                        );
-                                      },
-                                      transitionDuration: const Duration(milliseconds: 300),
-                                    ),
-                                  );
-                                },
-                              ),
-                            ],
-                          ),
                         ),
-                      ],
-                    ),
+                      );
+                    },
                   ),
                 ),
               ),
-            );
-          },
-        ),
-      ), 
-              ),
             ], // closing main Column children
-          ),   // closing main Column
-        ),     // closing FadeTransition
-      ),       // closing SafeArea
-    );         // closing Scaffold
+          ), // closing main Column
+        ), // closing FadeTransition
+      ), // closing SafeArea
+    ); // closing Scaffold
   }
 }
 
@@ -362,17 +400,19 @@ class FloatingElementsPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = AppColors.textOnPrimary.withOpacity(0.1)
-      ..style = PaintingStyle.fill;
+    final paint =
+        Paint()
+          ..color = AppColors.textOnPrimary.withOpacity(0.1)
+          ..style = PaintingStyle.fill;
 
     // Draw floating circles
     for (int i = 0; i < 8; i++) {
       final double x = (size.width * 0.1) + (i * size.width * 0.15);
-      final double y = size.height * 0.3 + 
+      final double y =
+          size.height * 0.3 +
           (50 * (animationValue * 2 - 1) * (i % 2 == 0 ? 1 : -1));
       final double radius = 20 + (i * 5);
-      
+
       canvas.drawCircle(
         Offset(x, y),
         radius * (0.5 + animationValue * 0.5),

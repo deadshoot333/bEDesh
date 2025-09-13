@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl_phone_field/intl_phone_field.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/app_constants.dart';
@@ -19,14 +20,12 @@ class _ModernSignupPageState extends State<ModernSignupPage> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _phoneController = TextEditingController(
-    text: '+880',
-  );
   final TextEditingController _universityController = TextEditingController();
   final TextEditingController _cityController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController =
-      TextEditingController();
+  final TextEditingController _confirmPasswordController = TextEditingController();
+
+  String _fullPhone = '';
 
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
@@ -98,9 +97,7 @@ class _ModernSignupPageState extends State<ModernSignupPage> {
             child: Center(
               child: SingleChildScrollView(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppConstants.spaceL,
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: AppConstants.spaceL),
                   child: Container(
                     padding: const EdgeInsets.all(AppConstants.spaceXL),
                     decoration: BoxDecoration(
@@ -120,7 +117,7 @@ class _ModernSignupPageState extends State<ModernSignupPage> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          // Logo/Title
+                          // Title
                           Text(
                             'Create Account',
                             style: AppTextStyles.h2.copyWith(
@@ -137,7 +134,7 @@ class _ModernSignupPageState extends State<ModernSignupPage> {
                           ),
                           const SizedBox(height: AppConstants.spaceXL),
 
-                          // Full Name Field
+                          // Full Name
                           TextFormField(
                             controller: _nameController,
                             textCapitalization: TextCapitalization.words,
@@ -148,15 +145,12 @@ class _ModernSignupPageState extends State<ModernSignupPage> {
                               'Full Name',
                               Icons.person_outline,
                             ),
-                            validator:
-                                (value) =>
-                                    value == null || value.trim().isEmpty
-                                        ? 'Enter your full name'
-                                        : null,
+                            validator: (value) =>
+                                value == null || value.trim().isEmpty ? 'Enter your full name' : null,
                           ),
                           const SizedBox(height: AppConstants.spaceL),
 
-                          // Email Field
+                          // Email
                           TextFormField(
                             controller: _emailController,
                             keyboardType: TextInputType.emailAddress,
@@ -169,45 +163,46 @@ class _ModernSignupPageState extends State<ModernSignupPage> {
                             ),
                             validator: (value) {
                               if (value == null || value.trim().isEmpty) {
-                                return 'Enter your email address';
+                                return 'Enter your edu mail address';
                               }
-                              if (!value.contains('@') ||
-                                  !value.contains('.')) {
-                                return 'Enter a valid email address';
+                              if (!value.contains('@') || !value.contains('.')) {
+                                return 'Enter a valid edu mail address';
                               }
                               return null;
                             },
                           ),
                           const SizedBox(height: AppConstants.spaceL),
 
-                          // Phone Number Field
-                          TextFormField(
-                            controller: _phoneController,
-                            keyboardType: TextInputType.phone,
-                            style: AppTextStyles.bodyMedium.copyWith(
-                              color: AppColors.textPrimary,
-                            ),
+                          // Phone Number with country code (IntlPhoneField)
+                          IntlPhoneField(
+                            initialCountryCode: 'BD', // Bangladesh (+880)
                             decoration: _modernInputDecoration(
                               'Phone Number',
                               Icons.phone_outlined,
                             ),
-                            validator: (value) {
-                              if (value == null || value.trim().isEmpty) {
+                            autovalidateMode: AutovalidateMode.onUserInteraction,
+                            onChanged: (phone) {
+                              // phone.completeNumber includes country code
+                              _fullPhone = phone.completeNumber;
+                            },
+                            validator: (phone) {
+                              if (phone == null || phone.number.trim().isEmpty) {
                                 return 'Enter your phone number';
                               }
-                              if (!value.startsWith('+880') ||
-                                  value.length < 14) {
-                                return 'Enter valid +880 phone number';
+                              // Basic length guard; detailed checks are handled by the widget
+                              if (phone.completeNumber.trim().length < 7) {
+                                return 'Enter a valid phone number';
                               }
                               return null;
                             },
                           ),
                           const SizedBox(height: AppConstants.spaceL),
 
-                          // University Field
+                          // University
                           TextFormField(
                             controller: _universityController,
                             textCapitalization: TextCapitalization.words,
+                            keyboardType: TextInputType.text,
                             style: AppTextStyles.bodyMedium.copyWith(
                               color: AppColors.textPrimary,
                             ),
@@ -227,10 +222,11 @@ class _ModernSignupPageState extends State<ModernSignupPage> {
                           ),
                           const SizedBox(height: AppConstants.spaceL),
 
-                          // City Field
+                          // City
                           TextFormField(
                             controller: _cityController,
                             textCapitalization: TextCapitalization.words,
+                            keyboardType: TextInputType.text,
                             style: AppTextStyles.bodyMedium.copyWith(
                               color: AppColors.textPrimary,
                             ),
@@ -250,7 +246,7 @@ class _ModernSignupPageState extends State<ModernSignupPage> {
                           ),
                           const SizedBox(height: AppConstants.spaceL),
 
-                          // Password Field
+                          // Password
                           TextFormField(
                             controller: _passwordController,
                             obscureText: _obscurePassword,
@@ -286,7 +282,7 @@ class _ModernSignupPageState extends State<ModernSignupPage> {
                           ),
                           const SizedBox(height: AppConstants.spaceL),
 
-                          // Confirm Password Field
+                          // Confirm Password
                           TextFormField(
                             controller: _confirmPasswordController,
                             obscureText: _obscureConfirmPassword,
@@ -326,10 +322,7 @@ class _ModernSignupPageState extends State<ModernSignupPage> {
 
                           // Sign Up Button
                           PrimaryButton(
-                            text:
-                                _isLoading
-                                    ? 'Creating Account...'
-                                    : 'Create Account',
+                            text: _isLoading ? 'Creating Account...' : 'Create Account',
                             isExpanded: true,
                             size: ButtonSize.large,
                             onPressed: _isLoading ? null : _handleSignup,
@@ -391,18 +384,16 @@ class _ModernSignupPageState extends State<ModernSignupPage> {
                                 ),
                               ),
                               TextButton(
-                                onPressed:
-                                    () => Navigator.pushReplacement(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => const LoginPage(),
-                                      ),
-                                    ),
+                                onPressed: () => Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const LoginPage(),
+                                  ),
+                                ),
                                 style: TextButton.styleFrom(
                                   padding: EdgeInsets.zero,
                                   minimumSize: Size.zero,
-                                  tapTargetSize:
-                                      MaterialTapTargetSize.shrinkWrap,
+                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                                 ),
                                 child: Text(
                                   'Login',
@@ -471,23 +462,37 @@ class _ModernSignupPageState extends State<ModernSignupPage> {
   Future<void> _handleSignup() async {
     if (!_formKey.currentState!.validate()) return;
 
+    // Ensure full phone captured from IntlPhoneField
+    if (_fullPhone.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Please enter a valid phone number',
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: AppColors.textOnPrimary,
+            ),
+          ),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+
     setState(() {
       _isLoading = true;
     });
 
     try {
-      // Call the signup API with all the fields
       await _authService.signup(
         name: _nameController.text.trim(),
         email: _emailController.text.trim(),
-        mobile: _phoneController.text.trim(),
+        mobile: _fullPhone.trim(), 
         university: _universityController.text.trim(),
         city: _cityController.text.trim(),
         password: _passwordController.text,
       );
 
       if (mounted) {
-        // Show success message
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -500,7 +505,6 @@ class _ModernSignupPageState extends State<ModernSignupPage> {
           ),
         );
 
-        // Navigate to login page
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const LoginPage()),
@@ -508,7 +512,6 @@ class _ModernSignupPageState extends State<ModernSignupPage> {
       }
     } catch (e) {
       if (mounted) {
-        // Show error message
         String errorMessage = 'Signup failed. Please try again.';
         if (e is ApiError) {
           errorMessage = e.message;
@@ -539,7 +542,6 @@ class _ModernSignupPageState extends State<ModernSignupPage> {
   void dispose() {
     _nameController.dispose();
     _emailController.dispose();
-    _phoneController.dispose();
     _universityController.dispose();
     _cityController.dispose();
     _passwordController.dispose();
