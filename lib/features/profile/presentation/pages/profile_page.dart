@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/app_constants.dart';
+import '../../../../core/services/favorites_service.dart';
 import '../../../../shared/widgets/buttons/modern_buttons.dart';
 import '../widgets/profile_stat_card.dart';
 import '../widgets/profile_option_card.dart';
@@ -12,6 +13,7 @@ import '../../../../core/services/storage_service.dart';
 import '../../../../core/services/auth_service.dart';
 import '../../../../core/models/user.dart';
 import '../../services/profile_service.dart';
+import '../pages/favorites_page.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -121,6 +123,12 @@ class _ProfilePageState extends State<ProfilePage>
     }
   }
 
+  Future<void> _refreshStats() async {
+    if (_currentUser?.id != null) {
+      await _loadUserStatistics(_currentUser!.id);
+    }
+  }
+
   Future<void> _loadUserStatistics(String userId) async {
     try {
       final ProfileService profileService = ProfileService();
@@ -131,8 +139,8 @@ class _ProfilePageState extends State<ProfilePage>
       // Load connections count  
       final connectionsCount = await profileService.getUserConnectionsCount(userId);
       
-      // For now, saved count is hardcoded - you can implement this later
-      const savedCount = 0;
+      // Load favorites count from FavoritesService
+      final savedCount = FavoritesService.getFavoritesCount();
       
       setState(() {
         _postsCount = postsCount;
@@ -401,7 +409,7 @@ class _ProfilePageState extends State<ProfilePage>
                           children: [
                             ProfileStatCard(label: "Posts", value: "$_postsCount"),
                             ProfileStatCard(label: "Connections", value: "$_connectionsCount"),
-                            ProfileStatCard(label: "Saved", value: "$_savedCount"),
+                            ProfileStatCard(label: "Favorites", value: "$_savedCount"),
                           ],
                         ),
                       ),
@@ -490,10 +498,10 @@ class _ProfilePageState extends State<ProfilePage>
                             ),
                             const Divider(color: AppColors.borderLight, height: 1),
                             ProfileOptionCard(
-                              icon: Icons.bookmark_outline,
-                              title: "Saved Content",
-                              subtitle: "View your saved universities & posts",
-                              onTap: () => _navigateToHome(),
+                              icon: Icons.favorite_outline,
+                              title: "Favorite Universities",
+                              subtitle: "View your saved universities (${FavoritesService.getFavoritesCount()})",
+                              onTap: () => _navigateToFavorites(),
                             ),
                             const Divider(color: AppColors.borderLight, height: 1),
                             ProfileOptionCard(
@@ -560,6 +568,17 @@ class _ProfilePageState extends State<ProfilePage>
         builder: (context) => const CommunityFeedPage(),
       ),
     );
+  }
+
+  void _navigateToFavorites() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const FavoritesPage(),
+      ),
+    );
+    // Refresh stats when returning from favorites page
+    _refreshStats();
   }
 
   void _navigateToPeerConnect() {
