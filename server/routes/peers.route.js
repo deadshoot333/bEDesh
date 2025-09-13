@@ -8,6 +8,8 @@ const {
   listReceived,
   listSent,
   getUserConnectionsCount,
+  getUserConnections,
+  disconnectUsers,
 } = require("../models/peers.model");
 const { findUserById } = require("../models/user.model");
 const authenticateToken = require("../middlewares/auth.middleware.js");
@@ -95,6 +97,34 @@ router.get("/connections/:userId/count", authenticateToken, async (req, res) => 
   } catch (error) {
     console.error("Error getting user connections count:", error);
     res.status(500).json({ error: "Failed to get connections count" });
+  }
+});
+
+// Get user connections
+router.get("/connections/:userId", authenticateToken, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const connections = await getUserConnections(userId);
+    res.json(connections);
+  } catch (error) {
+    console.error("Error getting user connections:", error);
+    res.status(500).json({ error: "Failed to get connections" });
+  }
+});
+
+// Disconnect users
+router.post("/disconnect", authenticateToken, async (req, res) => {
+  try {
+    const { connectionId } = req.body;
+    const success = await disconnectUsers(connectionId);
+    if (success) {
+      res.json({ message: "Connection removed successfully" });
+    } else {
+      res.status(404).json({ error: "Connection not found" });
+    }
+  } catch (error) {
+    console.error("Error disconnecting users:", error);
+    res.status(500).json({ error: "Failed to remove connection" });
   }
 });
 
