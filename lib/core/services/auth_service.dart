@@ -74,10 +74,6 @@ class AuthService {
 
       print('✅ API call successful, response: $response');
 
-      if (response == null) {
-        throw ApiError(message: 'No response received from server');
-      }
-
       return SignupResponse.fromJson(response);
     } catch (e) {
       print('❌ ERROR in AuthService.signup:');
@@ -120,10 +116,6 @@ class AuthService {
         'email': email.trim().toLowerCase(),
         'password': password,
       });
-
-      if (response == null) {
-        throw ApiError(message: 'No response received from server');
-      }
 
       final authResponse = AuthResponse.fromJson(response);
 
@@ -170,10 +162,6 @@ class AuthService {
         requiresAuth: true,
       );
 
-      if (response == null) {
-        throw ApiError(message: 'No profile data received');
-      }
-
       final userData = response['user'];
       if (userData == null) {
         throw ApiError(message: 'User profile data not found');
@@ -212,10 +200,6 @@ class AuthService {
       final response = await _apiService.post(ApiConstants.refreshEndpoint, {
         'refreshToken': refreshToken,
       });
-
-      if (response == null) {
-        throw ApiError(message: 'No response from token refresh');
-      }
 
       final newAccessToken = response['accessToken'];
       if (newAccessToken == null || newAccessToken.toString().isEmpty) {

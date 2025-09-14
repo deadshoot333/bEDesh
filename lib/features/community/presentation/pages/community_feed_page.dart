@@ -3,14 +3,14 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/app_constants.dart';
+import '../../../../core/services/storage_service.dart';
+import '../../../../core/models/user.dart';
 import '../../../../shared/widgets/buttons/modern_buttons.dart';
 import '../../../../shared/widgets/chips/modern_chip.dart';
 import '../widgets/post_card.dart';
 import '../widgets/create_post_dialog.dart';
 import '../widgets/comments_dialog.dart';
 import '../../domain/models/post.dart';
-import '../../../../core/models/user.dart';
-import 'user_profile_page.dart';
 import '../../../profile/presentation/pages/profile_page.dart';
 import 'package:http/http.dart' as http;
 import '../../../../core/constants/api_constants.dart';
@@ -42,31 +42,25 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
   User? currentUser;
   List<Post> posts = [];
   bool isLoading = false;
-  @override
-  void initState() {
-    super.initState();
-    _animationController = AnimationController(
-      duration: const Duration(milliseconds: 400),
-      vsync: this,
-    );
-    _fadeAnimation = CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeIn,
-    );
-    _animationController.forward();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final user = StorageService.getUserData();
-      if (user != null) {
-        setState(() {
-          currentUser = user;
-        });
-      } else {
-        // ignore: avoid_print
-        print("⚠️ No user data found in StorageService");
-      }
-    });
-    fetchPosts();
-  }
+  
+  // User data
+  User? _currentUser;
+  String _userName = 'User';
+  String _userLocation = 'Unknown Location';
+  String _userId = '';
+  // void initState() {
+  //   super.initState();
+  //   _animationController = AnimationController(
+  //     duration: const Duration(milliseconds: 400),
+  //     vsync: this,
+  //   );
+  //   _fadeAnimation = CurvedAnimation(
+  //     parent: _animationController,
+  //     curve: Curves.easeIn,
+  //   );
+  //   _animationController.forward();
+  //   fetchPosts();
+  // }
 
   Future<void> fetchPosts() async {
     setState(() {
@@ -136,7 +130,11 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
   void _onCreatePost() async {
     final newPost = await showDialog<Post>(
       context: context,
-      builder: (context) => CreatePostDialog(),
+      builder: (context) => CreatePostDialog(
+        userName: _userName,
+        userId: _userId,
+        userLocation: _userLocation,
+      ),
     );
     if (newPost != null) {
       await addPost(newPost);
@@ -169,19 +167,32 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
     }).toList();
   }
 
-  // @override
-  // void initState() {
-  //   super.initState();
-  //   _animationController = AnimationController(
-  //     duration: const Duration(milliseconds: 1000),
-  //     vsync: this,
-  //   );
-  //   _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-  //     CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
-  //   );
-  //   _animationController.forward();
-  //   fetchPosts();
-  // }
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 1000),
+      vsync: this,
+    );
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
+    _animationController.forward();
+    _loadUserData();
+    fetchPosts();
+  }
+
+  void _loadUserData() {
+    final user = StorageService.getUserData();
+    if (user != null) {
+      setState(() {
+        _currentUser = user;
+        _userName = user.name;
+        _userLocation = '${user.city}, ${user.university}';
+        _userId = user.id;
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -206,13 +217,12 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
               child: Row(
                 children: [
                   GestureDetector(
-                    onTap:
-                        () => _navigateToUserProfile(
-                          context,
-                          '1fa5ba70-6a6c-473c-97c2-d0d4e33dea1e', // Current logged in user
-                          'Arqam Bin Almas', // Current user name
-                          'Cambridge, USA', // Current user location
-                        ),
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ProfilePage(),
+                      ),
+                    ),
                     child: Container(
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
@@ -224,10 +234,12 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
                       child: CircleAvatar(
                         radius: 20,
                         backgroundColor: AppColors.primary.withOpacity(0.1),
-                        child: Icon(
-                          Icons.person,
-                          color: AppColors.primary,
-                          size: 24,
+                        child: Text(
+                          _userName.isNotEmpty ? _userName[0].toUpperCase() : 'U',
+                          style: AppTextStyles.bodyLarge.copyWith(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ),
@@ -499,7 +511,12 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => CreatePostDialog(onPostCreated: _addNewPost),
+      builder: (context) => CreatePostDialog(
+        onPostCreated: _addNewPost,
+        userName: _userName,
+        userId: _userId,
+        userLocation: _userLocation,
+      ),
     );
   }
 
@@ -533,41 +550,6 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
           textColor: AppColors.textOnPrimary,
           onPressed: () {},
         ),
-      ),
-    );
-  }
-
-  void _navigateToUserProfile(
-    BuildContext context,
-    String userId,
-    String userName,
-    String userLocation,
-  ) {
-    Navigator.push(
-      context,
-      PageRouteBuilder(
-        pageBuilder:
-            (context, animation, secondaryAnimation) => UserProfilePage(
-              userId: userId,
-              userName: userName,
-              userLocation: userLocation,
-            ),
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          const begin = Offset(1.0, 0.0);
-          const end = Offset.zero;
-          const curve = Curves.easeInOut;
-
-          var tween = Tween(
-            begin: begin,
-            end: end,
-          ).chain(CurveTween(curve: curve));
-
-          return SlideTransition(
-            position: animation.drive(tween),
-            child: child,
-          );
-        },
-        transitionDuration: const Duration(milliseconds: 300),
       ),
     );
   }

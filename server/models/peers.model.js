@@ -69,6 +69,62 @@ async function getPeersUni(uni, id) {
   );
   return result.rows;
 }
+
+async function getUserConnectionsCount(userId) {
+  const result = await pool.query(
+    `SELECT COUNT(*) as count 
+     FROM peer_connections 
+     WHERE (requester_id = $1 OR receiver_id = $1) 
+     AND status = 'accepted'`,
+    [userId]
+  );
+  return parseInt(result.rows[0].count) || 0;
+}
+
+async function getUserConnections(userId) {
+  const result = await pool.query(
+    `SELECT pc.id as connection_id,
+            pc.status,
+            pc.created_at,
+            CASE 
+              WHEN pc.requester_id = $1 THEN receiver.id
+              ELSE requester.id
+            END as user_id,
+            CASE 
+              WHEN pc.requester_id = $1 THEN receiver.name
+              ELSE requester.name
+            END as name,
+            CASE 
+              WHEN pc.requester_id = $1 THEN receiver.email
+              ELSE requester.email
+            END as email,
+            CASE 
+              WHEN pc.requester_id = $1 THEN receiver.university
+              ELSE requester.university
+            END as university,
+            CASE 
+              WHEN pc.requester_id = $1 THEN receiver.city
+              ELSE requester.city
+            END as city
+     FROM peer_connections pc
+     JOIN public.users requester ON requester.id = pc.requester_id
+     JOIN public.users receiver ON receiver.id = pc.receiver_id
+     WHERE (pc.requester_id = $1 OR pc.receiver_id = $1)
+     AND pc.status = 'accepted'
+     ORDER BY pc.created_at DESC`,
+    [userId]
+  );
+  return result.rows;
+}
+
+async function disconnectUsers(connectionId) {
+  const result = await pool.query(
+    "DELETE FROM peer_connections WHERE id = $1",
+    [connectionId]
+  );
+  return result.rowCount > 0;
+}
+
 module.exports = {
   sentRequest,
   respondRequest,
@@ -77,4 +133,7 @@ module.exports = {
   getUsersfromQuery,
   listReceived,
   listSent,
+  getUserConnectionsCount,
+  getUserConnections,
+  disconnectUsers,
 };

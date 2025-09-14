@@ -3,6 +3,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/app_constants.dart';
+import '../../../../core/services/favorites_service.dart';
 import '../../../../shared/widgets/common/section_header.dart';
 import '../../../../shared/widgets/buttons/modern_buttons.dart';
 import '../../../../shared/widgets/cards/dynamic_course_card.dart';
@@ -40,6 +41,7 @@ class _DynamicUniversityPageState extends State<DynamicUniversityPage>
   
   bool isLoading = true;
   String? errorMessage;
+  bool _isFavorite = false;
 
   // Filter states
   String? _selectedCourseLevel;
@@ -111,6 +113,7 @@ class _DynamicUniversityPageState extends State<DynamicUniversityPage>
         university = universityData;
         courses = results[0] as List<Course>;
         scholarships = results[1] as List<Scholarship>;
+        _isFavorite = FavoritesService.isFavorite(universityData.id);
         isLoading = false;
       });
     } catch (e) {
@@ -119,6 +122,57 @@ class _DynamicUniversityPageState extends State<DynamicUniversityPage>
         errorMessage = e.toString();
         isLoading = false;
       });
+    }
+  }
+
+  Future<void> _toggleFavorite() async {
+    if (university == null) return;
+
+    try {
+      final isFavorite = await FavoritesService.toggleFavorite(
+        universityId: university!.id,
+        name: university!.name,
+        location: university!.location,
+        imageUrl: university!.imageUrl,
+        ranking: university!.worldRanking,
+        description: university!.description,
+      );
+
+      setState(() {
+        _isFavorite = isFavorite;
+      });
+
+      // Show feedback to user
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              isFavorite 
+                ? '${university!.name} added to favorites' 
+                : '${university!.name} removed from favorites',
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: AppColors.textOnPrimary,
+              ),
+            ),
+            backgroundColor: isFavorite ? AppColors.success : AppColors.info,
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.all(AppConstants.spaceM),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppConstants.radiusM),
+            ),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to update favorites'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
     }
   }
 
@@ -324,10 +378,11 @@ class _DynamicUniversityPageState extends State<DynamicUniversityPage>
           },
         ),
         IconButton(
-          icon: const Icon(Icons.favorite_border, color: Colors.white),
-          onPressed: () {
-            // Implement favorite functionality
-          },
+          icon: Icon(
+            _isFavorite ? Icons.favorite : Icons.favorite_border,
+            color: _isFavorite ? AppColors.cta : Colors.white,
+          ),
+          onPressed: _toggleFavorite,
         ),
       ],
     );

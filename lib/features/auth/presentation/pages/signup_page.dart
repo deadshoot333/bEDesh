@@ -168,6 +168,10 @@ class _ModernSignupPageState extends State<ModernSignupPage> {
                               if (!value.contains('@') || !value.contains('.')) {
                                 return 'Enter a valid edu mail address';
                               }
+                              // Check for .edu email requirement
+                              if (!value.toLowerCase().endsWith('.edu')) {
+                                return 'Only .edu email addresses are allowed';
+                              }
                               return null;
                             },
                           ),
