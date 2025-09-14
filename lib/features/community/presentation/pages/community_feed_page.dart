@@ -9,10 +9,12 @@ import '../widgets/post_card.dart';
 import '../widgets/create_post_dialog.dart';
 import '../widgets/comments_dialog.dart';
 import '../../domain/models/post.dart';
+import '../../../../core/models/user.dart';
 import 'user_profile_page.dart';
 import '../../../profile/presentation/pages/profile_page.dart';
 import 'package:http/http.dart' as http;
 import '../../../../core/constants/api_constants.dart';
+import '../../../../core/services/storage_service.dart';
 
 class CommunityFeedPage extends StatefulWidget {
   const CommunityFeedPage({super.key});
@@ -37,30 +39,48 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
     'Canada',
     'Australia',
   ];
+  User? currentUser;
   List<Post> posts = [];
   bool isLoading = false;
-  // void initState() {
-  //   super.initState();
-  //   _animationController = AnimationController(
-  //     duration: const Duration(milliseconds: 400),
-  //     vsync: this,
-  //   );
-  //   _fadeAnimation = CurvedAnimation(
-  //     parent: _animationController,
-  //     curve: Curves.easeIn,
-  //   );
-  //   _animationController.forward();
-  //   fetchPosts();
-  // }
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 400),
+      vsync: this,
+    );
+    _fadeAnimation = CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeIn,
+    );
+    _animationController.forward();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final user = StorageService.getUserData();
+      if (user != null) {
+        setState(() {
+          currentUser = user;
+        });
+      } else {
+        // ignore: avoid_print
+        print("⚠️ No user data found in StorageService");
+      }
+    });
+    fetchPosts();
+  }
 
   Future<void> fetchPosts() async {
     setState(() {
       isLoading = true;
     });
     try {
+      if (currentUser == null) {
+        // ignore: avoid_print
+        print("⚠️ currentUser is null, cannot fetch posts");
+        return;
+      }
       final response = await http.get(
         Uri.parse(
-          '$_baseUrl/api/community/get-posts?user_id=1fa5ba70-6a6c-473c-97c2-d0d4e33dea1e',
+          '$_baseUrl/api/community/get-posts?user_id=${currentUser!.id}',
         ),
       );
       if (response.statusCode == 200) {
@@ -149,19 +169,19 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
     }).toList();
   }
 
-  @override
-  void initState() {
-    super.initState();
-    _animationController = AnimationController(
-      duration: const Duration(milliseconds: 1000),
-      vsync: this,
-    );
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
-    );
-    _animationController.forward();
-    fetchPosts();
-  }
+  // @override
+  // void initState() {
+  //   super.initState();
+  //   _animationController = AnimationController(
+  //     duration: const Duration(milliseconds: 1000),
+  //     vsync: this,
+  //   );
+  //   _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+  //     CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+  //   );
+  //   _animationController.forward();
+  //   fetchPosts();
+  // }
 
   @override
   void dispose() {
