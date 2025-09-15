@@ -549,13 +549,16 @@ class _AccommodationPageState extends State<AccommodationPage>
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          _currentListingView == ListingViewType.allListings 
-                              ? 'Accommodation Listings' 
-                              : 'My Listings',
-                          style: AppTextStyles.h4.copyWith(
-                            color: AppColors.textPrimary,
-                            fontWeight: FontWeight.w700,
+                        Expanded(
+                          child: Text(
+                            _currentListingView == ListingViewType.allListings 
+                                ? 'Accommodation Listings' 
+                                : 'My Listings',
+                            style: AppTextStyles.h4.copyWith(
+                              color: AppColors.textPrimary,
+                              fontWeight: FontWeight.w700,
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                         if (_currentListingView == ListingViewType.allListings)

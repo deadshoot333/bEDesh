@@ -12,7 +12,7 @@ class AccommodationApiService {
   AccommodationApiService._internal();
 
   // Base URL - Update this to match your backend server
-  static const String _baseUrl = 'http://192.168.68.107:5000';
+  static const String _baseUrl = 'http://192.168.68.102:5000';
   
   // API endpoints
   static const String _accommodationsEndpoint = '/accommodations';
