@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/app_constants.dart';
@@ -7,6 +9,9 @@ import '../../../../shared/widgets/buttons/modern_buttons.dart';
 import '../../../../shared/widgets/inputs/modern_search_bar.dart';
 import '../widgets/accommodation_card.dart';
 import '../../../profile/presentation/pages/profile_page.dart';
+import '../../../../core/services/storage_service.dart';
+import '../../../../core/models/api_error.dart';
+import '../../../auth/presentation/pages/login_page.dart';
 
 /// Main accommodation page with listings and filters
 class AccommodationPage extends StatefulWidget {
@@ -100,6 +105,60 @@ class _AccommodationPageState extends State<AccommodationPage>
   void dispose() {
     _animationController.dispose();
     super.dispose();
+  }
+
+  /// Check if user is authenticated before posting accommodation
+  bool _checkAuthentication() {
+    final token = StorageService.getAccessToken();
+    return token != null && token.isNotEmpty;
+  }
+
+  /// Show login required dialog
+  void _showLoginRequiredDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.backgroundSecondary,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppConstants.radiusL),
+        ),
+        title: Text(
+          'Login Required',
+          style: AppTextStyles.h4.copyWith(
+            color: AppColors.textPrimary,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        content: Text(
+          'You need to be logged in to post accommodation requests. Please log in to continue.',
+          style: AppTextStyles.bodyMedium.copyWith(
+            color: AppColors.textSecondary,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'Cancel',
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: AppColors.textTertiary,
+              ),
+            ),
+          ),
+          PrimaryButton(
+            text: 'Login',
+            onPressed: () {
+              Navigator.pop(context); // Close dialog
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const LoginPage()),
+              );
+            },
+            size: ButtonSize.small,
+          ),
+        ],
+      ),
+    );
   }
 
   // Mock data for listings - comprehensive accommodation data
@@ -1587,6 +1646,12 @@ class _AccommodationPageState extends State<AccommodationPage>
   }
 
   void _handlePostAccommodation() {
+    // Check if user is authenticated
+    if (!_checkAuthentication()) {
+      _showLoginRequiredDialog();
+      return;
+    }
+    
     _showPostAccommodationForm();
   }
 
@@ -1651,6 +1716,11 @@ class _PostAccommodationFormState extends State<_PostAccommodationForm> {
   DateTime? _availableTo;
   List<String> _selectedFacilities = [];
   bool _isSubmitting = false;
+  
+  // Image picker variables
+  List<XFile> _selectedImages = [];
+  final ImagePicker _imagePicker = ImagePicker();
+  static const int _maxImages = 5;
 
   @override
   void initState() {
@@ -2230,60 +2300,373 @@ class _PostAccommodationFormState extends State<_PostAccommodationForm> {
   }
 
   Widget _buildPhotoUploadSection() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(AppConstants.spaceL),
-      decoration: BoxDecoration(
-        color: AppColors.accent,
-        border: Border.all(
-          color: AppColors.borderLight,
-          style: BorderStyle.solid,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Upload Button and Info
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(AppConstants.spaceL),
+          decoration: BoxDecoration(
+            color: AppColors.accent,
+            border: Border.all(
+              color: AppColors.borderLight,
+              style: BorderStyle.solid,
+            ),
+            borderRadius: BorderRadius.circular(AppConstants.radiusM),
+          ),
+          child: Column(
+            children: [
+              Icon(
+                Icons.cloud_upload_outlined,
+                size: 48,
+                color: AppColors.textTertiary,
+              ),
+              const SizedBox(height: AppConstants.spaceS),
+              Text(
+                'Upload Photos (${_selectedImages.length}/$_maxImages)',
+                style: AppTextStyles.h6.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: AppConstants.spaceXS),
+              Text(
+                'Add photos to make your listing more attractive',
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: AppColors.textTertiary,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: AppConstants.spaceM),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  OutlinedButton.icon(
+                    onPressed: _selectedImages.length >= _maxImages ? null : () => _pickImages(ImageSource.gallery),
+                    icon: Icon(Icons.photo_library),
+                    label: const Text('Gallery'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.primary,
+                      side: BorderSide(color: AppColors.primary),
+                    ),
+                  ),
+                  const SizedBox(width: AppConstants.spaceM),
+                  OutlinedButton.icon(
+                    onPressed: _selectedImages.length >= _maxImages ? null : () => _pickImages(ImageSource.camera),
+                    icon: Icon(Icons.camera_alt),
+                    label: const Text('Camera'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.secondary,
+                      side: BorderSide(color: AppColors.secondary),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
-        borderRadius: BorderRadius.circular(AppConstants.radiusM),
-      ),
-      child: Column(
-        children: [
-          Icon(
-            Icons.cloud_upload_outlined,
-            size: 48,
-            color: AppColors.textTertiary,
+        
+        // Selected Images Preview
+        if (_selectedImages.isNotEmpty) ...[
+          const SizedBox(height: AppConstants.spaceM),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Selected Photos:',
+                style: AppTextStyles.labelMedium.copyWith(
+                  color: AppColors.textSecondary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              TextButton.icon(
+                onPressed: _clearAllImages,
+                icon: Icon(Icons.clear_all, size: 18),
+                label: const Text('Clear All'),
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.error,
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: AppConstants.spaceS),
-          Text(
-            'Upload Photos',
-            style: AppTextStyles.h6.copyWith(
-              color: AppColors.textSecondary,
-            ),
-          ),
-          const SizedBox(height: AppConstants.spaceXS),
-          Text(
-            'Add photos to make your listing more attractive',
-            style: AppTextStyles.bodySmall.copyWith(
-              color: AppColors.textTertiary,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: AppConstants.spaceM),
-          OutlinedButton.icon(
-            onPressed: () {
-              // TODO: Implement photo upload functionality
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: const Text('Photo upload feature coming soon!'),
-                  backgroundColor: AppColors.primary,
-                ),
-              );
-            },
-            icon: Icon(Icons.add_photo_alternate),
-            label: const Text('Choose Photos'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.primary,
-              side: BorderSide(color: AppColors.primary),
+          SizedBox(
+            height: 120,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: _selectedImages.length,
+              itemBuilder: (context, index) {
+                return Container(
+                  width: 120,
+                  margin: EdgeInsets.only(
+                    right: index < _selectedImages.length - 1 ? AppConstants.spaceS : 0,
+                  ),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(AppConstants.radiusM),
+                    border: Border.all(color: AppColors.borderLight),
+                  ),
+                  child: Stack(
+                    children: [
+                      // Image
+                      GestureDetector(
+                        onTap: () => _showImagePreview(index),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(AppConstants.radiusM),
+                          child: Image.file(
+                            File(_selectedImages[index].path),
+                            width: 120,
+                            height: 120,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      ),
+                      // Remove Button
+                      Positioned(
+                        top: 4,
+                        right: 4,
+                        child: GestureDetector(
+                          onTap: () => _removeImage(index),
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              color: AppColors.error.withOpacity(0.9),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Icon(
+                              Icons.close,
+                              color: Colors.white,
+                              size: 16,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
             ),
           ),
         ],
-      ),
+      ],
     );
+  }
+
+  // Image picker methods
+  Future<void> _pickImages(ImageSource source) async {
+    try {
+      if (source == ImageSource.gallery) {
+        // Pick single image from gallery (user can repeat to add multiple)
+        final XFile? singleImage = await _imagePicker.pickImage(
+          source: ImageSource.gallery,
+          imageQuality: 85,
+        );
+        
+        List<XFile> images = [];
+        if (singleImage != null) {
+          images = [singleImage];
+        }
+        if (images.isNotEmpty) {
+          // Validate and filter images
+          final List<XFile> validImages = [];
+          final List<String> validationErrors = [];
+          
+          for (final image in images) {
+            // Check file type
+            if (!_isValidImageFile(image)) {
+              validationErrors.add('${image.name}: Invalid file type. Only JPG, PNG, and WebP are allowed.');
+              continue;
+            }
+            
+            // Check file size
+            if (!await _isValidImageSize(image)) {
+              validationErrors.add('${image.name}: File too large. Maximum 5MB per image.');
+              continue;
+            }
+            
+            validImages.add(image);
+          }
+          
+          if (validImages.isNotEmpty) {
+            final remainingSlots = _maxImages - _selectedImages.length;
+            final imagesToAdd = validImages.take(remainingSlots).toList();
+            
+            setState(() {
+              // Add new images but don't exceed max limit
+              _selectedImages.addAll(imagesToAdd);
+            });
+            
+            // Show success message
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Added ${imagesToAdd.length} photo(s) successfully!'),
+                  backgroundColor: Colors.green,
+                ),
+              );
+            }
+          }
+          
+          // Show validation errors if any
+          if (validationErrors.isNotEmpty && mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Some images were skipped: ${validationErrors.join(' ')}'),
+                backgroundColor: AppColors.error,
+                duration: const Duration(seconds: 5),
+              ),
+            );
+          }
+        }
+      } else {
+        // Pick single image from camera
+        final XFile? image = await _imagePicker.pickImage(
+          source: ImageSource.camera,
+          imageQuality: 85, // Compress to reduce file size
+        );
+        
+        if (image != null) {
+          // Validate image
+          if (!_isValidImageFile(image)) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: const Text('Invalid file type. Only JPG, PNG, and WebP are allowed.'),
+                  backgroundColor: AppColors.error,
+                ),
+              );
+            }
+            return;
+          }
+          
+          if (!await _isValidImageSize(image)) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: const Text('Image too large. Maximum 5MB per image.'),
+                  backgroundColor: AppColors.error,
+                ),
+              );
+            }
+            return;
+          }
+          
+          setState(() {
+            _selectedImages.add(image);
+          });
+          
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: const Text('Photo added successfully!'),
+                backgroundColor: Colors.green,
+              ),
+            );
+          }
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error selecting images: ${e.toString()}'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+
+  void _removeImage(int index) {
+    setState(() {
+      _selectedImages.removeAt(index);
+    });
+    
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Photo removed'),
+          backgroundColor: AppColors.primary,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  void _clearAllImages() {
+    if (_selectedImages.isEmpty) return;
+    
+    setState(() {
+      _selectedImages.clear();
+    });
+    
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('All photos cleared'),
+          backgroundColor: AppColors.primary,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  // Image validation helper methods
+  bool _isValidImageFile(XFile imageFile) {
+    final String fileName = imageFile.name.toLowerCase();
+    final List<String> allowedExtensions = ['.jpg', '.jpeg', '.png', '.webp'];
+    
+    return allowedExtensions.any((ext) => fileName.endsWith(ext));
+  }
+
+  Future<bool> _isValidImageSize(XFile imageFile, {double maxSizeMB = 5.0}) async {
+    try {
+      final File file = File(imageFile.path);
+      final int lengthInBytes = await file.length();
+      final double sizeInMB = lengthInBytes / (1024 * 1024);
+      return sizeInMB <= maxSizeMB;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  void _showImagePreview(int index) {
+    if (index >= 0 && index < _selectedImages.length) {
+      showDialog(
+        context: context,
+        barrierColor: Colors.black87,
+        builder: (context) => Dialog(
+          backgroundColor: Colors.transparent,
+          child: Stack(
+            children: [
+              Center(
+                child: InteractiveViewer(
+                  child: Image.file(
+                    File(_selectedImages[index].path),
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              ),
+              Positioned(
+                top: 40,
+                right: 40,
+                child: IconButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: Icon(
+                    Icons.close,
+                    color: Colors.white,
+                    size: 32,
+                  ),
+                  style: IconButton.styleFrom(
+                    backgroundColor: Colors.black54,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
   }
 
   void _submitForm() async {
@@ -2368,6 +2751,8 @@ class _PostAccommodationFormState extends State<_PostAccommodationForm> {
         'facilities': _selectedFacilities,
         'description': _descriptionController.text.trim(),
         'isRoommateRequest': true,
+        'selectedImages': _selectedImages.map((image) => image.path).toList(), // Image file paths
+        'imageCount': _selectedImages.length,
         'postedDate': DateTime.now().toIso8601String(),
       };
 
@@ -2399,10 +2784,31 @@ class _PostAccommodationFormState extends State<_PostAccommodationForm> {
       }
     } catch (e) {
       if (mounted) {
+        String errorMessage = 'Error posting accommodation: ${e.toString()}';
+        
+        // Handle authentication errors specifically
+        if (e is ApiError) {
+          if (e.statusCode == 401) {
+            errorMessage = 'Your session has expired. Please log in again.';
+            // Close form and redirect to login
+            Navigator.pop(context); // Close form
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const LoginPage()),
+            );
+            return;
+          } else if (e.statusCode == 403) {
+            errorMessage = 'You do not have permission to post accommodations.';
+          } else {
+            errorMessage = e.message;
+          }
+        }
+        
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error posting accommodation: ${e.toString()}'),
+            content: Text(errorMessage),
             backgroundColor: AppColors.error,
+            duration: const Duration(seconds: 4),
           ),
         );
       }
