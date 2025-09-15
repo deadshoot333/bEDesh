@@ -7,7 +7,7 @@ class MessageService {
   static const String baseUrl = ApiConstants.baseUrl;
 
   static Future<List<Message>> getMessages(String userId, String peerId) async {
-    final response = await http.get(Uri.parse("$baseUrl/$userId/$peerId"));
+    final response = await http.get(Uri.parse("$baseUrl/api/message/$userId/$peerId"));
     if (response.statusCode == 200) {
       final List data = json.decode(response.body);
       return data.map((e) => Message.fromJson(e, userId)).toList();
@@ -22,7 +22,7 @@ class MessageService {
     String content,
   ) async {
     final response = await http.post(
-      Uri.parse("$baseUrl/send"),
+      Uri.parse("$baseUrl/api/message"),
       headers: {"Content-Type": "application/json"},
       body: json.encode({
         "senderId": senderId,

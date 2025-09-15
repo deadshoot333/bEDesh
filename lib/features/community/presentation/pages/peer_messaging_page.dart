@@ -40,6 +40,7 @@ class _PeerMessagingPageState extends State<PeerMessagingPage> {
       widget.currentUserId,
       widget.peerId,
     );
+    print("Chat:$chat");
     setState(() {
       messages = chat;
     });
@@ -57,7 +58,7 @@ class _PeerMessagingPageState extends State<PeerMessagingPage> {
       widget.peerId,
       text,
     );
-
+    print("New Message:$newMessage");
     setState(() {
       messages.add(newMessage);
     });

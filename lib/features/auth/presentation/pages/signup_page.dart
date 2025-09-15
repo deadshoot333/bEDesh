@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl_phone_field/intl_phone_field.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/app_constants.dart';
@@ -19,9 +20,12 @@ class _ModernSignupPageState extends State<ModernSignupPage> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _phoneController = TextEditingController(text: '+880');
+  final TextEditingController _universityController = TextEditingController();
+  final TextEditingController _cityController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController = TextEditingController();
+
+  String _fullPhone = '';
 
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
@@ -113,7 +117,7 @@ class _ModernSignupPageState extends State<ModernSignupPage> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          // Logo/Title
+                          // Title
                           Text(
                             'Create Account',
                             style: AppTextStyles.h2.copyWith(
@@ -130,7 +134,7 @@ class _ModernSignupPageState extends State<ModernSignupPage> {
                           ),
                           const SizedBox(height: AppConstants.spaceXL),
 
-                          // Full Name Field
+                          // Full Name
                           TextFormField(
                             controller: _nameController,
                             textCapitalization: TextCapitalization.words,
@@ -142,13 +146,11 @@ class _ModernSignupPageState extends State<ModernSignupPage> {
                               Icons.person_outline,
                             ),
                             validator: (value) =>
-                                value == null || value.trim().isEmpty
-                                    ? 'Enter your full name'
-                                    : null,
+                                value == null || value.trim().isEmpty ? 'Enter your full name' : null,
                           ),
                           const SizedBox(height: AppConstants.spaceL),
 
-                          // Email Field
+                          // Email
                           TextFormField(
                             controller: _emailController,
                             keyboardType: TextInputType.emailAddress,
@@ -161,40 +163,94 @@ class _ModernSignupPageState extends State<ModernSignupPage> {
                             ),
                             validator: (value) {
                               if (value == null || value.trim().isEmpty) {
-                                return 'Enter your email address';
+                                return 'Enter your edu mail address';
                               }
                               if (!value.contains('@') || !value.contains('.')) {
-                                return 'Enter a valid email address';
+                                return 'Enter a valid edu mail address';
+                              }
+                              // Check for .edu email requirement
+                              if (!value.toLowerCase().endsWith('.edu')) {
+                                return 'Only .edu email addresses are allowed';
                               }
                               return null;
                             },
                           ),
                           const SizedBox(height: AppConstants.spaceL),
 
-                          // Phone Number Field
-                          TextFormField(
-                            controller: _phoneController,
-                            keyboardType: TextInputType.phone,
-                            style: AppTextStyles.bodyMedium.copyWith(
-                              color: AppColors.textPrimary,
-                            ),
+                          // Phone Number with country code (IntlPhoneField)
+                          IntlPhoneField(
+                            initialCountryCode: 'BD', // Bangladesh (+880)
                             decoration: _modernInputDecoration(
                               'Phone Number',
                               Icons.phone_outlined,
                             ),
-                            validator: (value) {
-                              if (value == null || value.trim().isEmpty) {
+                            autovalidateMode: AutovalidateMode.onUserInteraction,
+                            onChanged: (phone) {
+                              // phone.completeNumber includes country code
+                              _fullPhone = phone.completeNumber;
+                            },
+                            validator: (phone) {
+                              if (phone == null || phone.number.trim().isEmpty) {
                                 return 'Enter your phone number';
                               }
-                              if (!value.startsWith('+880') || value.length < 14) {
-                                return 'Enter valid +880 phone number';
+                              // Basic length guard; detailed checks are handled by the widget
+                              if (phone.completeNumber.trim().length < 7) {
+                                return 'Enter a valid phone number';
                               }
                               return null;
                             },
                           ),
                           const SizedBox(height: AppConstants.spaceL),
 
-                          // Password Field
+                          // University
+                          TextFormField(
+                            controller: _universityController,
+                            textCapitalization: TextCapitalization.words,
+                            keyboardType: TextInputType.text,
+                            style: AppTextStyles.bodyMedium.copyWith(
+                              color: AppColors.textPrimary,
+                            ),
+                            decoration: _modernInputDecoration(
+                              'University',
+                              Icons.school_outlined,
+                            ),
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return 'Enter your university';
+                              }
+                              if (value.trim().length < 3) {
+                                return 'University name is too short';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: AppConstants.spaceL),
+
+                          // City
+                          TextFormField(
+                            controller: _cityController,
+                            textCapitalization: TextCapitalization.words,
+                            keyboardType: TextInputType.text,
+                            style: AppTextStyles.bodyMedium.copyWith(
+                              color: AppColors.textPrimary,
+                            ),
+                            decoration: _modernInputDecoration(
+                              'City',
+                              Icons.location_city_outlined,
+                            ),
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return 'Enter your city';
+                              }
+                              if (value.trim().length < 2) {
+                                return 'City name is too short';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: AppConstants.spaceL),
+
+                          // Password
                           TextFormField(
                             controller: _passwordController,
                             obscureText: _obscurePassword,
@@ -230,7 +286,7 @@ class _ModernSignupPageState extends State<ModernSignupPage> {
                           ),
                           const SizedBox(height: AppConstants.spaceL),
 
-                          // Confirm Password Field
+                          // Confirm Password
                           TextFormField(
                             controller: _confirmPasswordController,
                             obscureText: _obscureConfirmPassword,
@@ -249,7 +305,8 @@ class _ModernSignupPageState extends State<ModernSignupPage> {
                                 ),
                                 onPressed: () {
                                   setState(() {
-                                    _obscureConfirmPassword = !_obscureConfirmPassword;
+                                    _obscureConfirmPassword =
+                                        !_obscureConfirmPassword;
                                   });
                                 },
                               ),
@@ -375,11 +432,7 @@ class _ModernSignupPageState extends State<ModernSignupPage> {
       hintStyle: AppTextStyles.bodyMedium.copyWith(
         color: AppColors.textTertiary,
       ),
-      prefixIcon: Icon(
-        prefixIcon,
-        color: AppColors.textSecondary,
-        size: 20,
-      ),
+      prefixIcon: Icon(prefixIcon, color: AppColors.textSecondary, size: 20),
       suffixIcon: suffixIcon,
       filled: true,
       fillColor: AppColors.backgroundSecondary.withOpacity(0.8),
@@ -389,38 +442,23 @@ class _ModernSignupPageState extends State<ModernSignupPage> {
       ),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppConstants.radiusM),
-        borderSide: const BorderSide(
-          color: AppColors.borderLight,
-          width: 1.5,
-        ),
+        borderSide: const BorderSide(color: AppColors.borderLight, width: 1.5),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppConstants.radiusM),
-        borderSide: const BorderSide(
-          color: AppColors.borderLight,
-          width: 1.5,
-        ),
+        borderSide: const BorderSide(color: AppColors.borderLight, width: 1.5),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppConstants.radiusM),
-        borderSide: const BorderSide(
-          color: AppColors.primary,
-          width: 2,
-        ),
+        borderSide: const BorderSide(color: AppColors.primary, width: 2),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppConstants.radiusM),
-        borderSide: const BorderSide(
-          color: AppColors.error,
-          width: 1.5,
-        ),
+        borderSide: const BorderSide(color: AppColors.error, width: 1.5),
       ),
       focusedErrorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppConstants.radiusM),
-        borderSide: const BorderSide(
-          color: AppColors.error,
-          width: 2,
-        ),
+        borderSide: const BorderSide(color: AppColors.error, width: 2),
       ),
     );
   }
@@ -428,20 +466,37 @@ class _ModernSignupPageState extends State<ModernSignupPage> {
   Future<void> _handleSignup() async {
     if (!_formKey.currentState!.validate()) return;
 
+    // Ensure full phone captured from IntlPhoneField
+    if (_fullPhone.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Please enter a valid phone number',
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: AppColors.textOnPrimary,
+            ),
+          ),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+
     setState(() {
       _isLoading = true;
     });
 
     try {
-      // Call the signup API
       await _authService.signup(
+        name: _nameController.text.trim(),
         email: _emailController.text.trim(),
-        mobile: _phoneController.text.trim(),
+        mobile: _fullPhone.trim(), 
+        university: _universityController.text.trim(),
+        city: _cityController.text.trim(),
         password: _passwordController.text,
       );
 
       if (mounted) {
-        // Show success message
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -454,17 +509,13 @@ class _ModernSignupPageState extends State<ModernSignupPage> {
           ),
         );
 
-        // Navigate to login page
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(
-            builder: (context) => const LoginPage(),
-          ),
+          MaterialPageRoute(builder: (context) => const LoginPage()),
         );
       }
     } catch (e) {
       if (mounted) {
-        // Show error message
         String errorMessage = 'Signup failed. Please try again.';
         if (e is ApiError) {
           errorMessage = e.message;
@@ -495,7 +546,8 @@ class _ModernSignupPageState extends State<ModernSignupPage> {
   void dispose() {
     _nameController.dispose();
     _emailController.dispose();
-    _phoneController.dispose();
+    _universityController.dispose();
+    _cityController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();

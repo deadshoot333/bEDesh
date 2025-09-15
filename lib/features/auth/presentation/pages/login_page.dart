@@ -119,10 +119,15 @@ class _LoginPageState extends State<LoginPage> {
                               'Email Address',
                               Icons.email_outlined,
                             ),
-                            validator: (value) =>
-                                value == null || !value.contains('@')
-                                    ? 'Enter valid email'
-                                    : null,
+                            validator: (value) {
+                              if (value == null || !value.contains('@')) {
+                                return 'Enter valid edu mail';
+                              }
+                              if (!value.toLowerCase().endsWith('.edu')) {
+                                return 'Only .edu email addresses are allowed';
+                              }
+                              return null;
+                            },
                           ),
                           const SizedBox(height: AppConstants.spaceL),
 

@@ -10,7 +10,7 @@ router.post('/signup', async (req, res) => {
   console.log('📥 Request body:', JSON.stringify(req.body, null, 2));
   console.log('📋 Request headers:', JSON.stringify(req.headers, null, 2));
   
-  const { email, mobile, password,university,city } = req.body;
+  const { name,email, mobile, password,university,city } = req.body;
   
   console.log('🔍 Extracted fields:');
   console.log('  - email:', email, '(type:', typeof email, ')');
@@ -18,19 +18,20 @@ router.post('/signup', async (req, res) => {
   console.log('  - password:', password ? '[REDACTED]' : 'undefined', '(type:', typeof password, ')');
   
   // Validate required fields
-  if (!email || !mobile || !password) {
+  if (!email || !mobile || !password || !name) {
     console.log('❌ VALIDATION FAILED: Missing required fields');
     console.log('  - email present:', !!email);
     console.log('  - mobile present:', !!mobile);
     console.log('  - password present:', !!password);
-    return res.status(400).json({ error: 'Email, mobile, and password are required' });
+    console.log('  - name present:', !!name);
+    return res.status(400).json({ error: 'Name,Email, mobile, and password are required' });
   }
   
   // Basic email validation
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const emailRegex = /^[^\s@]+@[^\s@]+\.edu$/;
   if (!emailRegex.test(email)) {
-    console.log('❌ VALIDATION FAILED: Invalid email format:', email);
-    return res.status(400).json({ error: 'Invalid email format' });
+    console.log('❌ VALIDATION FAILED: Only edu mails can be taken:', email);
+    return res.status(400).json({ error: 'Only edu mails can be taken' });
   }
   
   // Password validation
@@ -42,7 +43,7 @@ router.post('/signup', async (req, res) => {
   console.log('✅ All validations passed, calling registerUser...');
   
   try {
-    const user = await registerUser(email, mobile, password,university,city);
+    const user = await registerUser(name,email, mobile, password,university,city);
     console.log('✅ User created successfully:', user);
     res.status(201).json({ message: 'User created', user });
   } catch (err) {
@@ -65,8 +66,17 @@ router.post('/login', async (req, res) => {
   }
   
   try {
-    const {accessToken,refreshToken} = await loginUser(email, password);
-    res.json({accessToken,refreshToken});
+    const {accessToken, refreshToken, user} = await loginUser(email, password);
+    res.json({accessToken,
+      refreshToken,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        image: user.image,
+        city: user.city,
+        university:user.university
+      }});
   } catch (err) {
     console.error('Login error:', err.message);
     res.status(401).json({ error: err.message });
