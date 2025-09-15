@@ -8,7 +8,7 @@ const countryRoutes = require("./routes/country.route");
 const peerRoutes = require("./routes/peers.route");
 const communityRoutes = require("./routes/posts.route");
 const messageRoutes = require("./routes/message.route");
-const accommodationRoutes = require('./routes/accommodation.routes');
+const accommodationRoutes = require("./routes/accommodation.routes");
 
 const app = express();
 
@@ -23,6 +23,7 @@ app.use((req, res, next) => {
   next();
 });
 
+
 app.use(cors());
 app.use(express.json());
 app.get("/", async (req, res) => {
@@ -34,6 +35,7 @@ app.use("/api/country", countryRoutes);
 app.use("/api/peer", peerRoutes);
 app.use("/api/community", communityRoutes);
 app.use("/api/message", messageRoutes);
+app.use("/accommodations", accommodationRoutes);
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, "0.0.0.0", () =>
   console.log(`Server running on  http://localhost:${PORT}`)
