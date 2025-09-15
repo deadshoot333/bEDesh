@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 import 'package:image_picker/image_picker.dart';
 import '../models/api_error.dart';
 import 'storage_service.dart';
@@ -11,7 +12,7 @@ class AccommodationApiService {
   AccommodationApiService._internal();
 
   // Base URL - Update this to match your backend server
-  static const String _baseUrl = 'http://localhost:5000';
+  static const String _baseUrl = 'http://192.168.68.107:5000';
   
   // API endpoints
   static const String _accommodationsEndpoint = '/accommodations';
@@ -171,7 +172,6 @@ class AccommodationApiService {
     double? maxRent,
     double? minRent,
     String? genderPreference,
-    bool? isRoommateRequest,
     int limit = 20,
     int offset = 0,
   }) async {
@@ -196,9 +196,7 @@ class AccommodationApiService {
       if (genderPreference != null && genderPreference.isNotEmpty) {
         queryParams['gender_preference'] = genderPreference;
       }
-      if (isRoommateRequest != null) {
-        queryParams['is_roommate_request'] = isRoommateRequest.toString();
-      }
+      // Removed isRoommateRequest parameter as backend doesn't support it
 
       final uri = Uri.parse('$_baseUrl$_accommodationsEndpoint').replace(
         queryParameters: queryParams,
@@ -235,7 +233,7 @@ class AccommodationApiService {
   }
 
   /// Get accommodation by ID
-  Future<Map<String, dynamic>?> getAccommodationById(int id) async {
+  Future<Map<String, dynamic>?> getAccommodationById(String id) async {
     try {
       print('🔍 Fetching accommodation by ID: $id');
       
@@ -292,6 +290,13 @@ class AccommodationApiService {
           final List<Map<String, dynamic>> accommodations = 
               List<Map<String, dynamic>>.from(responseData['data']);
           print('✅ Fetched ${accommodations.length} user accommodations');
+          
+          // Debug: Print first accommodation to see structure
+          if (accommodations.isNotEmpty) {
+            print('🔍 DEBUG - First accommodation structure:');
+            print(accommodations.first);
+          }
+          
           return accommodations;
         } else {
           throw ApiError(message: 'Failed to fetch user accommodations');
@@ -313,7 +318,7 @@ class AccommodationApiService {
 
   /// Update accommodation (with automatic auth)
   Future<Map<String, dynamic>> updateAccommodation(
-    int id, 
+    String id, 
     Map<String, dynamic> accommodationData
   ) async {
     final authToken = _getAuthToken();
@@ -322,7 +327,7 @@ class AccommodationApiService {
 
   /// Update accommodation with explicit token
   Future<Map<String, dynamic>> _updateAccommodationWithToken(
-    int id, 
+    String id, 
     Map<String, dynamic> accommodationData, 
     String authToken
   ) async {
@@ -343,7 +348,7 @@ class AccommodationApiService {
         
         if (responseData['success'] == true) {
           print('✅ Accommodation updated successfully');
-          return responseData['data'];
+          return responseData; // Return full response including 'success' field
         } else {
           throw ApiError(message: responseData['error'] ?? 'Update failed');
         }
@@ -367,13 +372,13 @@ class AccommodationApiService {
   }
 
   /// Delete accommodation (with automatic auth)
-  Future<bool> deleteAccommodation(int id) async {
+  Future<bool> deleteAccommodation(String id) async {
     final authToken = _getAuthToken();
     return _deleteAccommodationWithToken(id, authToken);
   }
 
   /// Delete accommodation with explicit token
-  Future<bool> _deleteAccommodationWithToken(int id, String authToken) async {
+  Future<bool> _deleteAccommodationWithToken(String id, String authToken) async {
     try {
       print('🗑️ Deleting accommodation ID: $id');
       
@@ -411,7 +416,7 @@ class AccommodationApiService {
   }
 
   // Upload images to specific accommodation
-  Future<List<String>> uploadImagesToAccommodation(int accommodationId, List<XFile> imageFiles) async {
+  Future<List<String>> uploadImagesToAccommodation(String accommodationId, List<XFile> imageFiles) async {
     try {
       String authToken = _getAuthToken();
       
@@ -430,16 +435,20 @@ class AccommodationApiService {
           'images',
           await imageFile.readAsBytes(),
           filename: imageFile.name,
+          contentType: MediaType.parse(imageFile.mimeType ?? 'image/jpeg'),
         );
         request.files.add(multipartFile);
       }
 
       print('🔄 Uploading ${imageFiles.length} images to accommodation $accommodationId...');
+      print('🌐 Request URL: $_baseUrl$_accommodationsEndpoint/$accommodationId/images');
+      print('🔑 Auth token: ${authToken.substring(0, 20)}...');
       
       var streamedResponse = await request.send();
       var response = await http.Response.fromStream(streamedResponse);
 
       print('📡 Response status: ${response.statusCode}');
+      print('📡 Response headers: ${response.headers}');
       print('📡 Response body: ${response.body}');
 
       // Handle auth errors

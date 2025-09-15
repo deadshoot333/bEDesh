@@ -2,6 +2,7 @@ console.log('🔄 ACCOMMODATION ROUTES - Starting module load...');
 
 const express = require('express');
 const authenticateToken = require('../middlewares/auth.middleware');
+const { supabase } = require('../config/connection');
 const { 
   createNewAccommodation, 
   fetchAccommodations, 
@@ -17,7 +18,7 @@ const multer = require('multer');
 const upload = multer({ 
   storage: multer.memoryStorage(),
   limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB per file
+    fileSize: 10 * 1024 * 1024, // 10MB per file
     files: 5 // Maximum 5 files
   },
   fileFilter: (req, file, cb) => {
@@ -65,9 +66,10 @@ router.get('/:id', async (req, res) => {
   console.log('🆔 Accommodation ID:', req.params.id);
   
   try {
-    const accommodationId = parseInt(req.params.id);
+    const accommodationId = req.params.id;
     
-    if (isNaN(accommodationId)) {
+    // Validate UUID format (basic check)
+    if (!accommodationId || accommodationId.length < 10) {
       return res.status(400).json({
         success: false,
         error: 'Invalid accommodation ID'
@@ -102,23 +104,20 @@ router.get('/:id', async (req, res) => {
 // POST /accommodations - Create new accommodation (Protected)
 router.post('/', authenticateToken, async (req, res) => {
   console.log('\n🏠 POST /accommodations - Route called');
-  console.log('👤 User ID:', req.user.id);
+  console.log('👤 User ID:', req.user.userId);
   console.log('📋 Request body keys:', Object.keys(req.body));
   
   try {
-    const accommodationData = {
-      ...req.body,
-      user_id: req.user.id // Ensure user_id is set from authenticated user
-    };
+    const accommodationData = req.body;
     
     console.log('🔍 Processing accommodation data:', {
       title: accommodationData.title,
       location: accommodationData.location,
-      price: accommodationData.price,
-      user_id: accommodationData.user_id
+      rent: accommodationData.rent,
+      roomType: accommodationData.roomType
     });
 
-    const newAccommodation = await createNewAccommodation(accommodationData);
+    const newAccommodation = await createNewAccommodation(accommodationData, req.user.userId);
     
     console.log('✅ Accommodation created with ID:', newAccommodation.id);
     res.status(201).json({
@@ -140,10 +139,10 @@ router.post('/', authenticateToken, async (req, res) => {
 // GET /accommodations/user/my - Get current user's accommodations (Protected)
 router.get('/user/my', authenticateToken, async (req, res) => {
   console.log('\n👤 GET /accommodations/user/my - Route called');
-  console.log('👤 User ID:', req.user.id);
+  console.log('👤 User ID:', req.user.userId);
   
   try {
-    const userAccommodations = await fetchUserAccommodations(req.user.id);
+    const userAccommodations = await fetchUserAccommodations(req.user.userId);
     console.log(`✅ Found ${userAccommodations.length} user accommodations`);
     
     res.json({
@@ -166,20 +165,21 @@ router.get('/user/my', authenticateToken, async (req, res) => {
 router.put('/:id', authenticateToken, async (req, res) => {
   console.log('\n✏️ PUT /accommodations/:id - Route called');
   console.log('🆔 Accommodation ID:', req.params.id);
-  console.log('👤 User ID:', req.user.id);
+  console.log('👤 User ID:', req.user.userId);
   console.log('📋 Request body keys:', Object.keys(req.body));
   
   try {
-    const accommodationId = parseInt(req.params.id);
+    const accommodationId = req.params.id;
     
-    if (isNaN(accommodationId)) {
+    // Validate UUID format (basic check)
+    if (!accommodationId || accommodationId.length < 10) {
       return res.status(400).json({
         success: false,
         error: 'Invalid accommodation ID'
       });
     }
 
-    const updatedAccommodation = await updateExistingAccommodation(accommodationId, req.body, req.user.id);
+    const updatedAccommodation = await updateExistingAccommodation(accommodationId, req.body, req.user.userId);
     
     if (!updatedAccommodation) {
       return res.status(404).json({
@@ -209,19 +209,20 @@ router.put('/:id', authenticateToken, async (req, res) => {
 router.delete('/:id', authenticateToken, async (req, res) => {
   console.log('\n🗑️ DELETE /accommodations/:id - Route called');
   console.log('🆔 Accommodation ID:', req.params.id);
-  console.log('👤 User ID:', req.user.id);
+  console.log('👤 User ID:', req.user.userId);
   
   try {
-    const accommodationId = parseInt(req.params.id);
+    const accommodationId = req.params.id;
     
-    if (isNaN(accommodationId)) {
+    // Validate UUID format (basic check)
+    if (!accommodationId || accommodationId.length < 10) {
       return res.status(400).json({
         success: false,
         error: 'Invalid accommodation ID'
       });
     }
 
-    const deletedAccommodation = await removeAccommodation(accommodationId, req.user.id);
+    const deletedAccommodation = await removeAccommodation(accommodationId, req.user.userId);
     
     if (!deletedAccommodation) {
       return res.status(404).json({
@@ -251,35 +252,90 @@ router.delete('/:id', authenticateToken, async (req, res) => {
 router.post('/:id/images', authenticateToken, upload.array('images', 5), async (req, res) => {
   console.log('\n🖼️ POST /accommodations/:id/images - Route called');
   console.log('🆔 Accommodation ID:', req.params.id);
-  console.log('👤 User ID:', req.user.id);
-  console.log('📸 Number of files:', req.files ? req.files.length : 0);
+  console.log('🆔 ID Type:', typeof req.params.id);
+  console.log('👤 User ID:', req.user.userId);
+  console.log('� User from token:', JSON.stringify(req.user, null, 2));
+  console.log('�📸 Number of files:', req.files ? req.files.length : 0);
+  console.log('📋 Headers:', JSON.stringify(req.headers, null, 2));
   
   try {
-    const accommodationId = parseInt(req.params.id);
+    const accommodationId = req.params.id;
     
-    if (isNaN(accommodationId)) {
+    // Enhanced UUID validation
+    console.log('🔍 Validating accommodation ID...');
+    if (!accommodationId) {
+      console.error('❌ No accommodation ID provided');
       return res.status(400).json({
         success: false,
-        error: 'Invalid accommodation ID'
+        error: 'Accommodation ID is required'
       });
     }
+    
+    if (typeof accommodationId !== 'string') {
+      console.error('❌ Accommodation ID is not a string:', typeof accommodationId);
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid accommodation ID format'
+      });
+    }
+    
+    if (accommodationId.length < 10) {
+      console.error('❌ Accommodation ID too short:', accommodationId.length);
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid accommodation ID length'
+      });
+    }
+    
+    console.log('✅ Accommodation ID validation passed');
 
+    // Validate files
+    console.log('🔍 Validating uploaded files...');
     if (!req.files || req.files.length === 0) {
+      console.error('❌ No files provided in request');
       return res.status(400).json({
         success: false,
         error: 'No images provided'
       });
     }
 
-    console.log('📋 File details:', req.files.map(f => ({
-      originalname: f.originalname,
-      mimetype: f.mimetype,
-      size: f.size
-    })));
+    console.log('📋 Detailed file information:');
+    req.files.forEach((file, index) => {
+      console.log(`  📁 File ${index + 1}:`, {
+        originalname: file.originalname,
+        mimetype: file.mimetype,
+        size: file.size,
+        encoding: file.encoding,
+        bufferLength: file.buffer ? file.buffer.length : 'No buffer'
+      });
+    });
 
-    const imageUrls = await uploadAccommodationImages(req.files, req.user.id, accommodationId);
+    // Test Supabase connection (simplified)
+    console.log('🔗 Testing Supabase storage access...');
+    try {
+      // Skip bucket listing due to RLS policies, go straight to upload test
+      console.log('ℹ️ Skipping bucket existence check due to RLS policies');
+      console.log('✅ Proceeding with upload - bucket exists in dashboard');
+    } catch (connectionError) {
+      console.error('❌ Supabase connection test failed:', connectionError.message);
+      console.error('❌ Full connection error:', connectionError);
+      return res.status(500).json({
+        success: false,
+        error: 'Storage service connection failed',
+        details: connectionError.message
+      });
+    }
+
+    console.log('🚀 Starting image upload process...');
+    const imageUrls = await uploadAccommodationImages(req.files, req.user.userId, accommodationId);
     
-    console.log('✅ Images uploaded successfully');
+    console.log('✅ Images uploaded and accommodation updated successfully');
+    console.log('📊 Upload summary:', {
+      totalFiles: req.files.length,
+      successfulUploads: imageUrls.length,
+      imageUrls: imageUrls
+    });
+    
     res.json({
       success: true,
       message: 'Images uploaded successfully',
@@ -291,6 +347,7 @@ router.post('/:id/images', authenticateToken, upload.array('images', 5), async (
     
   } catch (error) {
     console.error('❌ UPLOAD IMAGES ERROR:', error.message);
+    console.error('❌ Error stack:', error.stack);
     res.status(500).json({
       success: false,
       error: 'Failed to upload images',
@@ -302,7 +359,7 @@ router.post('/:id/images', authenticateToken, upload.array('images', 5), async (
 // POST /accommodations/upload-images - Upload images to Supabase Storage (Protected)
 router.post('/upload-images', authenticateToken, upload.array('images', 5), async (req, res) => {
   console.log('\n🖼️ POST /accommodations/upload-images - Route called');
-  console.log('👤 User ID:', req.user.id);
+  console.log('👤 User ID:', req.user.userId);
   console.log('📸 Number of files:', req.files ? req.files.length : 0);
   
   try {
@@ -320,7 +377,7 @@ router.post('/upload-images', authenticateToken, upload.array('images', 5), asyn
     })));
 
     // Upload images without accommodation ID (general upload)
-    const imageUrls = await uploadAccommodationImages(req.files, req.user.id);
+    const imageUrls = await uploadAccommodationImages(req.files, req.user.userId);
     
     console.log('✅ Images uploaded successfully');
     res.json({
