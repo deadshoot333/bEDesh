@@ -1,5 +1,9 @@
 /// Accommodation listing model
 class AccommodationListing {
+  // Status constants
+  static const String statusAvailable = 'available';
+  static const String statusBooked = 'booked';
+  
   final String id;
   final String title;
   final String description;
@@ -18,7 +22,6 @@ class AccommodationListing {
   final String contactEmail;
   final DateTime availableFrom;
   final DateTime? availableTo;
-  final bool isRoommateRequest;
   final String postedBy;
   final DateTime postedAt;
   final double? latitude;
@@ -27,6 +30,7 @@ class AccommodationListing {
   final String gender; // male, female, any
   final bool petsAllowed;
   final bool smokingAllowed;
+  final String status; // available, booked
 
   const AccommodationListing({
     required this.id,
@@ -47,7 +51,6 @@ class AccommodationListing {
     required this.contactEmail,
     required this.availableFrom,
     this.availableTo,
-    required this.isRoommateRequest,
     required this.postedBy,
     required this.postedAt,
     this.latitude,
@@ -56,5 +59,6 @@ class AccommodationListing {
     required this.gender,
     required this.petsAllowed,
     required this.smokingAllowed,
+    required this.status,
   });
 }

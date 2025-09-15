@@ -119,7 +119,9 @@ class _PrimaryButtonState extends State<PrimaryButton>
                     ? null
                     : () {
                         _animationController.forward().then((_) {
-                          _animationController.reverse();
+                          if (mounted) {
+                            _animationController.reverse();
+                          }
                         });
                         widget.onPressed?.call();
                       },
@@ -298,7 +300,9 @@ class _SecondaryButtonState extends State<SecondaryButton>
                     ? null
                     : () {
                         _animationController.forward().then((_) {
-                          _animationController.reverse();
+                          if (mounted) {
+                            _animationController.reverse();
+                          }
                         });
                         widget.onPressed?.call();
                       },

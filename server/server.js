@@ -8,6 +8,8 @@ const countryRoutes = require("./routes/country.route");
 const peerRoutes = require("./routes/peers.route");
 const communityRoutes = require("./routes/posts.route");
 const messageRoutes = require("./routes/message.route");
+const accommodationRoutes = require('./routes/accommodation.routes');
+
 const app = express();
 
 // Debug middleware - log all incoming requests

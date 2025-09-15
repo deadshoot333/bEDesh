@@ -9,14 +9,9 @@ class AccommodationCard extends StatelessWidget {
   final String location;
   final String propertyType;
   final double rent;
-  final String rentPeriod;
-  final int bedrooms;
-  final int bathrooms;
-  final List<String> amenities;
   final String? imageUrl;
-  final bool isRoommateRequest;
+  final List<String>? imageUrls; // New field for multiple images
   final VoidCallback? onTap;
-  final List<String> nearbyUniversities;
   final String availableFrom;
   final String? country;
   final String? genderPreference;
@@ -28,14 +23,9 @@ class AccommodationCard extends StatelessWidget {
     required this.location,
     required this.propertyType,
     required this.rent,
-    required this.rentPeriod,
-    required this.bedrooms,
-    required this.bathrooms,
-    required this.amenities,
     this.imageUrl,
-    required this.isRoommateRequest,
+    this.imageUrls, // New parameter
     this.onTap,
-    required this.nearbyUniversities,
     required this.availableFrom,
     this.country,
     this.genderPreference,
@@ -79,30 +69,8 @@ class AccommodationCard extends StatelessWidget {
                 ),
                 child: Stack(
                   children: [
-                    // Placeholder image
-                    Container(
-                      width: double.infinity,
-                      height: double.infinity,
-                      decoration: BoxDecoration(
-                        borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(AppConstants.radiusL),
-                          topRight: Radius.circular(AppConstants.radiusL),
-                        ),
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            AppColors.primary.withOpacity(0.8),
-                            AppColors.secondary.withOpacity(0.6),
-                          ],
-                        ),
-                      ),
-                      child: Icon(
-                        isRoommateRequest ? Icons.people : Icons.home,
-                        size: 60,
-                        color: AppColors.textOnPrimary.withOpacity(0.7),
-                      ),
-                    ),
+                    // Image display logic - show actual image if available, otherwise placeholder
+                    _buildImageDisplay(),
                     
                     // Badges
                     Positioned(
@@ -113,23 +81,16 @@ class AccommodationCard extends StatelessWidget {
                         children: [
                           Row(
                             children: [
-                              if (isRoommateRequest) 
-                                _buildBadge(
-                                  'Roommate',
-                                  AppColors.secondary,
-                                  Icons.people,
-                                ),
-                              if (country != null) ...[
-                                const SizedBox(width: AppConstants.spaceXS),
+                              // Remove roommate badge since we don't track this anymore
+                              if (country != null) 
                                 _buildBadge(
                                   country!,
                                   AppColors.info,
                                   Icons.public,
                                 ),
-                              ],
                             ],
                           ),
-                          if (genderPreference != null && genderPreference != 'All') ...[
+                          if (genderPreference != null && genderPreference != 'Any') ...[
                             const SizedBox(height: AppConstants.spaceXS),
                             _buildBadge(
                               '$genderPreference Only',
@@ -162,7 +123,7 @@ class AccommodationCard extends StatelessWidget {
                           ],
                         ),
                         child: Text(
-                          '\$${rent.toStringAsFixed(0)}/$rentPeriod',
+                          '\$${rent.toStringAsFixed(0)}/month',
                           style: AppTextStyles.labelMedium.copyWith(
                             color: AppColors.primary,
                             fontWeight: FontWeight.w700,
@@ -221,77 +182,18 @@ class AccommodationCard extends StatelessWidget {
                     Row(
                       children: [
                         _buildDetailChip(
-                          Icons.single_bed,
-                          '$bedrooms bed${bedrooms > 1 ? 's' : ''}',
-                        ),
-                        const SizedBox(width: AppConstants.spaceS),
-                        _buildDetailChip(
-                          Icons.bathroom,
-                          '$bathrooms bath${bathrooms > 1 ? 's' : ''}',
-                        ),
-                        const SizedBox(width: AppConstants.spaceS),
-                        _buildDetailChip(
                           Icons.home_work,
                           propertyType,
+                        ),
+                        const SizedBox(width: AppConstants.spaceS),
+                        _buildDetailChip(
+                          Icons.calendar_today,
+                          'Available',
                         ),
                       ],
                     ),
                     
                     const SizedBox(height: AppConstants.spaceS),
-                    
-                    // Nearby universities
-                    if (nearbyUniversities.isNotEmpty) ...[
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.school,
-                            size: 14,
-                            color: AppColors.secondary,
-                          ),
-                          const SizedBox(width: AppConstants.spaceXS),
-                          Expanded(
-                            child: Text(
-                              'Near ${nearbyUniversities.take(2).join(', ')}',
-                              style: AppTextStyles.bodySmall.copyWith(
-                                color: AppColors.secondary,
-                                fontWeight: FontWeight.w500,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: AppConstants.spaceS),
-                    ],
-                    
-                    // Amenities/Facilities
-                    if ((facilities?.isNotEmpty ?? false) || amenities.isNotEmpty) ...[
-                      Wrap(
-                        spacing: AppConstants.spaceXS,
-                        runSpacing: AppConstants.spaceXS,
-                        children: (facilities?.isNotEmpty ?? false ? facilities! : amenities)
-                            .take(3).map((item) {
-                          return Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: AppConstants.spaceS,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppColors.accent,
-                              borderRadius: BorderRadius.circular(AppConstants.radiusS),
-                            ),
-                            child: Text(
-                              item,
-                              style: AppTextStyles.labelSmall.copyWith(
-                                color: AppColors.textSecondary,
-                              ),
-                            ),
-                          );
-                        }).toList(),
-                      ),
-                      const SizedBox(height: AppConstants.spaceS),
-                    ],
                     
                     // Available from
                     Row(
@@ -382,6 +284,83 @@ class AccommodationCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  /// Build image display - shows actual uploaded image or placeholder
+  Widget _buildImageDisplay() {
+    // Get the first available image URL
+    String? displayImageUrl;
+    
+    // Prefer imageUrls array (new format) over single imageUrl (legacy)
+    if (imageUrls != null && imageUrls!.isNotEmpty) {
+      displayImageUrl = imageUrls!.first;
+    } else if (imageUrl != null && imageUrl!.isNotEmpty) {
+      displayImageUrl = imageUrl;
+    }
+
+    if (displayImageUrl != null && displayImageUrl.isNotEmpty) {
+      // Display the actual uploaded image
+      return Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: BoxDecoration(
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(AppConstants.radiusL),
+            topRight: Radius.circular(AppConstants.radiusL),
+          ),
+        ),
+        child: ClipRRect(
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(AppConstants.radiusL),
+            topRight: Radius.circular(AppConstants.radiusL),
+          ),
+          child: Image.network(
+            displayImageUrl,
+            fit: BoxFit.cover,
+            width: double.infinity,
+            height: double.infinity,
+            loadingBuilder: (context, child, loadingProgress) {
+              if (loadingProgress == null) return child;
+              return _buildPlaceholder(); // Show placeholder while loading
+            },
+            errorBuilder: (context, error, stackTrace) {
+              print('❌ Error loading image: $displayImageUrl - $error');
+              return _buildPlaceholder(); // Show placeholder on error
+            },
+          ),
+        ),
+      );
+    } else {
+      // No image available, show placeholder
+      return _buildPlaceholder();
+    }
+  }
+
+  /// Build gradient placeholder
+  Widget _buildPlaceholder() {
+    return Container(
+      width: double.infinity,
+      height: double.infinity,
+      decoration: BoxDecoration(
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(AppConstants.radiusL),
+          topRight: Radius.circular(AppConstants.radiusL),
+        ),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.primary.withOpacity(0.8),
+            AppColors.secondary.withOpacity(0.6),
+          ],
+        ),
+      ),
+      child: Icon(
+        Icons.home, // Default to home icon
+        size: 60,
+        color: AppColors.textOnPrimary.withOpacity(0.7),
       ),
     );
   }
