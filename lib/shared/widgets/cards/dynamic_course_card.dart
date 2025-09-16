@@ -33,65 +33,111 @@ class DynamicCourseCard extends StatelessWidget {
             ),
           ],
         ),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Course Icon
-            Container(
-              padding: const EdgeInsets.all(AppConstants.spaceM),
-              decoration: BoxDecoration(
-                color: course.isUndergraduate 
-                    ? AppColors.info.withOpacity(0.1)
-                    : AppColors.primary.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(AppConstants.radiusM),
-              ),
-              child: Icon(
-                course.isUndergraduate ? Icons.school : Icons.book,
-                color: course.isUndergraduate ? AppColors.info : AppColors.primary,
-                size: 24,
-              ),
+            // Top Row: Icon and Course Name
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Course Icon
+                Container(
+                  padding: const EdgeInsets.all(AppConstants.spaceS),
+                  decoration: BoxDecoration(
+                    color: course.isUndergraduate 
+                        ? AppColors.info.withOpacity(0.1)
+                        : AppColors.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(AppConstants.radiusS),
+                  ),
+                  child: Icon(
+                    course.isUndergraduate ? Icons.school : Icons.book,
+                    color: course.isUndergraduate ? AppColors.info : AppColors.primary,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: AppConstants.spaceS),
+                
+                // Course Name - Takes remaining space
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        course.name,
+                        style: AppTextStyles.h5.copyWith(
+                          color: AppColors.textPrimary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: AppConstants.spaceXS),
+                      if (course.fieldOfStudy.isNotEmpty)
+                        Text(
+                          course.fieldOfStudy,
+                          style: AppTextStyles.bodySmall.copyWith(
+                            color: AppColors.textSecondary,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                    ],
+                  ),
+                ),
+                
+                // Action Arrow
+                Icon(
+                  Icons.arrow_forward_ios,
+                  size: 16,
+                  color: AppColors.textSecondary,
+                ),
+              ],
             ),
-            const SizedBox(width: AppConstants.spaceM),
             
-            // Course Details
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    course.name,
-                    style: AppTextStyles.h5.copyWith(
-                      color: AppColors.textPrimary,
+            const SizedBox(height: AppConstants.spaceM),
+            
+            // Bottom Row: Level, Duration, and Fee (wrapped layout)
+            Wrap(
+              spacing: AppConstants.spaceS,
+              runSpacing: AppConstants.spaceXS,
+              children: [
+                // Level Badge
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppConstants.spaceS,
+                    vertical: AppConstants.spaceXS,
+                  ),
+                  decoration: BoxDecoration(
+                    color: course.isUndergraduate 
+                        ? AppColors.info.withOpacity(0.1)
+                        : AppColors.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(AppConstants.radiusS),
+                  ),
+                  child: Text(
+                    course.level,
+                    style: AppTextStyles.labelSmall.copyWith(
+                      color: course.isUndergraduate ? AppColors.info : AppColors.primary,
                       fontWeight: FontWeight.w600,
                     ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: AppConstants.spaceXS),
-                  Row(
+                ),
+                
+                // Duration
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppConstants.spaceS,
+                    vertical: AppConstants.spaceXS,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.backgroundSecondary,
+                    borderRadius: BorderRadius.circular(AppConstants.radiusS),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppConstants.spaceS,
-                          vertical: AppConstants.spaceXS,
-                        ),
-                        decoration: BoxDecoration(
-                          color: course.isUndergraduate 
-                              ? AppColors.info.withOpacity(0.1)
-                              : AppColors.primary.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(AppConstants.radiusS),
-                        ),
-                        child: Text(
-                          course.level,
-                          style: AppTextStyles.labelSmall.copyWith(
-                            color: course.isUndergraduate ? AppColors.info : AppColors.primary,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: AppConstants.spaceS),
                       Icon(
                         Icons.access_time,
-                        size: 14,
+                        size: 12,
                         color: AppColors.textSecondary,
                       ),
                       const SizedBox(width: AppConstants.spaceXS),
@@ -103,43 +149,37 @@ class DynamicCourseCard extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: AppConstants.spaceXS),
-                  if (course.fieldOfStudy.isNotEmpty)
-                    Text(
-                      course.fieldOfStudy,
-                      style: AppTextStyles.bodySmall.copyWith(
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                ],
-              ),
-            ),
-            
-            // Course Fee and Action
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                if (course.annualFee.isNotEmpty) ...[
-                  Text(
-                    'Annual Fee',
-                    style: AppTextStyles.labelSmall.copyWith(
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                  Text(
-                    course.annualFee.contains(',') ? '£${course.annualFee}' : '£${course.annualFee}',
-                    style: AppTextStyles.bodyMedium.copyWith(
-                      color: AppColors.textPrimary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: AppConstants.spaceS),
-                ],
-                Icon(
-                  Icons.arrow_forward_ios,
-                  size: 16,
-                  color: AppColors.textSecondary,
                 ),
+                
+                // Annual Fee (if available)
+                if (course.annualFee.isNotEmpty)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppConstants.spaceS,
+                      vertical: AppConstants.spaceXS,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.success.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(AppConstants.radiusS),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.attach_money,
+                          size: 12,
+                          color: AppColors.success,
+                        ),
+                        Text(
+                          course.annualFee.contains(',') ? '£${course.annualFee}' : '£${course.annualFee}',
+                          style: AppTextStyles.labelSmall.copyWith(
+                            color: AppColors.success,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
               ],
             ),
           ],

@@ -5,6 +5,7 @@ import '../../../../core/constants/app_constants.dart';
 import '../../../../core/services/connections_service.dart';
 import '../../../../core/services/storage_service.dart';
 import '../../../../shared/widgets/buttons/modern_buttons.dart';
+import '../../../../shared/widgets/navigation/navigation_wrapper.dart';
 import '../../../community/presentation/pages/peer_messaging_page.dart';
 import '../../../community/presentation/pages/user_profile_page.dart';
 
@@ -144,7 +145,9 @@ class _ConnectionsPageState extends State<ConnectionsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return NavigationWrapper(
+      selectedIndex: 4, // Profile tab context
+      child: Scaffold(
       backgroundColor: AppColors.backgroundPrimary,
       appBar: AppBar(
         backgroundColor: AppColors.primary,
@@ -170,8 +173,9 @@ class _ConnectionsPageState extends State<ConnectionsPage> {
         color: AppColors.primary,
         child: _buildBody(),
       ),
-    );
-  }
+    ), // Scaffold closes here
+  ); // NavigationWrapper closes here
+  } // build method closes here
 
   Widget _buildBody() {
     if (_isLoading) {

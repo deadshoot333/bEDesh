@@ -7,6 +7,7 @@ import '../../../../shared/widgets/chips/modern_chip.dart';
 import '../../../../shared/widgets/cards/university_card.dart';
 import '../../../../shared/widgets/buttons/modern_buttons.dart';
 import '../../../../shared/widgets/common/section_header.dart';
+import '../../../../shared/widgets/navigation/navigation_wrapper.dart';
 import '../../domain/models/university.dart';
 import '../../data/services/university_api_service.dart';
 import 'dynamic_university_page.dart';
@@ -192,8 +193,10 @@ class _UniversityListPageState extends State<UniversityListPage>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.backgroundPrimary,
+    return NavigationWrapper(
+      selectedIndex: 0, // Home tab context
+      child: Scaffold(
+        backgroundColor: AppColors.backgroundPrimary,
       body: FadeTransition(
         opacity: _fadeAnimation,
         child: CustomScrollView(
@@ -216,9 +219,10 @@ class _UniversityListPageState extends State<UniversityListPage>
               ),
             ),
           ],
-        ),
-      ),
-    );
+        ), // CustomScrollView closes here
+      ), // FadeTransition closes here
+    ), // Scaffold closes here
+  ); // NavigationWrapper closes here
   }
 
   Widget _buildContent() {

@@ -6,6 +6,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/constants/asset_paths.dart';
+import '../../../../core/services/navigation_service.dart';
 import '../../../../shared/widgets/common/section_header.dart';
 import '../../../../shared/widgets/inputs/modern_search_bar.dart';
 import '../../../../shared/widgets/cards/circular_destination_card.dart';
@@ -16,7 +17,6 @@ import '../../../../shared/widgets/buttons/modern_buttons.dart';
 import '../../../university/presentation/pages/dynamic_university_page.dart';
 import '../../../destination/presentation/pages/australia_details_page.dart';
 import '../../../university/presentation/pages/university_list_page.dart';
-import '../../../profile/presentation/pages/profile_page.dart';
 import '../../../onboarding/presentation/pages/modern_onboarding_page.dart';
 
 class ModernHomePage extends StatefulWidget {
@@ -281,12 +281,8 @@ class _ModernHomePageState extends State<ModernHomePage>
                       backgroundColor: AppColors.textOnPrimary.withOpacity(0.2),
                       iconColor: AppColors.textOnPrimary,
                       onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const ProfilePage(),
-                          ),
-                        );
+                        // Switch to profile tab instead of pushing new page
+                        NavigationService.navigateToProfile();
                       },
                       tooltip: 'Profile',
                     ),

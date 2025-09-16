@@ -5,6 +5,7 @@ import '../../../../core/constants/app_constants.dart';
 import '../../../../core/services/favorites_service.dart';
 import '../../../../shared/widgets/cards/university_card.dart';
 import '../../../../shared/widgets/common/section_header.dart';
+import '../../../../shared/widgets/navigation/navigation_wrapper.dart';
 import '../../../university/presentation/pages/dynamic_university_page.dart';
 
 class FavoritesPage extends StatefulWidget {
@@ -125,7 +126,9 @@ class _FavoritesPageState extends State<FavoritesPage>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return NavigationWrapper(
+      selectedIndex: 4, // Profile tab context
+      child: Scaffold(
       backgroundColor: AppColors.backgroundPrimary,
       appBar: AppBar(
         backgroundColor: AppColors.backgroundPrimary,
@@ -154,7 +157,8 @@ class _FavoritesPageState extends State<FavoritesPage>
           : _favoriteUniversities.isEmpty
               ? _buildEmptyState()
               : _buildFavoritesList(),
-    );
+    ), // Scaffold closes here
+  ); // NavigationWrapper closes here
   }
 
   Widget _buildLoadingState() {

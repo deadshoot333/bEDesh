@@ -8,6 +8,7 @@ import '../../../../shared/widgets/common/section_header.dart';
 import '../../../../shared/widgets/buttons/modern_buttons.dart';
 import '../../../../shared/widgets/cards/dynamic_course_card.dart';
 import '../../../../shared/widgets/cards/scholarship_card.dart';
+import '../../../../shared/widgets/navigation/navigation_wrapper.dart';
 import '../../data/services/university_api_service.dart';
 import '../../domain/models/university.dart';
 import '../../domain/models/course.dart';
@@ -186,88 +187,103 @@ class _DynamicUniversityPageState extends State<DynamicUniversityPage>
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
-      return Scaffold(
-        backgroundColor: AppColors.backgroundPrimary,
-        body: const Center(
-          child: CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+      return NavigationWrapper(
+        selectedIndex: 0, // Home tab context
+        child: Scaffold(
+          backgroundColor: AppColors.backgroundPrimary,
+          body: const Center(
+            child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+            ),
           ),
         ),
       );
     }
 
     if (errorMessage != null) {
-      return Scaffold(
-        backgroundColor: AppColors.backgroundPrimary,
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.error_outline,
-                size: 64,
-                color: AppColors.error,
-              ),
-              const SizedBox(height: AppConstants.spaceM),
-              Text(
-                'Error Loading University',
-                style: AppTextStyles.h3.copyWith(color: AppColors.textPrimary),
-              ),
-              const SizedBox(height: AppConstants.spaceS),
-              Text(
-                errorMessage!,
-                style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: AppConstants.spaceL),
-              PrimaryButton(
-                text: 'Retry',
-                onPressed: _loadUniversityData,
-              ),
-            ],
+      return NavigationWrapper(
+        selectedIndex: 0, // Home tab context
+        child: Scaffold(
+          backgroundColor: AppColors.backgroundPrimary,
+          body: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.error_outline,
+                  size: 64,
+                  color: AppColors.error,
+                ),
+                const SizedBox(height: AppConstants.spaceM),
+                Text(
+                  'Error Loading University',
+                  style: AppTextStyles.h3.copyWith(color: AppColors.textPrimary),
+                ),
+                const SizedBox(height: AppConstants.spaceS),
+                Text(
+                  errorMessage!,
+                  style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: AppConstants.spaceL),
+                PrimaryButton(
+                  text: 'Retry',
+                  onPressed: _loadUniversityData,
+                ),
+              ],
+            ),
           ),
         ),
       );
     }
 
     if (university == null) {
-      return Scaffold(
-        backgroundColor: AppColors.backgroundPrimary,
-        body: const Center(
-          child: Text('University not found'),
+      return NavigationWrapper(
+        selectedIndex: 0, // Home tab context
+        child: Scaffold(
+          backgroundColor: AppColors.backgroundPrimary,
+          body: const Center(
+            child: Text('University not found'),
+          ),
         ),
       );
     }
 
-    return Scaffold(
-      body: FadeTransition(
-        opacity: _fadeAnimation,
-        child: SlideTransition(
-          position: _slideAnimation,
-          child: CustomScrollView(
-            slivers: [
-              _buildUniversityHeader(),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.all(AppConstants.spaceM),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildUniversityDescription(),
-                      const SizedBox(height: AppConstants.spaceL),
-                      _buildUniversityStats(),
-                      const SizedBox(height: AppConstants.spaceXL),
-                      _buildScholarshipsSection(),
-                      const SizedBox(height: AppConstants.spaceXL),
-                      _buildCoursesSection(),
-                      const SizedBox(height: AppConstants.spaceXL),
-                      _buildApplySection(),
-                      const SizedBox(height: AppConstants.spaceXL),
-                    ],
+    return NavigationWrapper(
+      selectedIndex: 0, // Home tab context since users navigate here from country pages
+      child: Scaffold(
+        body: FadeTransition(
+          opacity: _fadeAnimation,
+          child: SlideTransition(
+            position: _slideAnimation,
+            child: CustomScrollView(
+              slivers: [
+                _buildUniversityHeader(),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8.0, // Further reduced to prevent any overflow
+                      vertical: AppConstants.spaceM,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildUniversityDescription(),
+                        const SizedBox(height: AppConstants.spaceL),
+                        _buildUniversityStats(),
+                        const SizedBox(height: AppConstants.spaceXL),
+                        _buildScholarshipsSection(),
+                        const SizedBox(height: AppConstants.spaceXL),
+                        _buildCoursesSection(),
+                        const SizedBox(height: AppConstants.spaceXL),
+                        _buildApplySection(),
+                        const SizedBox(height: AppConstants.spaceXL),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

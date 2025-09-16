@@ -7,10 +7,10 @@ import 'package:image_picker/image_picker.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/app_constants.dart';
+import '../../../../core/services/navigation_service.dart';
 import '../../../../shared/widgets/buttons/modern_buttons.dart';
 import '../../../../shared/widgets/inputs/modern_search_bar.dart';
 import '../widgets/accommodation_card.dart';
-import '../../../profile/presentation/pages/profile_page.dart';
 import '../../../../core/services/storage_service.dart';
 import '../../../../core/services/auth_service.dart';
 import '../../../../core/services/accommodation_api_service.dart';
@@ -507,12 +507,7 @@ class _AccommodationPageState extends State<AccommodationPage>
                           child: IconButton(
                             onPressed: () {
                               // Navigate to profile page
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const ProfilePage(),
-                                ),
-                              );
+                              NavigationService.navigateToProfile();
                             },
                             icon: Icon(
                               Icons.person,
