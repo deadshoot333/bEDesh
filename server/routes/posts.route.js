@@ -1,11 +1,6 @@
 const express = require("express");
-<<<<<<< HEAD
-const { getPosts, addPost, userResult } = require("../models/post.model");
+const { getPosts, addPost, userResult,getUserPostsCount } = require("../models/post.model");
 const authenticateToken = require("../middlewares/auth.middleware.js");
-=======
-const { getAllPosts, addPost, getUserPostsCount } = require("../models/post.model");
-const authenticateToken = require('../middlewares/auth.middleware.js');
->>>>>>> refs/remotes/origin/main
 const router = express.Router();
 
 router.get("/get-posts", authenticateToken, async (req, res) => {
@@ -18,17 +13,12 @@ router.get("/get-posts", authenticateToken, async (req, res) => {
     res.status(500).json({ error: "Failed to get posts" });
   }
 });
-<<<<<<< HEAD
 router.post("/post", authenticateToken, async (req, res) => {
-=======
-
-router.post("/post", async (req, res) => {
->>>>>>> refs/remotes/origin/main
   try {
     const userId = req.user.id;
     const newPost = await addPost(userId, req.body);
     const user = userResult(userId);
-    const formattedPost = {
+    const post = {
       id: newPost.id,
       userId: user.id,
       userImage: user.image,
@@ -43,7 +33,7 @@ router.post("/post", async (req, res) => {
       postType: newPost.post_type,
       images: newPost.images || null,
     };
-    res.json({ formattedPost });
+    res.json({ post });
   } catch (error) {
     console.error("Error gettting posts:", error);
     res.status(500).json({ error: "Failed to get posts" });
