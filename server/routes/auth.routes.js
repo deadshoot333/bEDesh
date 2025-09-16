@@ -85,10 +85,21 @@ router.post('/login', async (req, res) => {
 
 // Protected route
 router.get('/me', authenticateToken, async (req, res) => {
+  console.log('\n🔍 PROFILE ENDPOINT - GET /auth/me called');
+  console.log('🧑 req.user:', req.user);
+  console.log('🆔 req.user.id:', req.user?.id);
+  console.log('🆔 req.user.userId:', req.user?.userId);
+  
   try {
-    const user = await getProfile(req.user.id);
+    const userId = req.user.userId || req.user.id;
+    console.log('🔎 Looking up user with ID:', userId);
+    
+    const user = await getProfile(userId);
+    console.log('✅ Profile found:', user);
+    
     res.json({ user });
   } catch (err) {
+    console.error('❌ Profile error:', err.message);
     res.status(500).json({ error: 'Failed to get profile' });
   }
 });

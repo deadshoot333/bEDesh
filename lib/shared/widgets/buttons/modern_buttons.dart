@@ -119,7 +119,9 @@ class _PrimaryButtonState extends State<PrimaryButton>
                     ? null
                     : () {
                         _animationController.forward().then((_) {
-                          _animationController.reverse();
+                          if (mounted) {
+                            _animationController.reverse();
+                          }
                         });
                         widget.onPressed?.call();
                       },
@@ -164,10 +166,14 @@ class _PrimaryButtonState extends State<PrimaryButton>
                         ),
                         const SizedBox(width: AppConstants.spaceS),
                       ],
-                      Text(
-                        widget.text,
-                        style: _textStyle.copyWith(
-                          color: isDisabled ? AppColors.textSecondary : textColor,
+                      Flexible(
+                        child: Text(
+                          widget.text,
+                          style: _textStyle.copyWith(
+                            color: isDisabled ? AppColors.textSecondary : textColor,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
                         ),
                       ),
                     ],
@@ -298,7 +304,9 @@ class _SecondaryButtonState extends State<SecondaryButton>
                     ? null
                     : () {
                         _animationController.forward().then((_) {
-                          _animationController.reverse();
+                          if (mounted) {
+                            _animationController.reverse();
+                          }
                         });
                         widget.onPressed?.call();
                       },

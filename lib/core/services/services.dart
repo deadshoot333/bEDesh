@@ -8,6 +8,8 @@ export '../models/api_error.dart';
 export '../services/api_service.dart';
 export '../services/auth_service.dart';
 export '../services/storage_service.dart';
+export 'image_service.dart';
+export 'accommodation_api_service.dart';
 
 // Export constants
 export '../constants/api_constants.dart';
