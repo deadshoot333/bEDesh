@@ -1,6 +1,6 @@
 class ApiConstants {
   // Base URL for the Node.js backend
-  static const String baseUrl = 'http://10.103.130.93:5000';
+  static const String baseUrl = 'http://10.103.135.183:5000';
   // static const String baseUrl = 'http://10.0.2.2:5000';
 
   // Authentication endpoints
