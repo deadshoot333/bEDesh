@@ -175,7 +175,9 @@ router.get('/user/my', authenticateToken, async (req, res) => {
       availableFrom: req.query.availableFrom ? new Date(req.query.availableFrom) : undefined,
       availableTo: req.query.availableTo ? new Date(req.query.availableTo) : undefined,
       // Parse facilities array
-      facilities: req.query.facilities ? req.query.facilities.split(',') : undefined
+      facilities: req.query.facilities ? req.query.facilities.split(',') : undefined,
+      // Parse include_booked parameter for My Listings to show all statuses
+      includeBooked: req.query.include_booked === 'true'
     };
 
     console.log('🔧 Processed filters:', filters);

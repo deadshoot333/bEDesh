@@ -332,7 +332,8 @@ async function fetchUserAccommodations(userId, filters = {}) {
       available_from: filters.availableFrom || filters.available_from,
       available_to: filters.availableTo || filters.available_to,
       facilities: filters.facilities || [],
-      userId // Add user ID to filters
+      userId, // Add user ID to filters
+      includeBooked: filters.includeBooked || false // Use the passed includeBooked flag
     };
 
     // Clean undefined values
