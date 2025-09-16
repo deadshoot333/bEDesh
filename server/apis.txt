@@ -1,0 +1,27 @@
+// {
+//   "requesterId": "c67c2c6f-8286-4eef-bd0a-9af880dcf329",
+//   "receiverId": "ef4d7a68-8a15-4a39-9850-0f71037a6e6a"
+// }--->http://localhost:5000/api/peer/connect
+
+//{
+//  "connectionId":"6acb0a9b-f803-4a8f-9b3e-089a56d3381b",
+//  "action":""
+//}--->http://localhost:5000/api/peer/respond
+
+{
+  "userId": "7f50c5a4-18d6-4e5f-a847-9d1c3a4cf97b",
+  "content": "My first post with JOIN 🚀",
+  "postType": "text",
+  "tags": ["flutter", "supabase", "express"],
+  "images": ["https://example.com/image.jpg"]
+}--->http://localhost:5000/api/community/post
+
+
+{
+    "email":"arqam343almas@gmail.com",
+    "mobile":"+8801841225706",
+    "password":"123456",
+    "university":"MIT",
+    "city":"Cambridge"
+}--->http://localhost:5000/auth/signup
+

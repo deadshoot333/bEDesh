@@ -37,7 +37,7 @@ dependencies:
   share_plus: ^7.2.1
   url_launcher: ^6.2.6
   image_picker: ^1.0.4
-  
+  intl_phone_field: ^3.2.0
   # HTTP and Authentication packages
   http: ^1.5.0
   shared_preferences: ^2.2.0 

@@ -118,6 +118,86 @@ class _CircularUniversityCardState extends State<CircularUniversityCard>
     _scaleController.reverse();
   }
 
+  /// Build image widget that handles both network URLs and asset paths
+  Widget _buildImage() {
+    final isNetworkImage = widget.imageUrl.startsWith('http://') || 
+                          widget.imageUrl.startsWith('https://');
+    
+    if (isNetworkImage) {
+      return Image.network(
+        widget.imageUrl,
+        width: 120,
+        height: 120,
+        fit: BoxFit.cover,
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return Container(
+            width: 120,
+            height: 120,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: LinearGradient(
+                colors: [
+                  AppColors.primary.withOpacity(0.3),
+                  AppColors.primaryLight.withOpacity(0.5),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+            child: Center(
+              child: CircularProgressIndicator(
+                value: loadingProgress.expectedTotalBytes != null
+                    ? loadingProgress.cumulativeBytesLoaded /
+                        loadingProgress.expectedTotalBytes!
+                    : null,
+                strokeWidth: 2,
+                valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
+              ),
+            ),
+          );
+        },
+        errorBuilder: (context, error, stackTrace) {
+          return _buildFallbackImage();
+        },
+      );
+    } else {
+      return Image.asset(
+        widget.imageUrl,
+        width: 120,
+        height: 120,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return _buildFallbackImage();
+        },
+      );
+    }
+  }
+
+  /// Build fallback image when network/asset image fails to load
+  Widget _buildFallbackImage() {
+    return Container(
+      width: 120,
+      height: 120,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: LinearGradient(
+          colors: [
+            AppColors.primary.withOpacity(0.7),
+            AppColors.primaryLight.withOpacity(0.9),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: const Icon(
+        Icons.school_rounded,
+        size: 40,
+        color: AppColors.textOnPrimary,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
@@ -157,34 +237,7 @@ class _CircularUniversityCardState extends State<CircularUniversityCard>
                         children: [
                           // Main Image
                           ClipOval(
-                            child: Image.asset(
-                              widget.imageUrl,
-                              width: 120,
-                              height: 120,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return Container(
-                                  width: 120,
-                                  height: 120,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    gradient: LinearGradient(
-                                      colors: [
-                                        AppColors.primary.withOpacity(0.7),
-                                        AppColors.primaryLight.withOpacity(0.9),
-                                      ],
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                    ),
-                                  ),
-                                  child: const Icon(
-                                    Icons.school_rounded,
-                                    size: 40,
-                                    color: AppColors.textOnPrimary,
-                                  ),
-                                );
-                              },
-                            ),
+                            child: _buildImage(),
                           ),
                           
                           // Gradient Overlay

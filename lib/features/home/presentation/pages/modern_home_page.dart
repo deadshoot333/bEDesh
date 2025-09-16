@@ -1,7 +1,6 @@
 import 'package:bedesh/features/accommodation/presentation/pages/accommodation_page.dart';
 import 'package:bedesh/features/community/presentation/pages/community_feed_page.dart';
-import 'package:bedesh/features/destination/presentation/pages/uk_details_page.dart';
-import 'package:bedesh/features/university/presentation/pages/Cambridge_University_Page.dart';
+import 'package:bedesh/features/destination/presentation/pages/dynamic_country_details_page.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -14,11 +13,11 @@ import '../../../../shared/widgets/cards/circular_university_card.dart';
 import '../../../../shared/widgets/buttons/modern_buttons.dart';
 
 // Import the existing pages for navigation
-import '../../../university/presentation/pages/oxford_university_page.dart';
-import '../../../university/presentation/pages/swansea_university_page.dart';
+import '../../../university/presentation/pages/dynamic_university_page.dart';
 import '../../../destination/presentation/pages/australia_details_page.dart';
 import '../../../university/presentation/pages/university_list_page.dart';
 import '../../../profile/presentation/pages/profile_page.dart';
+import '../../../onboarding/presentation/pages/modern_onboarding_page.dart';
 
 class ModernHomePage extends StatefulWidget {
   const ModernHomePage({super.key});
@@ -35,8 +34,18 @@ class _ModernHomePageState extends State<ModernHomePage>
   late Animation<double> _heroFadeAnimation;
   late Animation<Offset> _heroSlideAnimation;
 
-  void _navigateToOnboarding() {
-    Navigator.of(context).pushReplacementNamed('/onboarding');
+  void _handleBackNavigation() {
+    // Check if we can pop (go back to previous page)
+    if (Navigator.of(context).canPop()) {
+      Navigator.of(context).pop();
+    } else {
+      // If no previous page, go to onboarding
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (context) => const ModernOnboardingPage(),
+        ),
+      );
+    }
   }
 
   final PageController _bannerController = PageController(viewportFraction: 0.85);
@@ -97,8 +106,15 @@ class _ModernHomePageState extends State<ModernHomePage>
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: () async {
-        _navigateToOnboarding();
-        return false;
+        // Check if this page can go back in navigation stack
+        if (Navigator.of(context).canPop()) {
+          Navigator.of(context).pop();
+          return false;
+        } else {
+          // If no navigation stack, go to onboarding
+          _handleBackNavigation();
+          return false;
+        }
       },
       child: Scaffold(
         backgroundColor: AppColors.backgroundPrimary,
@@ -132,7 +148,7 @@ class _ModernHomePageState extends State<ModernHomePage>
                       // Popular Destinations
                       SectionHeader(
                         title: 'Popular Destinations',
-                        subtitle: 'Discover top study abroad destinations',
+                        subtitle: 'Explore top study abroad destinations',
                         icon: Icons.public,
                         actionText: 'View All',
                         onActionPressed: () {
@@ -227,7 +243,7 @@ class _ModernHomePageState extends State<ModernHomePage>
                               color: AppColors.textOnPrimary,
                               size: 20,
                             ),
-                            onPressed: _navigateToOnboarding,
+                            onPressed: _handleBackNavigation,
                           ),
                         ),
                         // App name and description
@@ -313,7 +329,7 @@ class _ModernHomePageState extends State<ModernHomePage>
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const SwanseaUniversityPage()),
+                MaterialPageRoute(builder: (context) => const DynamicUniversityPage(universityName: 'Swansea University')),
               );
             },
           ),
@@ -430,10 +446,14 @@ class _ModernHomePageState extends State<ModernHomePage>
       'count': 108,
       'imageAsset': AssetPaths.ukFlag,
       'onTap': () {
-   Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const UKDetailsPage()),
-      );
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const DynamicCountryDetailsPage(
+              countryName: 'United Kingdom',
+            ),
+          ),
+        );
       },
     },
     {
@@ -441,7 +461,14 @@ class _ModernHomePageState extends State<ModernHomePage>
       'count': 137,
       'imageAsset': AssetPaths.abroad13,
       'onTap': () {
-        // Navigate to US details
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const DynamicCountryDetailsPage(
+              countryName: 'United States',
+            ),
+          ),
+        );
       },
     },
     {
@@ -449,7 +476,14 @@ class _ModernHomePageState extends State<ModernHomePage>
       'count': 39,
       'imageAsset': AssetPaths.canadaFlag,
       'onTap': () {
-        // Navigate to Canada details
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const DynamicCountryDetailsPage(
+              countryName: 'Canada',
+            ),
+          ),
+        );
       },
     },
     {
@@ -457,7 +491,14 @@ class _ModernHomePageState extends State<ModernHomePage>
       'count': 15,
       'imageAsset': AssetPaths.australiaFlag,
       'onTap': () {
-        // Navigate to Australia details
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const DynamicCountryDetailsPage(
+              countryName: 'Australia',
+            ),
+          ),
+        );
       },
     },
   ];
@@ -586,7 +627,7 @@ class _ModernHomePageState extends State<ModernHomePage>
       'onTap': () {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) =>  OxfordUniversityPage()),
+          MaterialPageRoute(builder: (context) => const DynamicUniversityPage(universityName: 'Oxford University')),
         );
       },
     },
@@ -600,7 +641,7 @@ class _ModernHomePageState extends State<ModernHomePage>
       'onTap': () {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) =>  CambridgeUniversityPage()),
+          MaterialPageRoute(builder: (context) => const DynamicUniversityPage(universityName: 'University of Cambridge')),
         );
       },
     },

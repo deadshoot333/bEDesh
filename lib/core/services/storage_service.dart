@@ -75,4 +75,17 @@ class StorageService {
       saveRefreshToken(refreshToken),
     ]);
   }
+
+  // Profile photo management
+  static Future<void> setProfilePhotoPath(String imagePath) async {
+    await _instance.setString('profile_photo_path', imagePath);
+  }
+
+  static String? getProfilePhotoPath() {
+    return _instance.getString('profile_photo_path');
+  }
+
+  static Future<void> removeProfilePhotoPath() async {
+    await _instance.remove('profile_photo_path');
+  }
 }

@@ -1,0 +1,14 @@
+john.doe@university.edu
+
+j.smith12@school.edu
+
+student123@college.edu
+
+lisa-ann.jones@gradschool.edu
+
+_test.user@tech.edu
+
+faculty.member@mit.edu
+
+
+arqam.student@harvard.edu

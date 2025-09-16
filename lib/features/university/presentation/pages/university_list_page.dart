@@ -2,13 +2,15 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/app_constants.dart';
-import '../../../../core/constants/asset_paths.dart';
+import '../../../../core/services/favorites_service.dart';
 import '../../../../shared/widgets/inputs/modern_search_bar.dart';
 import '../../../../shared/widgets/chips/modern_chip.dart';
 import '../../../../shared/widgets/cards/university_card.dart';
 import '../../../../shared/widgets/buttons/modern_buttons.dart';
 import '../../../../shared/widgets/common/section_header.dart';
-import 'oxford_university_page.dart';
+import '../../domain/models/university.dart';
+import '../../data/services/university_api_service.dart';
+import 'dynamic_university_page.dart';
 
 class UniversityListPage extends StatefulWidget {
   final String country;
@@ -35,10 +37,15 @@ class _UniversityListPageState extends State<UniversityListPage>
   String _selectedField = 'All Fields';
   String _sortBy = 'Ranking';
   
+  List<University> _universities = [];
+  List<University> _filteredUniversities = [];
+  bool _isLoading = true;
+  String? _error;
+  
   final List<String> _filters = [
     'All',
-    'Top 3',
-   
+    'Top 10',
+    'With Scholarships',
   ];
 
   final List<String> _levels = [
@@ -83,6 +90,7 @@ class _UniversityListPageState extends State<UniversityListPage>
       curve: Curves.easeOut,
     ));
     _animationController.forward();
+    _loadUniversities();
   }
 
   @override
@@ -90,6 +98,88 @@ class _UniversityListPageState extends State<UniversityListPage>
     _animationController.dispose();
     _searchController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadUniversities() async {
+    try {
+      setState(() {
+        _isLoading = true;
+        _error = null;
+      });
+
+      List<University> universities;
+      
+      // Map country codes to full names
+      String searchCountry = widget.country;
+      if (widget.country.toLowerCase() == 'uk') {
+        searchCountry = 'United Kingdom';
+      }
+      
+      // Try to get universities by country search
+      try {
+        universities = await UniversityApiService.getUniversitiesByCountry(searchCountry);
+      } catch (e) {
+        // If search fails, try with the original country name
+        universities = await UniversityApiService.searchUniversities(widget.country);
+      }
+
+      setState(() {
+        _universities = universities;
+        _applyFiltersAndSorting();
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
+    }
+  }
+
+  void _applyFiltersAndSorting() {
+    List<University> filtered = List.from(_universities);
+    
+    // Apply search filter
+    if (_searchController.text.isNotEmpty) {
+      filtered = filtered.where((uni) {
+        return uni.name.toLowerCase().contains(_searchController.text.toLowerCase()) ||
+               uni.location.toLowerCase().contains(_searchController.text.toLowerCase()) ||
+               uni.description.toLowerCase().contains(_searchController.text.toLowerCase());
+      }).toList();
+    }
+    
+    // Apply category filter
+    if (_selectedFilter == 'Top 10') {
+      filtered = filtered.where((uni) => uni.worldRanking <= 10).toList();
+    } else if (_selectedFilter == 'With Scholarships') {
+      // This would need scholarship data in the model
+      // For now, we'll assume all universities have scholarships
+    }
+    
+    // Apply sorting
+    filtered.sort((a, b) {
+      switch (_sortBy) {
+        case 'Ranking':
+          return a.worldRanking.compareTo(b.worldRanking);
+        case 'Tuition (Low to High)':
+          // Since we don't have tuition in the model, sort by ranking
+          return a.worldRanking.compareTo(b.worldRanking);
+        case 'Tuition (High to Low)':
+          // Since we don't have tuition in the model, sort by ranking
+          return b.worldRanking.compareTo(a.worldRanking);
+        case 'Acceptance Rate':
+          // Since we don't have acceptance rate in the model, sort by ranking
+          return a.worldRanking.compareTo(b.worldRanking);
+        case 'Name A-Z':
+          return a.name.compareTo(b.name);
+        default:
+          return 0;
+      }
+    });
+    
+    setState(() {
+      _filteredUniversities = filtered;
+    });
   }
 
   @override
@@ -109,15 +199,82 @@ class _UniversityListPageState extends State<UniversityListPage>
                   children: [
                     _buildSearchAndFilters(),
                     const SizedBox(height: AppConstants.spaceL),
-                    _buildResultsHeader(),
+                    if (!_isLoading && _error == null)
+                      _buildResultsHeader(),
                     const SizedBox(height: AppConstants.spaceM),
-                    _buildUniversityList(),
+                    _buildContent(),
                   ],
                 ),
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildContent() {
+    if (_isLoading) {
+      return _buildLoadingState();
+    } else if (_error != null) {
+      return _buildErrorState();
+    } else {
+      return _buildUniversityList();
+    }
+  }
+
+  Widget _buildLoadingState() {
+    return Container(
+      padding: const EdgeInsets.all(AppConstants.spaceXL),
+      child: Column(
+        children: [
+          const CircularProgressIndicator(
+            color: AppColors.primary,
+          ),
+          const SizedBox(height: AppConstants.spaceL),
+          Text(
+            'Loading universities...',
+            style: AppTextStyles.bodyLarge.copyWith(
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildErrorState() {
+    return Container(
+      padding: const EdgeInsets.all(AppConstants.spaceXL),
+      child: Column(
+        children: [
+          Icon(
+            Icons.error_outline,
+            size: 80,
+            color: AppColors.error.withOpacity(0.5),
+          ),
+          const SizedBox(height: AppConstants.spaceL),
+          Text(
+            'Error Loading Universities',
+            style: AppTextStyles.h4.copyWith(
+              color: AppColors.error,
+            ),
+          ),
+          const SizedBox(height: AppConstants.spaceS),
+          Text(
+            _error!,
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: AppColors.textSecondary,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: AppConstants.spaceL),
+          PrimaryButton(
+            text: 'Retry',
+            size: ButtonSize.medium,
+            onPressed: _loadUniversities,
+          ),
+        ],
       ),
     );
   }
@@ -172,7 +329,7 @@ class _UniversityListPageState extends State<UniversityListPage>
                       ),
                     ),
                     Text(
-                      '${_getFilteredUniversities().length} Universities',
+                      '${_filteredUniversities.length} Universities',
                       style: AppTextStyles.bodyLarge.copyWith(
                         color: AppColors.textOnPrimary.withOpacity(0.8),
                       ),
@@ -195,7 +352,7 @@ class _UniversityListPageState extends State<UniversityListPage>
           controller: _searchController,
           showFilter: true,
           onChanged: (value) {
-            setState(() {});
+            _applyFiltersAndSorting();
           },
           onFilterPressed: _showFilterBottomSheet,
         ),
@@ -220,6 +377,7 @@ class _UniversityListPageState extends State<UniversityListPage>
                 setState(() {
                   _selectedFilter = filter;
                 });
+                _applyFiltersAndSorting();
               },
             ),
           );
@@ -229,7 +387,7 @@ class _UniversityListPageState extends State<UniversityListPage>
   }
 
   Widget _buildResultsHeader() {
-    final filteredCount = _getFilteredUniversities().length;
+    final filteredCount = _filteredUniversities.length;
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -265,7 +423,7 @@ class _UniversityListPageState extends State<UniversityListPage>
   }
 
   Widget _buildUniversityList() {
-    final universities = _getFilteredUniversities();
+    final universities = _filteredUniversities;
     
     if (universities.isEmpty) {
       return _buildEmptyState();
@@ -281,13 +439,15 @@ class _UniversityListPageState extends State<UniversityListPage>
       itemBuilder: (context, index) {
         final university = universities[index];
         return UniversityCard(
-          title: university['name']!,
-          location: university['location']!,
-          imageUrl: university['image']!,
-          ranking: university['ranking'],
-          rating: university['rating'],
-          subtitle: university['subtitle'],
-          showFavoriteButton: false,
+          title: university.name,
+          location: university.location,
+          imageUrl: university.imageUrl,
+          ranking: university.worldRanking,
+          rating: 4.5, // Default rating since it's not in the model
+          subtitle: university.description,
+          showFavoriteButton: true,
+          isFavorite: FavoritesService.isFavorite(university.id),
+          onFavoritePressed: () => _toggleFavorite(university),
           onTap: () => _navigateToUniversity(university),
         );
       },
@@ -358,25 +518,26 @@ class _UniversityListPageState extends State<UniversityListPage>
               borderRadius: BorderRadius.circular(2),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.all(AppConstants.spaceL),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Filter Universities',
-                  style: AppTextStyles.h3.copyWith(
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.bold,
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(AppConstants.spaceL),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Filter Universities',
+                    style: AppTextStyles.h3.copyWith(
+                      color: AppColors.textPrimary,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-                const SizedBox(height: AppConstants.spaceL),
-                
-                // Level Filter
-                const SectionHeader(
-                  title: 'Study Level',
-                  icon: Icons.school_outlined,
-                ),
+                  const SizedBox(height: AppConstants.spaceL),
+                  
+                  // Level Filter
+                  const SectionHeader(
+                    title: 'Study Level',
+                    icon: Icons.school_outlined,
+                  ),
                 const SizedBox(height: AppConstants.spaceM),
                 Wrap(
                   spacing: AppConstants.spaceS,
@@ -430,7 +591,7 @@ class _UniversityListPageState extends State<UniversityListPage>
                           _clearFilters();
                           Navigator.pop(context);
                         },
-                        child: Text('Clear All'),
+                        child: const Text('Clear All'),
                       ),
                     ),
                     const SizedBox(width: AppConstants.spaceM),
@@ -439,13 +600,14 @@ class _UniversityListPageState extends State<UniversityListPage>
                         text: 'Apply Filters',
                         onPressed: () {
                           Navigator.pop(context);
-                          setState(() {});
+                          _applyFiltersAndSorting();
                         },
                       ),
                     ),
                   ],
                 ),
               ],
+            ),
             ),
           ),
         ],
@@ -496,6 +658,7 @@ class _UniversityListPageState extends State<UniversityListPage>
                   setState(() {
                     _sortBy = option;
                   });
+                  _applyFiltersAndSorting();
                   Navigator.pop(context);
                 },
               );
@@ -506,47 +669,62 @@ class _UniversityListPageState extends State<UniversityListPage>
     );
   }
 
-  List<Map<String, dynamic>> _getFilteredUniversities() {
-    List<Map<String, dynamic>> universities = _getUniversitiesForCountry();
-    
-    // Apply search filter
-    if (_searchController.text.isNotEmpty) {
-      universities = universities.where((uni) {
-        return uni['name']!.toLowerCase().contains(_searchController.text.toLowerCase()) ||
-               uni['location']!.toLowerCase().contains(_searchController.text.toLowerCase()) ||
-               (uni['subtitle'] ?? '').toLowerCase().contains(_searchController.text.toLowerCase());
-      }).toList();
-    }
-    
-    // Apply category filter
-    
-    
-    // Apply sorting
-    universities.sort((a, b) {
-      switch (_sortBy) {
-        case 'Ranking':
-          return (a['ranking'] ?? 999).compareTo(b['ranking'] ?? 999);
-        case 'Tuition (Low to High)':
-          return (a['tuition'] ?? 0).compareTo(b['tuition'] ?? 0);
-        case 'Tuition (High to Low)':
-          return (b['tuition'] ?? 0).compareTo(a['tuition'] ?? 0);
-        case 'Acceptance Rate':
-          return (b['acceptanceRate'] ?? 0).compareTo(a['acceptanceRate'] ?? 0);
-        case 'Name A-Z':
-          return a['name']!.compareTo(b['name']!);
-        default:
-          return 0;
-      }
-    });
-    
-    return universities;
-  }
+  Future<void> _toggleFavorite(University university) async {
+    try {
+      final isFavorite = await FavoritesService.toggleFavorite(
+        universityId: university.id,
+        name: university.name,
+        location: university.location,
+        imageUrl: university.imageUrl,
+        ranking: university.worldRanking,
+        description: university.description,
+      );
 
-  List<Map<String, dynamic>> _getUniversitiesForCountry() {
-    if (widget.country.toLowerCase() == 'uk') {
-      return _ukUniversities;
+      // Show feedback to user
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              isFavorite 
+                ? '${university.name} added to favorites' 
+                : '${university.name} removed from favorites',
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: AppColors.textOnPrimary,
+              ),
+            ),
+            backgroundColor: isFavorite ? AppColors.success : AppColors.info,
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.all(AppConstants.spaceM),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppConstants.radiusM),
+            ),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+        
+        // Trigger rebuild to update favorite icons
+        setState(() {});
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Failed to update favorites',
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: AppColors.textOnPrimary,
+              ),
+            ),
+            backgroundColor: AppColors.error,
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.all(AppConstants.spaceM),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppConstants.radiusM),
+            ),
+          ),
+        );
+      }
     }
-    return _ukUniversities; // Default for now
   }
 
   void _clearFilters() {
@@ -557,71 +735,17 @@ class _UniversityListPageState extends State<UniversityListPage>
       _sortBy = 'Ranking';
       _searchController.clear();
     });
+    _applyFiltersAndSorting();
   }
 
-  void _navigateToUniversity(Map<String, dynamic> university) {
-    if (university['name'] == 'University of Oxford') {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) =>  OxfordUniversityPage()),
-      );
-    } else {
-      // For now, show a coming soon message
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            '${university['name']} details coming soon!',
-            style: AppTextStyles.bodyMedium.copyWith(
-              color: AppColors.textOnPrimary,
-            ),
-          ),
-          backgroundColor: AppColors.info,
-          behavior: SnackBarBehavior.floating,
-          margin: const EdgeInsets.all(AppConstants.spaceM),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppConstants.radiusM),
-          ),
+  void _navigateToUniversity(University university) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => DynamicUniversityPage(
+          universityName: university.name,
         ),
-      );
-    }
+      ),
+    );
   }
-
-  // Sample data for UK universities
-  final List<Map<String, dynamic>> _ukUniversities = [
-    {
-      'name': 'University of Oxford',
-      'location': 'Oxford, England',
-      'image': AssetPaths.oxford,
-      'ranking': 1,
-      'rating': 4.8,
-      'subtitle': 'World\'s oldest English-speaking university',
-      'tuition': 35000,
-      'acceptanceRate': 18,
-      'hasScholarships': true,
-    },
-    {
-      'name': 'University of Cambridge',
-      'location': 'Cambridge, England',
-      'image': AssetPaths.cambridge,
-      'ranking': 2,
-      'rating': 4.8,
-      'subtitle': 'Historic university with exceptional academics',
-      'tuition': 34000,
-      'acceptanceRate': 21,
-      'hasScholarships': true,
-    },
-    {
-      'name': 'Imperial College London',
-      'location': 'London, England',
-      'image': AssetPaths.imperial,
-      'ranking': 3,
-      'rating': 4.7,
-      'subtitle': 'Leading science and technology university',
-      'tuition': 32000,
-      'acceptanceRate': 14,
-      'hasScholarships': true,
-    },
-    
-    
-  ];
 }

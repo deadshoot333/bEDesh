@@ -12,7 +12,7 @@ class AccommodationApiService {
   AccommodationApiService._internal();
 
   // Base URL - Update this to match your backend server
-  static const String _baseUrl = 'http://192.168.68.107:5000';
+  static const String _baseUrl = 'http://192.168.0.202:5000';
   
   // API endpoints
   static const String _accommodationsEndpoint = '/accommodations';
@@ -268,17 +268,87 @@ class AccommodationApiService {
   }
 
   /// Get user's accommodations (with automatic auth)
-  Future<List<Map<String, dynamic>>> getUserAccommodations() async {
+  Future<List<Map<String, dynamic>>> getUserAccommodations({
+    String? location,
+    double? maxRent,
+    double? minRent,
+    String? genderPreference,
+    String? roomType,
+    List<String>? facilities,
+    DateTime? availableFrom,
+    DateTime? availableTo,
+    int limit = 20,
+    int offset = 0,
+  }) async {
     final authToken = _getAuthToken();
-    return _getUserAccommodationsWithToken(authToken);
+    return _getUserAccommodationsWithToken(
+      authToken,
+      location: location,
+      maxRent: maxRent,
+      minRent: minRent,
+      genderPreference: genderPreference,
+      roomType: roomType,
+      facilities: facilities,
+      availableFrom: availableFrom,
+      availableTo: availableTo,
+      limit: limit,
+      offset: offset,
+    );
   }
 
   /// Get user's accommodations with explicit token
-  Future<List<Map<String, dynamic>>> _getUserAccommodationsWithToken(String authToken) async {
+  Future<List<Map<String, dynamic>>> _getUserAccommodationsWithToken(
+    String authToken, {
+    String? location,
+    double? maxRent,
+    double? minRent,
+    String? genderPreference,
+    String? roomType,
+    List<String>? facilities,
+    DateTime? availableFrom,
+    DateTime? availableTo,
+    int limit = 20,
+    int offset = 0,
+  }) async {
     try {
       print('👤 Fetching user accommodations...');
       
-      final uri = Uri.parse('$_baseUrl$_userAccommodationsEndpoint');
+      // Build query parameters
+      final Map<String, String> queryParams = {
+        'limit': limit.toString(),
+        'offset': offset.toString(),
+      };
+      
+      if (location != null && location.isNotEmpty) {
+        queryParams['location'] = location;
+      }
+      if (maxRent != null) {
+        queryParams['max_rent'] = maxRent.toString();
+      }
+      if (minRent != null) {
+        queryParams['min_rent'] = minRent.toString();
+      }
+      if (genderPreference != null && genderPreference != 'Any') {
+        queryParams['gender_preference'] = genderPreference;
+      }
+      if (roomType != null && roomType != 'All Types') {
+        queryParams['room_type'] = roomType;
+      }
+      if (facilities != null && facilities.isNotEmpty) {
+        queryParams['facilities'] = facilities.join(',');
+      }
+      if (availableFrom != null) {
+        queryParams['available_from'] = availableFrom.toIso8601String();
+      }
+      if (availableTo != null) {
+        queryParams['available_to'] = availableTo.toIso8601String();
+      }
+
+      final uri = Uri.parse('$_baseUrl$_userAccommodationsEndpoint').replace(
+        queryParameters: queryParams,
+      );
+      
+      print('📤 GET request to: $uri');
       final response = await http.get(uri, headers: _headersWithAuth(authToken));
 
       print('📥 User accommodations response status: ${response.statusCode}');
