@@ -14,8 +14,8 @@ async function getPosts(userId) {
   SELECT p.id, p.content, p.images, p.created_at, p.likes, p.comments,
               p.is_liked, p.tags, p.post_type,
               u.id AS user_id, u.name AS user_name, u.image AS user_image, u.city AS user_location
-       FROM posts p
-       JOIN users u ON p.user_id = u.id
+       FROM public.posts p
+       JOIN public.users u ON p.user_id = u.id
        WHERE p.user_id = ANY($1)
        ORDER BY p.created_at DESC
   `;
