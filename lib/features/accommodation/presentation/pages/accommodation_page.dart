@@ -383,7 +383,14 @@ class _AccommodationPageState extends State<AccommodationPage>
     if (_selectedFacilities.isNotEmpty) {
       listings = listings.where((l) {
         final facilities = List<String>.from(l['facilities'] ?? []);
-        return _selectedFacilities.every((f) => facilities.contains(f));
+        // Convert both selected and available facilities to lowercase for case-insensitive comparison
+        final facilitiesLower = facilities.map((f) => f.toLowerCase().trim()).toList();
+        final selectedFacilitiesLower = _selectedFacilities.map((f) => f.toLowerCase().trim()).toList();
+        
+        // Check if all selected facilities are available in the accommodation
+        return selectedFacilitiesLower.every((selectedFacility) => 
+          facilitiesLower.any((availableFacility) => availableFacility.contains(selectedFacility))
+        );
       }).toList();
     }
 
@@ -753,7 +760,7 @@ class _AccommodationPageState extends State<AccommodationPage>
           imageUrls: (listing['imageUrls'] as List<dynamic>?)
               ?.map((url) => url.toString())
               .toList(), // Pass the full imageUrls array
-          availableFrom: listing['availableFrom']?.toString() ?? 'Available now',
+          availableFrom: _formatDateString(listing['availableFrom']?.toString()),
           country: listing['country']?.toString(),
           genderPreference: listing['genderPreference']?.toString(),
           facilities: listing['facilities'] != null 
@@ -990,6 +997,18 @@ class _AccommodationPageState extends State<AccommodationPage>
     return '${date.day}/${date.month}/${date.year}';
   }
 
+  // Helper function to format date string from backend
+  String _formatDateString(String? dateString) {
+    if (dateString == null || dateString.isEmpty) return 'Available now';
+    
+    try {
+      final date = DateTime.parse(dateString);
+      return '${date.day}/${date.month}/${date.year}';
+    } catch (e) {
+      return 'Available now'; // Return default if parsing fails
+    }
+  }
+
   bool _hasActiveFilters() {
     return _selectedCountry != 'All Countries' ||
            _selectedCity != 'All Cities' ||
@@ -1028,6 +1047,8 @@ class _AccommodationPageState extends State<AccommodationPage>
       _availableTo = null;
       _selectedFacilities.clear();
     });
+    // Auto-refresh listings after clearing filters
+    _loadAccommodations();
   }
 
   // Individual filter dialogs
@@ -1069,6 +1090,8 @@ class _AccommodationPageState extends State<AccommodationPage>
                           _selectedCity = _citiesByCountry[_selectedCountry]!.first;
                         });
                         Navigator.pop(context);
+                        // Auto-refresh listings after country selection
+                        _loadAccommodations();
                       },
                     ),
                   );
@@ -1082,6 +1105,45 @@ class _AccommodationPageState extends State<AccommodationPage>
   }
 
   void _showCityFilter() {
+    // Check if a country is selected first
+    if (_selectedCountry == 'All Countries') {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          backgroundColor: AppColors.backgroundSecondary,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppConstants.radiusL),
+          ),
+          title: Text(
+            'Select Country First',
+            style: AppTextStyles.h4.copyWith(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          content: Text(
+            'Please select a country first before choosing a city.',
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: AppColors.textSecondary,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(
+                'OK',
+                style: AppTextStyles.bodyMedium.copyWith(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
     final cities = _citiesByCountry[_selectedCountry] ?? ['All Cities'];
     showModalBottomSheet(
       context: context,
@@ -1096,7 +1158,7 @@ class _AccommodationPageState extends State<AccommodationPage>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Select City',
+              'Select City in $_selectedCountry',
               style: AppTextStyles.h4.copyWith(
                 color: AppColors.textPrimary,
                 fontWeight: FontWeight.w600,
@@ -1118,6 +1180,8 @@ class _AccommodationPageState extends State<AccommodationPage>
                           _selectedCity = value!;
                         });
                         Navigator.pop(context);
+                        // Auto-refresh listings after city selection
+                        _loadAccommodations();
                       },
                     ),
                   );
@@ -1173,15 +1237,57 @@ class _AccommodationPageState extends State<AccommodationPage>
                 },
               ),
               const SizedBox(height: AppConstants.spaceL),
-              PrimaryButton(
-                text: 'Apply Filter',
-                isExpanded: true,
-                onPressed: () {
-                  setState(() {
-                    // Update main state
-                  });
-                  Navigator.pop(context);
-                },
+              // Show reset and apply buttons
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        setModalState(() {
+                          _priceRange = [0, 10000]; // Reset to default range
+                        });
+                        setState(() {
+                          // Update main state
+                        });
+                        Navigator.pop(context);
+                        // Auto-refresh listings after price reset
+                        _loadAccommodations();
+                      },
+                      icon: Icon(
+                        Icons.restart_alt,
+                        color: AppColors.textSecondary,
+                        size: 18,
+                      ),
+                      label: Text(
+                        'Reset',
+                        style: AppTextStyles.labelMedium.copyWith(
+                          color: AppColors.textSecondary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(color: AppColors.borderLight),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppConstants.radiusM),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: AppConstants.spaceM),
+                  Expanded(
+                    child: PrimaryButton(
+                      text: 'Apply Filter',
+                      onPressed: () {
+                        setState(() {
+                          // Update main state - price range is already updated in setModalState
+                        });
+                        Navigator.pop(context);
+                        // Auto-refresh listings after price selection
+                        _loadAccommodations();
+                      },
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -1226,6 +1332,8 @@ class _AccommodationPageState extends State<AccommodationPage>
                           _selectedRoomType = value!;
                         });
                         Navigator.pop(context);
+                        // Auto-refresh listings after room type selection
+                        _loadAccommodations();
                       },
                     ),
                   );
@@ -1274,6 +1382,8 @@ class _AccommodationPageState extends State<AccommodationPage>
                           _selectedGender = value!;
                         });
                         Navigator.pop(context);
+                        // Auto-refresh listings after gender selection
+                        _loadAccommodations();
                       },
                     ),
                   );
@@ -1397,13 +1507,65 @@ class _AccommodationPageState extends State<AccommodationPage>
               ],
             ),
             const SizedBox(height: AppConstants.spaceL),
-            PrimaryButton(
-              text: 'Apply Filter',
-              isExpanded: true,
-              onPressed: () {
-                Navigator.pop(context);
-              },
-            ),
+            // Show clear button if any dates are selected
+            if (_availableFrom != null || _availableTo != null) ...[
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        setState(() {
+                          _availableFrom = null;
+                          _availableTo = null;
+                        });
+                        Navigator.pop(context);
+                        // Auto-refresh listings after clearing dates
+                        _loadAccommodations();
+                      },
+                      icon: Icon(
+                        Icons.clear,
+                        color: AppColors.error,
+                        size: 18,
+                      ),
+                      label: Text(
+                        'Clear Dates',
+                        style: AppTextStyles.labelMedium.copyWith(
+                          color: AppColors.error,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(color: AppColors.error),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppConstants.radiusM),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: AppConstants.spaceM),
+                  Expanded(
+                    child: PrimaryButton(
+                      text: 'Apply Filter',
+                      onPressed: () {
+                        Navigator.pop(context);
+                        // Auto-refresh listings after availability selection
+                        _loadAccommodations();
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ] else ...[
+              PrimaryButton(
+                text: 'Apply Filter',
+                isExpanded: true,
+                onPressed: () {
+                  Navigator.pop(context);
+                  // Auto-refresh listings after availability selection
+                  _loadAccommodations();
+                },
+              ),
+            ],
           ],
         ),
       ),
@@ -1475,16 +1637,73 @@ class _AccommodationPageState extends State<AccommodationPage>
                 ),
               ),
               const SizedBox(height: AppConstants.spaceL),
-              PrimaryButton(
-                text: 'Apply Filter',
-                isExpanded: true,
-                onPressed: () {
-                  setState(() {
-                    // Update main state
-                  });
-                  Navigator.pop(context);
-                },
-              ),
+              // Show clear button if any facilities are selected
+              if (_selectedFacilities.isNotEmpty) ...[
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          setModalState(() {
+                            _selectedFacilities.clear();
+                          });
+                          setState(() {
+                            // Update main state
+                          });
+                          Navigator.pop(context);
+                          // Auto-refresh listings after clearing facilities
+                          _loadAccommodations();
+                        },
+                        icon: Icon(
+                          Icons.clear_all,
+                          color: AppColors.error,
+                          size: 18,
+                        ),
+                        label: Text(
+                          'Clear All',
+                          style: AppTextStyles.labelMedium.copyWith(
+                            color: AppColors.error,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(color: AppColors.error),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(AppConstants.radiusM),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: AppConstants.spaceM),
+                    Expanded(
+                      child: PrimaryButton(
+                        text: 'Apply Filter',
+                        onPressed: () {
+                          setState(() {
+                            // Update main state - facilities are already updated in setModalState
+                          });
+                          Navigator.pop(context);
+                          // Auto-refresh listings after facility selection
+                          _loadAccommodations();
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ] else ...[
+                PrimaryButton(
+                  text: 'Apply Filter',
+                  isExpanded: true,
+                  onPressed: () {
+                    setState(() {
+                      // Update main state - facilities are already updated in setModalState
+                    });
+                    Navigator.pop(context);
+                    // Auto-refresh listings after facility selection
+                    _loadAccommodations();
+                  },
+                ),
+              ],
             ],
           ),
         ),
