@@ -331,27 +331,7 @@ class _UniversityListPageState extends State<UniversityListPage>
                   color: AppColors.textOnPrimary.withOpacity(0.1),
                 ),
               ),
-              Positioned(
-                left: AppConstants.spaceL,
-                bottom: 60,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Discover',
-                      style: AppTextStyles.h4.copyWith(
-                        color: AppColors.textOnPrimary.withOpacity(0.9),
-                      ),
-                    ),
-                    Text(
-                      '${_filteredUniversities.length} Universities',
-                      style: AppTextStyles.bodyLarge.copyWith(
-                        color: AppColors.textOnPrimary.withOpacity(0.8),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+
             ],
           ),
         ),
