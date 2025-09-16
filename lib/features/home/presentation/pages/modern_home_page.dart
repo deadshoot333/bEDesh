@@ -14,6 +14,7 @@ import '../../../../shared/widgets/buttons/modern_buttons.dart';
 
 // Import the existing pages for navigation
 import '../../../university/presentation/pages/dynamic_university_page.dart';
+import '../../../university/presentation/pages/swansea_university_page.dart';
 import '../../../destination/presentation/pages/australia_details_page.dart';
 import '../../../university/presentation/pages/university_list_page.dart';
 import '../../../profile/presentation/pages/profile_page.dart';
@@ -325,11 +326,11 @@ class _ModernHomePageState extends State<ModernHomePage>
             title: 'Swansea University',
             subtitle: '83% employability rate',
             description: 'High student satisfaction',
-            imageAsset: AssetPaths.abroad11,
+            imageAsset: AssetPaths.swanseaUni,
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const DynamicUniversityPage(universityName: 'Swansea University')),
+                MaterialPageRoute(builder: (context) => const SwanseaUniversityPage()),
               );
             },
           ),
@@ -654,6 +655,20 @@ class _ModernHomePageState extends State<ModernHomePage>
       'subtitle': 'World-leading science and technology',
       'onTap': () {
         // Navigate to Imperial page when implemented
+      },
+    },
+    {
+      'title': 'Swansea University',
+      'location': 'Swansea, Wales',
+      'imageUrl': AssetPaths.swanseaUni,
+      'ranking': 296,
+      'rating': 4.5,
+      'subtitle': '83% employability rate',
+      'onTap': () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const SwanseaUniversityPage()),
+        );
       },
     },
   ];
