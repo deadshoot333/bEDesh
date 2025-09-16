@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/app_constants.dart';
+import '../../../../core/services/favorites_service.dart';
 import '../../../../shared/widgets/inputs/modern_search_bar.dart';
 import '../../../../shared/widgets/chips/modern_chip.dart';
 import '../../../../shared/widgets/cards/university_card.dart';
@@ -444,7 +445,9 @@ class _UniversityListPageState extends State<UniversityListPage>
           ranking: university.worldRanking,
           rating: 4.5, // Default rating since it's not in the model
           subtitle: university.description,
-          showFavoriteButton: false,
+          showFavoriteButton: true,
+          isFavorite: FavoritesService.isFavorite(university.id),
+          onFavoritePressed: () => _toggleFavorite(university),
           onTap: () => _navigateToUniversity(university),
         );
       },
@@ -664,6 +667,64 @@ class _UniversityListPageState extends State<UniversityListPage>
         ),
       ),
     );
+  }
+
+  Future<void> _toggleFavorite(University university) async {
+    try {
+      final isFavorite = await FavoritesService.toggleFavorite(
+        universityId: university.id,
+        name: university.name,
+        location: university.location,
+        imageUrl: university.imageUrl,
+        ranking: university.worldRanking,
+        description: university.description,
+      );
+
+      // Show feedback to user
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              isFavorite 
+                ? '${university.name} added to favorites' 
+                : '${university.name} removed from favorites',
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: AppColors.textOnPrimary,
+              ),
+            ),
+            backgroundColor: isFavorite ? AppColors.success : AppColors.info,
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.all(AppConstants.spaceM),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppConstants.radiusM),
+            ),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+        
+        // Trigger rebuild to update favorite icons
+        setState(() {});
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Failed to update favorites',
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: AppColors.textOnPrimary,
+              ),
+            ),
+            backgroundColor: AppColors.error,
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.all(AppConstants.spaceM),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppConstants.radiusM),
+            ),
+          ),
+        );
+      }
+    }
   }
 
   void _clearFilters() {

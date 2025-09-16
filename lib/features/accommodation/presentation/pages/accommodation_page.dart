@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'dart:math' as math;
+import 'dart:io';
+import 'dart:async';
+import 'package:image_picker/image_picker.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/app_constants.dart';
@@ -7,6 +11,14 @@ import '../../../../shared/widgets/buttons/modern_buttons.dart';
 import '../../../../shared/widgets/inputs/modern_search_bar.dart';
 import '../widgets/accommodation_card.dart';
 import '../../../profile/presentation/pages/profile_page.dart';
+import '../../../../core/services/storage_service.dart';
+import '../../../../core/services/auth_service.dart';
+import '../../../../core/services/accommodation_api_service.dart';
+import '../../../../core/models/api_error.dart';
+import '../../../auth/presentation/pages/login_page.dart';
+
+/// Enum for listing view types
+enum ListingViewType { allListings, myListings }
 
 /// Main accommodation page with listings and filters
 class AccommodationPage extends StatefulWidget {
@@ -23,15 +35,25 @@ class _AccommodationPageState extends State<AccommodationPage>
   
   bool _showAllListings = false;
   
+  // Listing view toggle state
+  ListingViewType _currentListingView = ListingViewType.allListings;
+  
   // New comprehensive filter system
   String _selectedCountry = 'All Countries';
   String _selectedCity = 'All Cities';
-  List<double> _priceRange = [0, 2500];
+  List<double> _priceRange = [0, 10000];
   String _selectedRoomType = 'All Types';
-  String _selectedGender = 'All';
+  String _selectedGender = 'Any';
   DateTime? _availableFrom;
   DateTime? _availableTo;
   List<String> _selectedFacilities = [];
+  
+  // Data loading state management
+  List<Map<String, dynamic>> _accommodations = [];
+  List<Map<String, dynamic>> _userAccommodations = []; // Separate list for user accommodations
+  bool _isLoading = true;
+  String? _errorMessage;
+  final AccommodationApiService _apiService = AccommodationApiService();
   
   // Filter options
   final List<String> _countries = [
@@ -59,7 +81,7 @@ class _AccommodationPageState extends State<AccommodationPage>
   ];
   
   final List<String> _genderOptions = [
-    'All',
+    'Any',
     'Male',
     'Female',
   ];
@@ -94,6 +116,9 @@ class _AccommodationPageState extends State<AccommodationPage>
       curve: Curves.easeInOut,
     ));
     _animationController.forward();
+    
+    // Load accommodations when page initializes
+    _loadAccommodations();
   }
 
   @override
@@ -102,643 +127,228 @@ class _AccommodationPageState extends State<AccommodationPage>
     super.dispose();
   }
 
-  // Mock data for listings - comprehensive accommodation data
-  List<Map<String, dynamic>> get _mockListings => [
-    {
-      'title': 'Looking for Female Roommate - Modern Studio',
-      'location': 'Bloomsbury, London',
-      'country': 'UK',
-      'city': 'London',
-      'propertyType': 'Studio',
-      'rent': 1200.0,
-      'rentPeriod': 'month',
-      'bedrooms': 1,
-      'bathrooms': 1,
-      'amenities': ['WiFi', 'Furnished', 'Laundry'],
-      'isRoommateRequest': true,
-      'nearbyUniversities': ['UCL', 'King\'s College London'],
-      'availableFrom': 'Sept 2025',
-      'availableTo': 'June 2026',
-      'genderPreference': 'Female',
-      'facilities': ['WiFi', 'Kitchen', 'Laundry', 'Furnished'],
-      'description': 'Looking for a female roommate for a modern studio in Bloomsbury. Perfect for UCL students. Quiet environment with all amenities included.',
-      'contactEmail': 'sarah.bloomsbury@student.ucl.ac.uk',
-      'postedBy': 'Sarah Johnson',
-      'postedDate': '2025-07-20T10:30:00Z',
-    },
-    {
-      'title': 'Male Student Seeking Flatmate - Shared Apartment',
-      'location': 'Camden, London',
-      'country': 'UK',
-      'city': 'London',
-      'propertyType': 'Apartment',
-      'rent': 750.0,
-      'rentPeriod': 'month',
-      'bedrooms': 1,
-      'bathrooms': 1,
-      'amenities': ['Shared Kitchen', 'WiFi', 'Near Tube'],
-      'isRoommateRequest': true,
-      'nearbyUniversities': ['UCL', 'University of Westminster'],
-      'availableFrom': 'Oct 2025',
-      'availableTo': 'July 2026',
-      'genderPreference': 'Male',
-      'facilities': ['WiFi', 'Kitchen', 'Parking'],
-      'description': 'Male student looking for a flatmate in Camden. Great location with easy access to central London. Shared kitchen and living areas.',
-      'contactEmail': 'tom.camden@gmail.com',
-      'postedBy': 'Tom Wilson',
-      'postedDate': '2025-07-22T14:15:00Z',
-    },
-    {
-      'title': 'Room Available in Student House - 3 Current Flatmates',
-      'location': 'Fallowfield, Manchester',
-      'country': 'UK',
-      'city': 'Manchester',
-      'propertyType': 'House',
-      'rent': 450.0,
-      'rentPeriod': 'month',
-      'bedrooms': 1,
-      'bathrooms': 2,
-      'amenities': ['Garden', 'Study Room', 'Parking'],
-      'isRoommateRequest': true,
-      'nearbyUniversities': ['University of Manchester'],
-      'availableFrom': 'Sept 2025',
-      'availableTo': 'June 2026',
-      'genderPreference': 'All',
-      'facilities': ['WiFi', 'Garden', 'Study Room', 'Parking'],
-      'description': 'Student house with 3 friendly flatmates looking for one more person. Great location in Fallowfield with garden and study room. Perfect for University of Manchester students.',
-      'contactEmail': 'manchester.studenthouse@gmail.com',
-      'postedBy': 'Manchester Student House',
-      'postedDate': '2025-07-25T09:45:00Z',
-    },
-    {
-      'title': 'Luxury Penthouse - Birmingham City Center',
-      'location': 'Birmingham City Center, Birmingham',
-      'country': 'UK',
-      'city': 'Birmingham',
-      'propertyType': 'Apartment',
-      'rent': 1800.0,
-      'rentPeriod': 'month',
-      'bedrooms': 2,
-      'bathrooms': 2,
-      'amenities': ['Balcony', 'Concierge', 'Gym'],
-      'isRoommateRequest': false,
-      'nearbyUniversities': ['University of Birmingham', 'Birmingham City University'],
-      'availableFrom': 'Jan 2026',
-      'availableTo': 'Dec 2026',
-      'genderPreference': 'All',
-      'facilities': ['WiFi', 'Kitchen', 'Gym', 'Air Conditioning', 'Balcony'],
-    },
-    {
-      'title': 'Female-Only House Share - Edinburgh',
-      'location': 'Old Town, Edinburgh',
-      'country': 'UK',
-      'city': 'Edinburgh',
-      'propertyType': 'Room',
-      'rent': 650.0,
-      'rentPeriod': 'month',
-      'bedrooms': 1,
-      'bathrooms': 1,
-      'amenities': ['Historic Building', 'Garden', 'Study Room'],
-      'isRoommateRequest': true,
-      'nearbyUniversities': ['University of Edinburgh', 'Heriot-Watt University'],
-      'availableFrom': 'Aug 2025',
-      'availableTo': 'May 2026',
-      'genderPreference': 'Female',
-      'facilities': ['WiFi', 'Kitchen', 'Garden', 'Study Room', 'Laundry'],
-    },
-    {
-      'title': 'Studio Apartment in Brooklyn',
-      'location': 'Brooklyn, New York',
-      'country': 'USA',
-      'city': 'New York',
-      'propertyType': 'Studio',
-      'rent': 1800.0,
-      'rentPeriod': 'month',
-      'bedrooms': 1,
-      'bathrooms': 1,
-      'amenities': ['Modern Kitchen', 'Gym Access', 'Doorman'],
-      'isRoommateRequest': false,
-      'nearbyUniversities': ['NYU', 'Brooklyn College'],
-      'availableFrom': 'Aug 2025',
-      'availableTo': 'May 2026',
-      'genderPreference': 'All',
-      'facilities': ['WiFi', 'Kitchen', 'Gym', 'Air Conditioning'],
-    },
-    {
-      'title': 'Shared House Near Harvard - Male Students',
-      'location': 'Cambridge, Boston',
-      'country': 'USA',
-      'city': 'Boston',
-      'propertyType': 'House',
-      'rent': 1100.0,
-      'rentPeriod': 'month',
-      'bedrooms': 1,
-      'bathrooms': 2,
-      'amenities': ['Near Campus', 'Study Room', 'Parking'],
-      'isRoommateRequest': true,
-      'nearbyUniversities': ['Harvard University', 'MIT'],
-      'availableFrom': 'Sept 2025',
-      'availableTo': 'June 2026',
-      'genderPreference': 'Male',
-      'facilities': ['WiFi', 'Kitchen', 'Study Room', 'Parking', 'Garden'],
-    },
-    {
-      'title': 'Downtown Apartment - Los Angeles',
-      'location': 'Downtown, Los Angeles',
-      'country': 'USA',
-      'city': 'Los Angeles',
-      'propertyType': 'Apartment',
-      'rent': 2200.0,
-      'rentPeriod': 'month',
-      'bedrooms': 2,
-      'bathrooms': 2,
-      'amenities': ['Pool', 'Gym', 'Rooftop Terrace'],
-      'isRoommateRequest': false,
-      'nearbyUniversities': ['USC', 'UCLA'],
-      'availableFrom': 'July 2025',
-      'availableTo': 'June 2026',
-      'genderPreference': 'All',
-      'facilities': ['WiFi', 'Kitchen', 'Gym', 'Air Conditioning', 'Balcony', 'Pool'],
-    },
-    {
-      'title': 'Budget-Friendly Room in Chicago',
-      'location': 'Hyde Park, Chicago',
-      'country': 'USA',
-      'city': 'Chicago',
-      'propertyType': 'Room',
-      'rent': 550.0,
-      'rentPeriod': 'month',
-      'bedrooms': 1,
-      'bathrooms': 1,
-      'amenities': ['Near University', 'Furnished'],
-      'isRoommateRequest': true,
-      'nearbyUniversities': ['University of Chicago'],
-      'availableFrom': 'Sept 2025',
-      'availableTo': 'August 2026',
-      'genderPreference': 'Female',
-      'facilities': ['WiFi', 'Kitchen', 'Furnished', 'Laundry'],
-    },
-    {
-      'title': 'Shared Room in Sydney CBD',
-      'location': 'Sydney CBD, Sydney',
-      'country': 'Australia',
-      'city': 'Sydney',
-      'propertyType': 'Room',
-      'rent': 900.0,
-      'rentPeriod': 'month',
-      'bedrooms': 1,
-      'bathrooms': 1,
-      'amenities': ['City Views', 'Transport Links'],
-      'isRoommateRequest': true,
-      'nearbyUniversities': ['University of Sydney', 'UTS'],
-      'availableFrom': 'Feb 2026',
-      'availableTo': 'Nov 2026',
-      'genderPreference': 'Female',
-      'facilities': ['WiFi', 'Kitchen', 'Balcony'],
-    },
-    {
-      'title': 'Male Student House - Melbourne',
-      'location': 'Carlton, Melbourne',
-      'country': 'Australia',
-      'city': 'Melbourne',
-      'propertyType': 'House',
-      'rent': 700.0,
-      'rentPeriod': 'month',
-      'bedrooms': 1,
-      'bathrooms': 1,
-      'amenities': ['Near Trams', 'Garden', 'Study Area'],
-      'isRoommateRequest': true,
-      'nearbyUniversities': ['University of Melbourne', 'RMIT'],
-      'availableFrom': 'March 2026',
-      'availableTo': 'February 2027',
-      'genderPreference': 'Male',
-      'facilities': ['WiFi', 'Kitchen', 'Garden', 'Study Room'],
-    },
-    {
-      'title': 'Luxury Studio - Brisbane',
-      'location': 'South Brisbane, Brisbane',
-      'country': 'Australia',
-      'city': 'Brisbane',
-      'propertyType': 'Studio',
-      'rent': 1300.0,
-      'rentPeriod': 'month',
-      'bedrooms': 1,
-      'bathrooms': 1,
-      'amenities': ['River Views', 'Pool', 'Gym'],
-      'isRoommateRequest': false,
-      'nearbyUniversities': ['University of Queensland', 'QUT'],
-      'availableFrom': 'January 2026',
-      'availableTo': 'December 2026',
-      'genderPreference': 'All',
-      'facilities': ['WiFi', 'Kitchen', 'Air Conditioning', 'Pool', 'Gym'],
-    },
-    {
-      'title': 'Downtown Toronto Apartment',
-      'location': 'Downtown, Toronto',
-      'country': 'Canada',
-      'city': 'Toronto',
-      'propertyType': 'Apartment',
-      'rent': 1400.0,
-      'rentPeriod': 'month',
-      'bedrooms': 2,
-      'bathrooms': 1,
-      'amenities': ['Modern Kitchen', 'WiFi', 'Heating'],
-      'isRoommateRequest': true,
-      'nearbyUniversities': ['University of Toronto', 'Ryerson University'],
-      'availableFrom': 'Sept 2025',
-      'availableTo': 'April 2026',
-      'genderPreference': 'Male',
-      'facilities': ['WiFi', 'Kitchen', 'Heating', 'Dishwasher'],
-    },
-    {
-      'title': 'Female House Share - Vancouver',
-      'location': 'Kitsilano, Vancouver',
-      'country': 'Canada',
-      'city': 'Vancouver',
-      'propertyType': 'House',
-      'rent': 950.0,
-      'rentPeriod': 'month',
-      'bedrooms': 1,
-      'bathrooms': 2,
-      'amenities': ['Near Beach', 'Garden', 'Parking'],
-      'isRoommateRequest': true,
-      'nearbyUniversities': ['UBC', 'SFU'],
-      'availableFrom': 'May 2026',
-      'availableTo': 'April 2027',
-      'genderPreference': 'Female',
-      'facilities': ['WiFi', 'Kitchen', 'Garden', 'Parking', 'Laundry'],
-    },
-    {
-      'title': 'Budget Room in Montreal',
-      'location': 'Plateau, Montreal',
-      'country': 'Canada',
-      'city': 'Montreal',
-      'propertyType': 'Room',
-      'rent': 400.0,
-      'rentPeriod': 'month',
-      'bedrooms': 1,
-      'bathrooms': 1,
-      'amenities': ['Historic Area', 'Near Metro'],
-      'isRoommateRequest': true,
-      'nearbyUniversities': ['McGill University', 'Concordia University'],
-      'availableFrom': 'September 2025',
-      'availableTo': 'May 2026',
-      'genderPreference': 'All',
-      'facilities': ['WiFi', 'Kitchen', 'Furnished'],
-    },
-    {
-      'title': 'Luxury Condo - Calgary',
-      'location': 'Beltline, Calgary',
-      'country': 'Canada',
-      'city': 'Calgary',
-      'propertyType': 'Apartment',
-      'rent': 1600.0,
-      'rentPeriod': 'month',
-      'bedrooms': 2,
-      'bathrooms': 2,
-      'amenities': ['Mountain Views', 'Concierge', 'Gym'],
-      'isRoommateRequest': false,
-      'nearbyUniversities': ['University of Calgary'],
-      'availableFrom': 'August 2025',
-      'availableTo': 'July 2026',
-      'genderPreference': 'All',
-      'facilities': ['WiFi', 'Kitchen', 'Gym', 'Air Conditioning', 'Balcony'],
-    },
-    // Additional listings to ensure all filter combinations have results
-    {
-      'title': 'Affordable Studio - Glasgow Student Area',
-      'location': 'West End, Glasgow',
-      'country': 'UK',
-      'city': 'Glasgow',
-      'propertyType': 'Studio',
-      'rent': 550.0,
-      'rentPeriod': 'month',
-      'bedrooms': 1,
-      'bathrooms': 1,
-      'amenities': ['Near University', 'WiFi', 'Study Area'],
-      'isRoommateRequest': false,
-      'nearbyUniversities': ['University of Glasgow', 'Glasgow Caledonian University'],
-      'availableFrom': 'September 2025',
-      'availableTo': 'June 2026',
-      'genderPreference': 'Female',
-      'facilities': ['WiFi', 'Kitchen', 'Study Room', 'Laundry'],
-    },
-    {
-      'title': 'Male Student House - Bristol',
-      'location': 'Clifton, Bristol',
-      'country': 'UK',
-      'city': 'Bristol',
-      'propertyType': 'House',
-      'rent': 480.0,
-      'rentPeriod': 'month',
-      'bedrooms': 1,
-      'bathrooms': 1,
-      'amenities': ['Garden', 'Near Campus', 'Parking'],
-      'isRoommateRequest': true,
-      'nearbyUniversities': ['University of Bristol', 'UWE Bristol'],
-      'availableFrom': 'August 2025',
-      'availableTo': 'July 2026',
-      'genderPreference': 'Male',
-      'facilities': ['WiFi', 'Kitchen', 'Garden', 'Parking', 'Furnished'],
-    },
-    {
-      'title': 'Luxury Apartment - Liverpool City Center',
-      'location': 'City Center, Liverpool',
-      'country': 'UK',
-      'city': 'Liverpool',
-      'propertyType': 'Apartment',
-      'rent': 1500.0,
-      'rentPeriod': 'month',
-      'bedrooms': 2,
-      'bathrooms': 2,
-      'amenities': ['City Views', 'Concierge', 'Gym'],
-      'isRoommateRequest': false,
-      'nearbyUniversities': ['University of Liverpool', 'Liverpool John Moores University'],
-      'availableFrom': 'October 2025',
-      'availableTo': 'September 2026',
-      'genderPreference': 'All',
-      'facilities': ['WiFi', 'Kitchen', 'Gym', 'Air Conditioning', 'Balcony', 'Dishwasher'],
-    },
-    {
-      'title': 'Student Room in Leeds',
-      'location': 'Headingley, Leeds',
-      'country': 'UK',
-      'city': 'Leeds',
-      'propertyType': 'Room',
-      'rent': 380.0,
-      'rentPeriod': 'month',
-      'bedrooms': 1,
-      'bathrooms': 1,
-      'amenities': ['Student Area', 'Near Transport'],
-      'isRoommateRequest': true,
-      'nearbyUniversities': ['University of Leeds', 'Leeds Beckett University'],
-      'availableFrom': 'September 2025',
-      'availableTo': 'June 2026',
-      'genderPreference': 'Female',
-      'facilities': ['WiFi', 'Kitchen', 'Study Room', 'Laundry'],
-    },
-    {
-      'title': 'Modern Studio - Seattle Tech Hub',
-      'location': 'Capitol Hill, Seattle',
-      'country': 'USA',
-      'city': 'Seattle',
-      'propertyType': 'Studio',
-      'rent': 1900.0,
-      'rentPeriod': 'month',
-      'bedrooms': 1,
-      'bathrooms': 1,
-      'amenities': ['Tech Area', 'Modern Amenities', 'Transit'],
-      'isRoommateRequest': false,
-      'nearbyUniversities': ['University of Washington', 'Seattle University'],
-      'availableFrom': 'August 2025',
-      'availableTo': 'August 2026',
-      'genderPreference': 'All',
-      'facilities': ['WiFi', 'Kitchen', 'Gym', 'Air Conditioning', 'Dishwasher'],
-    },
-    {
-      'title': 'Shared House Near Stanford - Male Students',
-      'location': 'Palo Alto, San Francisco',
-      'country': 'USA',
-      'city': 'San Francisco',
-      'propertyType': 'House',
-      'rent': 1600.0,
-      'rentPeriod': 'month',
-      'bedrooms': 1,
-      'bathrooms': 2,
-      'amenities': ['Near Stanford', 'Tech Area', 'Garden'],
-      'isRoommateRequest': true,
-      'nearbyUniversities': ['Stanford University', 'UC Berkeley'],
-      'availableFrom': 'September 2025',
-      'availableTo': 'June 2026',
-      'genderPreference': 'Male',
-      'facilities': ['WiFi', 'Kitchen', 'Garden', 'Study Room', 'Parking'],
-    },
-    {
-      'title': 'Female Student Apartment - Washington DC',
-      'location': 'Georgetown, Washington DC',
-      'country': 'USA',
-      'city': 'Washington DC',
-      'propertyType': 'Apartment',
-      'rent': 1300.0,
-      'rentPeriod': 'month',
-      'bedrooms': 1,
-      'bathrooms': 1,
-      'amenities': ['Historic Area', 'Near Metro', 'Safe Area'],
-      'isRoommateRequest': true,
-      'nearbyUniversities': ['Georgetown University', 'George Washington University'],
-      'availableFrom': 'August 2025',
-      'availableTo': 'May 2026',
-      'genderPreference': 'Female',
-      'facilities': ['WiFi', 'Kitchen', 'Study Room', 'Air Conditioning', 'Furnished'],
-    },
-    {
-      'title': 'Budget Room in Perth',
-      'location': 'Northbridge, Perth',
-      'country': 'Australia',
-      'city': 'Perth',
-      'propertyType': 'Room',
-      'rent': 600.0,
-      'rentPeriod': 'month',
-      'bedrooms': 1,
-      'bathrooms': 1,
-      'amenities': ['City Close', 'Public Transport'],
-      'isRoommateRequest': true,
-      'nearbyUniversities': ['University of Western Australia', 'Curtin University'],
-      'availableFrom': 'February 2026',
-      'availableTo': 'November 2026',
-      'genderPreference': 'All',
-      'facilities': ['WiFi', 'Kitchen', 'Laundry'],
-    },
-    {
-      'title': 'Female House Share - Adelaide',
-      'location': 'North Adelaide, Adelaide',
-      'country': 'Australia',
-      'city': 'Adelaide',
-      'propertyType': 'House',
-      'rent': 520.0,
-      'rentPeriod': 'month',
-      'bedrooms': 1,
-      'bathrooms': 1,
-      'amenities': ['Garden', 'Quiet Area', 'Parking'],
-      'isRoommateRequest': true,
-      'nearbyUniversities': ['University of Adelaide', 'University of South Australia'],
-      'availableFrom': 'March 2026',
-      'availableTo': 'February 2027',
-      'genderPreference': 'Female',
-      'facilities': ['WiFi', 'Kitchen', 'Garden', 'Parking', 'Study Room'],
-    },
-    {
-      'title': 'Modern Studio - Canberra',
-      'location': 'Civic, Canberra',
-      'country': 'Australia',
-      'city': 'Canberra',
-      'propertyType': 'Studio',
-      'rent': 800.0,
-      'rentPeriod': 'month',
-      'bedrooms': 1,
-      'bathrooms': 1,
-      'amenities': ['Government Area', 'Modern', 'Transport'],
-      'isRoommateRequest': false,
-      'nearbyUniversities': ['Australian National University', 'University of Canberra'],
-      'availableFrom': 'January 2026',
-      'availableTo': 'December 2026',
-      'genderPreference': 'All',
-      'facilities': ['WiFi', 'Kitchen', 'Air Conditioning', 'Gym', 'Furnished'],
-    },
-    {
-      'title': 'Male Student Room - Ottawa',
-      'location': 'Sandy Hill, Ottawa',
-      'country': 'Canada',
-      'city': 'Ottawa',
-      'propertyType': 'Room',
-      'rent': 650.0,
-      'rentPeriod': 'month',
-      'bedrooms': 1,
-      'bathrooms': 1,
-      'amenities': ['Near University', 'Transit', 'Safe'],
-      'isRoommateRequest': true,
-      'nearbyUniversities': ['University of Ottawa', 'Carleton University'],
-      'availableFrom': 'September 2025',
-      'availableTo': 'April 2026',
-      'genderPreference': 'Male',
-      'facilities': ['WiFi', 'Kitchen', 'Study Room', 'Heating', 'Laundry'],
-    },
-    {
-      'title': 'Female House Share - Edmonton',
-      'location': 'Strathcona, Edmonton',
-      'country': 'Canada',
-      'city': 'Edmonton',
-      'propertyType': 'House',
-      'rent': 500.0,
-      'rentPeriod': 'month',
-      'bedrooms': 1,
-      'bathrooms': 1,
-      'amenities': ['Near Campus', 'Garden', 'Parking'],
-      'isRoommateRequest': true,
-      'nearbyUniversities': ['University of Alberta'],
-      'availableFrom': 'August 2025',
-      'availableTo': 'April 2026',
-      'genderPreference': 'Female',
-      'facilities': ['WiFi', 'Kitchen', 'Garden', 'Parking', 'Heating', 'Study Room'],
-    },
-    {
-      'title': 'Luxury Apartment - Vancouver Downtown',
-      'location': 'Yaletown, Vancouver',
-      'country': 'Canada',
-      'city': 'Vancouver',
-      'propertyType': 'Apartment',
-      'rent': 2000.0,
-      'rentPeriod': 'month',
-      'bedrooms': 2,
-      'bathrooms': 2,
-      'amenities': ['Waterfront', 'Luxury', 'Concierge'],
-      'isRoommateRequest': false,
-      'nearbyUniversities': ['UBC', 'SFU'],
-      'availableFrom': 'July 2025',
-      'availableTo': 'June 2026',
-      'genderPreference': 'All',
-      'facilities': ['WiFi', 'Kitchen', 'Gym', 'Air Conditioning', 'Balcony', 'Dishwasher'],
-    },
-    {
-      'title': 'Budget Student Room - Montreal East',
-      'location': 'Mile End, Montreal',
-      'country': 'Canada',
-      'city': 'Montreal',
-      'propertyType': 'Room',
-      'rent': 350.0,
-      'rentPeriod': 'month',
-      'bedrooms': 1,
-      'bathrooms': 1,
-      'amenities': ['Artistic Area', 'Affordable', 'Culture'],
-      'isRoommateRequest': true,
-      'nearbyUniversities': ['McGill University', 'Concordia University'],
-      'availableFrom': 'September 2025',
-      'availableTo': 'May 2026',
-      'genderPreference': 'All',
-      'facilities': ['WiFi', 'Kitchen', 'Furnished', 'Heating'],
-    },
-    // High-end luxury options for higher price ranges
-    {
-      'title': 'Premium Studio - Central London',
-      'location': 'Mayfair, London',
-      'country': 'UK',
-      'city': 'London',
-      'propertyType': 'Studio',
-      'rent': 2400.0,
-      'rentPeriod': 'month',
-      'bedrooms': 1,
-      'bathrooms': 1,
-      'amenities': ['Luxury', 'Prime Location', 'Concierge'],
-      'isRoommateRequest': false,
-      'nearbyUniversities': ['LSE', 'Imperial College'],
-      'availableFrom': 'August 2025',
-      'availableTo': 'July 2026',
-      'genderPreference': 'All',
-      'facilities': ['WiFi', 'Kitchen', 'Gym', 'Air Conditioning', 'Balcony', 'Dishwasher', 'Furnished'],
-    },
-    {
-      'title': 'Executive Apartment - Manhattan',
-      'location': 'Upper East Side, New York',
-      'country': 'USA',
-      'city': 'New York',
-      'propertyType': 'Apartment',
-      'rent': 2800.0,
-      'rentPeriod': 'month',
-      'bedrooms': 2,
-      'bathrooms': 2,
-      'amenities': ['Luxury', 'Doorman', 'Rooftop'],
-      'isRoommateRequest': false,
-      'nearbyUniversities': ['Columbia University', 'NYU'],
-      'availableFrom': 'September 2025',
-      'availableTo': 'August 2026',
-      'genderPreference': 'All',
-      'facilities': ['WiFi', 'Kitchen', 'Gym', 'Air Conditioning', 'Balcony', 'Dishwasher', 'Furnished'],
-    },
-  ];
+  /// Check if user is authenticated before posting accommodation
+  bool _checkAuthentication() {
+    final token = StorageService.getAccessToken();
+    return token != null && token.isNotEmpty;
+  }
+
+  /// Show login required dialog
+  void _showLoginRequiredDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.backgroundSecondary,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppConstants.radiusL),
+        ),
+        title: Text(
+          'Login Required',
+          style: AppTextStyles.h4.copyWith(
+            color: AppColors.textPrimary,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        content: Text(
+          'You need to be logged in to post accommodation requests. Please log in to continue.',
+          style: AppTextStyles.bodyMedium.copyWith(
+            color: AppColors.textSecondary,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'Cancel',
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: AppColors.textTertiary,
+              ),
+            ),
+          ),
+          PrimaryButton(
+            text: 'Login',
+            onPressed: () {
+              Navigator.pop(context); // Close dialog
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const LoginPage()),
+              );
+            },
+            size: ButtonSize.small,
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Load accommodations from API
+  /// Load accommodations based on current view type
+  Future<void> _loadAccommodations() async {
+    try {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+      });
+
+      if (_currentListingView == ListingViewType.allListings) {
+        print('🔍 Loading all accommodations from API...');
+        
+        // Get public accommodations with current filter parameters
+        final accommodations = await _apiService.getAccommodations(
+          location: _selectedCity != 'All Cities' ? _selectedCity : null,
+          maxRent: _priceRange[1] > 0 ? _priceRange[1] : null,
+          minRent: _priceRange[0] > 0 ? _priceRange[0] : null,
+          genderPreference: _selectedGender != 'Any' ? _selectedGender : null,
+          limit: 50,
+          offset: 0,
+        );
+
+        print('✅ Loaded ${accommodations.length} public accommodations from API');
+        
+        setState(() {
+          _accommodations = accommodations;
+          _isLoading = false;
+        });
+      } else {
+        print('👤 Loading user accommodations from API...');
+        
+        // Check if user is authenticated
+        if (!_checkAuthentication()) {
+          setState(() {
+            _isLoading = false;
+            _errorMessage = 'Please log in to view your listings.';
+          });
+          _showLoginRequiredDialog();
+          return;
+        }
+        
+        // Get user's accommodations
+        final userAccommodations = await _apiService.getUserAccommodations();
+
+        print('✅ Loaded ${userAccommodations.length} user accommodations from API');
+        
+        setState(() {
+          _userAccommodations = userAccommodations;
+          _isLoading = false;
+        });
+      }
+      
+    } catch (e) {
+      print('❌ Error loading accommodations: $e');
+      
+      setState(() {
+        _isLoading = false;
+        _errorMessage = e is ApiError ? e.message : 'Failed to load accommodations. Please try again.';
+      });
+      
+      // Show error message to user
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(_errorMessage ?? 'Error loading accommodations'),
+            backgroundColor: AppColors.error,
+            action: SnackBarAction(
+              label: 'Retry',
+              textColor: Colors.white,
+              onPressed: _loadAccommodations,
+            ),
+          ),
+        );
+      }
+    }
+  }
+
+  /// Refresh both public and user accommodation lists
+  /// Used when an accommodation is edited to ensure data consistency across views
+  Future<void> _refreshBothLists() async {
+    try {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+      });
+
+      print('🔄 Refreshing public accommodations...');
+      // Load public accommodations with current filter parameters
+      final accommodations = await _apiService.getAccommodations(
+        location: _selectedCity != 'All Cities' ? _selectedCity : null,
+        maxRent: _priceRange[1] > 0 ? _priceRange[1] : null,
+        minRent: _priceRange[0] > 0 ? _priceRange[0] : null,
+        genderPreference: _selectedGender != 'Any' ? _selectedGender : null,
+        limit: 50,
+        offset: 0,
+      );
+      
+      print('✅ Loaded ${accommodations.length} public accommodations');
+
+      // Load user accommodations if authenticated
+      List<Map<String, dynamic>> userAccommodations = [];
+      if (_checkAuthentication()) {
+        print('🔄 Refreshing user accommodations...');
+        userAccommodations = await _apiService.getUserAccommodations();
+        print('✅ Loaded ${userAccommodations.length} user accommodations');
+      }
+
+      setState(() {
+        _accommodations = accommodations;
+        _userAccommodations = userAccommodations;
+        _isLoading = false;
+      });
+      
+    } catch (e) {
+      print('❌ Error refreshing lists: $e');
+      
+      setState(() {
+        _isLoading = false;
+        _errorMessage = e is ApiError ? e.message : 'Failed to refresh accommodations.';
+      });
+    }
+  }
+
+  /// Switch between All Listings and My Listings
+  void _switchListingView(ListingViewType viewType) {
+    if (_currentListingView != viewType) {
+      setState(() {
+        _currentListingView = viewType;
+      });
+      _loadAccommodations();
+    }
+  }
+
+  /// Refresh accommodations (for pull-to-refresh)
+  Future<void> _refreshAccommodations() async {
+    await _loadAccommodations();
+  }
 
   List<Map<String, dynamic>> get _filteredListings {
-    var listings = _mockListings;
+    // Use appropriate data based on current view
+    var listings = _currentListingView == ListingViewType.allListings 
+        ? _accommodations 
+        : _userAccommodations;
     
-    // Filter by country
-    if (_selectedCountry != 'All Countries') {
-      listings = listings.where((l) => l['country'] == _selectedCountry).toList();
+    // Apply client-side filters for additional refinement (only for All Listings)
+    // Note: Basic filters (location, price, gender) are already applied at API level for public listings
+    if (_currentListingView == ListingViewType.allListings) {
+      // Filter by country (client-side for additional filtering)
+      if (_selectedCountry != 'All Countries') {
+        listings = listings.where((l) {
+          final country = l['country']?.toString() ?? '';
+          return country.contains(_selectedCountry);
+        }).toList();
+      }
+      
+      // Filter by room type - backend returns 'roomType' field
+      if (_selectedRoomType != 'All Types') {
+        listings = listings.where((l) => 
+          l['roomType'] == _selectedRoomType
+        ).toList();
+      }
+      
+      // Apply show all toggle for public listings
+      return _showAllListings ? listings : listings.take(3).toList();
+    } else {
+      // For My Listings, show all user accommodations without filtering
+      return listings;
     }
-    
-    // Filter by city
-    if (_selectedCity != 'All Cities') {
-      listings = listings.where((l) => l['city'] == _selectedCity).toList();
-    }
-    
-    // Filter by price range
-    listings = listings.where((l) => 
-      l['rent'] >= _priceRange[0] && l['rent'] <= _priceRange[1]
-    ).toList();
-    
-    // Filter by room type
-    if (_selectedRoomType != 'All Types') {
-      listings = listings.where((l) => l['propertyType'] == _selectedRoomType).toList();
-    }
-    
-    // Filter by gender preference
-    if (_selectedGender != 'All') {
-      listings = listings.where((l) => 
-        l['genderPreference'] == _selectedGender || l['genderPreference'] == 'All'
-      ).toList();
-    }
-    
-    // Filter by facilities
-    if (_selectedFacilities.isNotEmpty) {
-      listings = listings.where((l) {
-        final listingFacilities = List<String>.from(l['facilities'] ?? []);
-        return _selectedFacilities.every((facility) => 
-          listingFacilities.contains(facility)
-        );
-      }).toList();
-    }
-    
-    // TODO: Add date filtering when we implement proper date handling
-    
-    return _showAllListings ? listings : listings.take(3).toList();
   }
 
   @override
@@ -747,8 +357,12 @@ class _AccommodationPageState extends State<AccommodationPage>
       backgroundColor: AppColors.backgroundPrimary,
       body: FadeTransition(
         opacity: _fadeAnimation,
-        child: CustomScrollView(
-          slivers: [
+        child: RefreshIndicator(
+          onRefresh: _refreshAccommodations,
+          color: AppColors.primary,
+          child: CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(), // Ensures refresh works even with little content
+            slivers: [
             // Modern App Bar - consistent with homepage
             SliverToBoxAdapter(
               child: Container(
@@ -845,12 +459,30 @@ class _AccommodationPageState extends State<AccommodationPage>
                     const SizedBox(height: AppConstants.spaceL),
                     
                     // Quick Actions
-                    PrimaryButton(
-                      text: 'Post Roommate Request',
-                      icon: Icons.add_home,
-                      isExpanded: true,
-                      size: ButtonSize.large,
-                      onPressed: _handlePostAccommodation,
+                    Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [AppColors.primary, AppColors.primary.withOpacity(0.8)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(AppConstants.radiusL),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.primary.withOpacity(0.3),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: PrimaryButton(
+                        text: 'Post Accommodation Request',
+                        icon: Icons.add_home_outlined,
+                        isExpanded: true,
+                        size: ButtonSize.large,
+                        backgroundColor: Colors.transparent,
+                        onPressed: _handlePostAccommodation,
+                      ),
                     ),
                     
                     const SizedBox(height: AppConstants.spaceXL),
@@ -879,9 +511,9 @@ class _AccommodationPageState extends State<AccommodationPage>
                           const SizedBox(width: AppConstants.spaceS),
                           _buildHorizontalFilterTag('Room Type', _selectedRoomType, () => _showRoomTypeFilter()),
                           const SizedBox(width: AppConstants.spaceS),
-                          _buildHorizontalFilterTag('Price', '£${_priceRange[0].toInt()}-£${_priceRange[1].toInt()}', () => _showPriceFilter()),
+                          _buildHorizontalFilterTag('Price', _getPriceDisplayText(), () => _showPriceFilter()),
                           const SizedBox(width: AppConstants.spaceS),
-                          _buildHorizontalFilterTag('Gender', _selectedGender, () => _showGenderFilter()),
+                          _buildHorizontalFilterTag('Gender', _getGenderDisplayText(), () => _showGenderFilter()),
                           const SizedBox(width: AppConstants.spaceS),
                           _buildHorizontalFilterTag('Availability', _getAvailabilityText(), () => _showAvailabilityFilter()),
                           const SizedBox(width: AppConstants.spaceS),
@@ -917,32 +549,107 @@ class _AccommodationPageState extends State<AccommodationPage>
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          'Roommate Requests',
-                          style: AppTextStyles.h4.copyWith(
-                            color: AppColors.textPrimary,
-                            fontWeight: FontWeight.w700,
+                        Expanded(
+                          child: Text(
+                            _currentListingView == ListingViewType.allListings 
+                                ? 'Accommodation Listings' 
+                                : 'My Listings',
+                            style: AppTextStyles.h4.copyWith(
+                              color: AppColors.textPrimary,
+                              fontWeight: FontWeight.w700,
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        TextButton.icon(
-                          onPressed: () {
-                            setState(() {
-                              _showAllListings = !_showAllListings;
-                            });
-                          },
-                          icon: Icon(
-                            _showAllListings ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
-                            color: AppColors.primary,
-                          ),
-                          label: Text(
-                            _showAllListings ? 'Show Less' : 'View All',
-                            style: AppTextStyles.labelMedium.copyWith(
+                        if (_currentListingView == ListingViewType.allListings)
+                          TextButton.icon(
+                            onPressed: () {
+                              setState(() {
+                                _showAllListings = !_showAllListings;
+                              });
+                            },
+                            icon: Icon(
+                              _showAllListings ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
                               color: AppColors.primary,
-                              fontWeight: FontWeight.w600,
+                            ),
+                            label: Text(
+                              _showAllListings ? 'Show Less' : 'View All',
+                              style: AppTextStyles.labelMedium.copyWith(
+                                color: AppColors.primary,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ),
-                        ),
                       ],
+                    ),
+                    
+                    const SizedBox(height: AppConstants.spaceM),
+                    
+                    // Listing View Toggle
+                    Container(
+                      decoration: BoxDecoration(
+                        color: AppColors.backgroundSecondary,
+                        borderRadius: BorderRadius.circular(AppConstants.radiusM),
+                        border: Border.all(color: AppColors.borderLight),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () => _switchListingView(ListingViewType.allListings),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: AppConstants.spaceS,
+                                  horizontal: AppConstants.spaceM,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: _currentListingView == ListingViewType.allListings
+                                      ? AppColors.primary
+                                      : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(AppConstants.radiusM),
+                                ),
+                                child: Text(
+                                  'All Listings',
+                                  style: AppTextStyles.labelMedium.copyWith(
+                                    color: _currentListingView == ListingViewType.allListings
+                                        ? AppColors.textOnPrimary
+                                        : AppColors.textSecondary,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () => _switchListingView(ListingViewType.myListings),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: AppConstants.spaceS,
+                                  horizontal: AppConstants.spaceM,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: _currentListingView == ListingViewType.myListings
+                                      ? AppColors.primary
+                                      : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(AppConstants.radiusM),
+                                ),
+                                child: Text(
+                                  'My Listings',
+                                  style: AppTextStyles.labelMedium.copyWith(
+                                    color: _currentListingView == ListingViewType.myListings
+                                        ? AppColors.textOnPrimary
+                                        : AppColors.textSecondary,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                     
                     const SizedBox(height: AppConstants.spaceM),
@@ -956,33 +663,31 @@ class _AccommodationPageState extends State<AccommodationPage>
           ],
         ),
       ),
+      ),
     );
   }
 
   Widget _buildListView() {
-    final listings = _filteredListings;
-    
-    if (listings.isEmpty) {
+    final listings = _filteredListings;    if (listings.isEmpty) {
       return _buildEmptyState();
     }
     
     return Column(
       children: listings.map((listing) {
         return AccommodationCard(
-          title: listing['title'],
-          location: listing['location'],
-          propertyType: listing['propertyType'],
-          rent: listing['rent'],
-          rentPeriod: listing['rentPeriod'],
-          bedrooms: listing['bedrooms'],
-          bathrooms: listing['bathrooms'],
-          amenities: List<String>.from(listing['amenities']),
-          isRoommateRequest: listing['isRoommateRequest'],
-          nearbyUniversities: List<String>.from(listing['nearbyUniversities']),
-          availableFrom: listing['availableFrom'],
-          country: listing['country'],
-          genderPreference: listing['genderPreference'],
-          facilities: List<String>.from(listing['facilities'] ?? []),
+          title: listing['title'] ?? 'Accommodation',
+          location: listing['location'] ?? 'Location not specified',
+          propertyType: listing['roomType'] ?? 'Room', // Backend returns 'roomType'
+          rent: _parseDouble(listing['rent'] ?? listing['monthly_rent']) ?? 0.0,
+          imageUrls: (listing['imageUrls'] as List<dynamic>?)
+              ?.map((url) => url.toString())
+              .toList(), // Pass the full imageUrls array
+          availableFrom: listing['availableFrom']?.toString() ?? 'Available now',
+          country: listing['country']?.toString(),
+          genderPreference: listing['genderPreference']?.toString(),
+          facilities: listing['facilities'] != null 
+              ? List<String>.from(listing['facilities']) 
+              : [], // Get facilities from backend
           onTap: () => _showAccommodationDetails(listing),
         );
       }).toList(),
@@ -990,29 +695,59 @@ class _AccommodationPageState extends State<AccommodationPage>
   }
 
   Widget _buildEmptyState() {
+    final isMyListings = _currentListingView == ListingViewType.myListings;
     return Container(
       padding: const EdgeInsets.all(AppConstants.spaceXL),
       child: Column(
         children: [
           Icon(
-            Icons.search_off,
+            isMyListings ? Icons.home_work_outlined : Icons.search_off,
             size: 64,
             color: AppColors.textTertiary,
           ),
           const SizedBox(height: AppConstants.spaceM),
           Text(
-            'No listings found',
+            isMyListings ? 'No listings yet' : 'No listings found',
             style: AppTextStyles.h4.copyWith(
               color: AppColors.textSecondary,
             ),
           ),
           const SizedBox(height: AppConstants.spaceS),
           Text(
-            'Try adjusting your filters or search terms',
+            isMyListings 
+                ? 'Post your first accommodation to get started'
+                : 'Try adjusting your filters or search terms',
             style: AppTextStyles.bodyMedium.copyWith(
               color: AppColors.textTertiary,
             ),
           ),
+          if (isMyListings) ...[
+            const SizedBox(height: AppConstants.spaceM),
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [AppColors.primary, AppColors.primary.withOpacity(0.8)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(AppConstants.radiusM),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primary.withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: PrimaryButton(
+                text: '🏠 Post Your First Accommodation',
+                icon: Icons.add_circle_outline,
+                size: ButtonSize.medium,
+                backgroundColor: Colors.transparent,
+                onPressed: _handlePostAccommodation,
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -1026,7 +761,7 @@ class _AccommodationPageState extends State<AccommodationPage>
 
   // Horizontal filter tag for scrollable row
   Widget _buildHorizontalFilterTag(String label, String value, VoidCallback onTap) {
-    final isDefault = value.contains('All') || value.isEmpty || value == 'Any Time' || value == 'Any Facilities';
+    final isDefault = value.contains('All') || value.contains('Any') || value.isEmpty || value == 'Any Time' || value == 'Any Facilities';
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -1103,21 +838,37 @@ class _AccommodationPageState extends State<AccommodationPage>
   bool _hasActiveFilters() {
     return _selectedCountry != 'All Countries' ||
            _selectedCity != 'All Cities' ||
-           _priceRange[0] != 0 || _priceRange[1] != 2500 ||
+           _priceRange[0] != 0 || _priceRange[1] != 10000 ||
            _selectedRoomType != 'All Types' ||
-           _selectedGender != 'All' ||
+           _selectedGender != 'Any' ||
            _availableFrom != null ||
            _availableTo != null ||
            _selectedFacilities.isNotEmpty;
+  }
+
+  String _getPriceDisplayText() {
+    // Check if price range is at default values
+    if (_priceRange[0] == 0 && _priceRange[1] == 10000) {
+      return 'Any Price';
+    }
+    return '\$${_priceRange[0].toInt()}-\$${_priceRange[1].toInt()}';
+  }
+
+  String _getGenderDisplayText() {
+    // Check if gender is at default value
+    if (_selectedGender == 'Any') {
+      return 'Any Gender';
+    }
+    return _selectedGender;
   }
 
   void _clearAllFilters() {
     setState(() {
       _selectedCountry = 'All Countries';
       _selectedCity = 'All Cities';
-      _priceRange = [0, 2500];
+      _priceRange = [0, 10000];
       _selectedRoomType = 'All Types';
-      _selectedGender = 'All';
+      _selectedGender = 'Any';
       _availableFrom = null;
       _availableTo = null;
       _selectedFacilities.clear();
@@ -1247,7 +998,7 @@ class _AccommodationPageState extends State<AccommodationPage>
               ),
               const SizedBox(height: AppConstants.spaceL),
               Text(
-                '£${_priceRange[0].toInt()} - £${_priceRange[1].toInt()}',
+                '\$${_priceRange[0].toInt()} - \$${_priceRange[1].toInt()}',
                 style: AppTextStyles.h6.copyWith(
                   color: AppColors.primary,
                   fontWeight: FontWeight.w600,
@@ -1257,8 +1008,8 @@ class _AccommodationPageState extends State<AccommodationPage>
               RangeSlider(
                 values: RangeValues(_priceRange[0], _priceRange[1]),
                 min: 0,
-                max: 3000,
-                divisions: 30,
+                max: 10000,
+                divisions: 100,
                 activeColor: AppColors.primary,
                 onChanged: (values) {
                   setModalState(() {
@@ -1587,6 +1338,12 @@ class _AccommodationPageState extends State<AccommodationPage>
   }
 
   void _handlePostAccommodation() {
+    // Check if user is authenticated
+    if (!_checkAuthentication()) {
+      _showLoginRequiredDialog();
+      return;
+    }
+    
     _showPostAccommodationForm();
   }
 
@@ -1603,16 +1360,173 @@ class _AccommodationPageState extends State<AccommodationPage>
         roomTypes: _roomTypes.where((type) => type != 'All Types').toList(),
         genderOptions: _genderOptions,
         availableFacilities: _availableFacilities,
+        onAccommodationCreated: () {
+          // Refresh the accommodation list when a new accommodation is created
+          _loadAccommodations();
+        },
       ),
     );
   }
 
-  void _showAccommodationDetails(Map<String, dynamic> listing) {
-    showDialog(
+  void _showAccommodationDetails(Map<String, dynamic> listing) async {
+    print('🔍 Opening accommodation details dialog');
+    
+    if (!mounted) return; // Safety check before showing dialog
+    
+    // Store the original accommodation ID to check if it was deleted
+    final originalAccommodationId = listing['id']?.toString();
+    
+    final result = await showDialog<dynamic>(
       context: context,
       barrierDismissible: true,
       builder: (context) => _AccommodationDetailsDialog(listing: listing),
     );
+    
+    print('🔄 Dialog closed with result: $result');
+    
+    // Additional safety check after dialog closes
+    if (!mounted) {
+      print('⚠️ Widget disposed after dialog close, skipping result handling');
+      return;
+    }
+    
+    // Always refresh the data when dialog closes to catch any changes
+    print('🔄 Refreshing accommodations after dialog close');
+    
+    // If accommodation was edited, refresh both lists to ensure data consistency
+    if (result == 'edited') {
+      print('✅ Edit operation detected - refreshing both public and user lists');
+      await _refreshBothLists();
+    } else if (result == true) {
+      // True result indicates delete operation - refresh normally
+      print('✅ Delete operation detected - refreshing accommodations');
+      await _loadAccommodations();
+    } else {
+      // Standard refresh based on current view for other cases
+      await _loadAccommodations();
+    }
+    
+    print('✅ Data refresh completed');
+    
+    // Check if the accommodation was deleted by comparing before/after
+    bool wasDeleted = false;
+    if (originalAccommodationId != null) {
+      print('🔍 Checking if accommodation $originalAccommodationId was deleted...');
+      
+      final stillExistsInPublic = _accommodations.any((acc) => acc['id']?.toString() == originalAccommodationId);
+      final stillExistsInUser = _userAccommodations.any((acc) => acc['id']?.toString() == originalAccommodationId);
+      final stillExists = stillExistsInPublic || stillExistsInUser;
+      
+      wasDeleted = !stillExists;
+      
+      print('🔍 Public accommodations count: ${_accommodations.length}');
+      print('🔍 User accommodations count: ${_userAccommodations.length}');
+      print('🔍 Still exists in public: $stillExistsInPublic');
+      print('🔍 Still exists in user: $stillExistsInUser');
+      print('🔍 Was deleted: $wasDeleted');
+    }
+    
+    // Handle different return types or detect deletion
+    if (result == 'edited') {
+      // Edit success case - show edit success message
+      print('✅ Edit success detected - showing edit success message');
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.check_circle, color: Colors.white),
+                SizedBox(width: 8),
+                Text('Accommodation updated successfully'),
+              ],
+            ),
+            backgroundColor: AppColors.success,
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    } else if (result == true || wasDeleted) {
+      // Delete success case - show delete success message
+      print('✅ Delete success detected - result: $result, wasDeleted: $wasDeleted');
+      
+      if (mounted && wasDeleted) {
+        print('✅ Showing success message for deleted accommodation');
+        
+        // Small delay to ensure UI is ready for the success message
+        await Future.delayed(const Duration(milliseconds: 300));
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  Icon(Icons.check_circle, color: Colors.white),
+                  SizedBox(width: 8),
+                  Text('Accommodation deleted successfully'),
+                ],
+              ),
+              backgroundColor: AppColors.success,
+              behavior: SnackBarBehavior.floating,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }
+      } else if (mounted && result == true) {
+        print('✅ Showing success message for delete dialog result');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.check_circle, color: Colors.white),
+                SizedBox(width: 8),
+                Text('Accommodation deleted successfully'),
+              ],
+            ),
+            backgroundColor: AppColors.success,
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      } else {
+        print('⚠️ Delete success detected but not showing message - mounted: $mounted, wasDeleted: $wasDeleted, result: $result');
+      }
+    } else if (result is String && result.startsWith('error:')) {
+      // Error case - show error message
+      final errorMessage = result.substring(6); // Remove 'error:' prefix
+      print('❌ Delete operation failed: $errorMessage');
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.error, color: Colors.white),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text('Failed to delete accommodation: $errorMessage'),
+                ),
+              ],
+            ),
+            backgroundColor: AppColors.error,
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    }
+  }
+
+  // Helper method to safely parse double values from dynamic data
+  double? _parseDouble(dynamic value) {
+    if (value == null) return null;
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    if (value is String) {
+      return double.tryParse(value);
+    }
+    return null;
   }
 }
 
@@ -1623,6 +1537,7 @@ class _PostAccommodationForm extends StatefulWidget {
   final List<String> roomTypes;
   final List<String> genderOptions;
   final List<String> availableFacilities;
+  final VoidCallback? onAccommodationCreated;
 
   const _PostAccommodationForm({
     required this.countries,
@@ -1630,6 +1545,7 @@ class _PostAccommodationForm extends StatefulWidget {
     required this.roomTypes,
     required this.genderOptions,
     required this.availableFacilities,
+    this.onAccommodationCreated,
   });
 
   @override
@@ -1651,6 +1567,48 @@ class _PostAccommodationFormState extends State<_PostAccommodationForm> {
   DateTime? _availableTo;
   List<String> _selectedFacilities = [];
   bool _isSubmitting = false;
+  
+  // Image picker variables
+  List<XFile> _selectedImages = [];
+  final ImagePicker _imagePicker = ImagePicker();
+  static const int _maxImages = 5;
+
+  /// Helper function to create image widget that works on both web and mobile
+  Widget _buildImageFromXFile(XFile imageFile, {double? width, double? height, BoxFit? fit}) {
+    if (kIsWeb) {
+      // On web, XFile.path returns a blob URL that works with Image.network
+      return Image.network(
+        imageFile.path,
+        width: width,
+        height: height,
+        fit: fit ?? BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return Container(
+            width: width,
+            height: height,
+            color: Colors.grey[300],
+            child: const Icon(Icons.error),
+          );
+        },
+      );
+    } else {
+      // On mobile platforms, use Image.file with File
+      return Image.file(
+        File(imageFile.path),
+        width: width,
+        height: height,
+        fit: fit ?? BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return Container(
+            width: width,
+            height: height,
+            color: Colors.grey[300],
+            child: const Icon(Icons.error),
+          );
+        },
+      );
+    }
+  }
 
   @override
   void initState() {
@@ -1663,7 +1621,7 @@ class _PostAccommodationFormState extends State<_PostAccommodationForm> {
     // Initialize room type with the first option from the provided list
     _selectedRoomType = widget.roomTypes.isNotEmpty ? widget.roomTypes.first : 'Room';
     // Initialize gender with the first option from the provided list
-    _selectedGender = widget.genderOptions.isNotEmpty ? widget.genderOptions.first : 'All';
+    _selectedGender = widget.genderOptions.isNotEmpty ? widget.genderOptions.first : 'Any';
   }
 
   @override
@@ -1820,14 +1778,21 @@ class _PostAccommodationFormState extends State<_PostAccommodationForm> {
                             width: 200,
                             child: TextFormField(
                               controller: _rentController,
-                              decoration: _buildInputDecoration('Monthly rent (£)'),
+                              decoration: _buildInputDecoration('Monthly rent (\$)'),
                               keyboardType: TextInputType.number,
                               validator: (value) {
                                 if (value == null || value.trim().isEmpty) {
                                   return 'Please enter rent amount';
                                 }
-                                if (double.tryParse(value) == null) {
+                                final rent = double.tryParse(value);
+                                if (rent == null) {
                                   return 'Please enter a valid number';
+                                }
+                                if (rent < 0) {
+                                  return 'Rent cannot be negative';
+                                }
+                                if (rent > 10000) {
+                                  return 'Rent cannot exceed \$10,000';
                                 }
                                 return null;
                               },
@@ -1872,6 +1837,7 @@ class _PostAccommodationFormState extends State<_PostAccommodationForm> {
                           controller: _contactEmailController,
                           decoration: _buildInputDecoration('e.g., john.doe@email.com'),
                           keyboardType: TextInputType.emailAddress,
+                          autovalidateMode: AutovalidateMode.onUserInteraction,
                           validator: (value) {
                             if (value == null || value.trim().isEmpty) {
                               return 'Please enter your contact email';
@@ -2091,6 +2057,14 @@ class _PostAccommodationFormState extends State<_PostAccommodationForm> {
     DateTime? date,
     void Function(DateTime?) onDateSelected,
   ) {
+    // Check for date validation error
+    String? errorMessage;
+    if (label == 'Available Until' && _availableFrom != null && date != null) {
+      if (date.isBefore(_availableFrom!) || date.isAtSameMomentAs(_availableFrom!)) {
+        errorMessage = 'End date must be after start date';
+      }
+    }
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -2121,7 +2095,10 @@ class _PostAccommodationFormState extends State<_PostAccommodationForm> {
               vertical: AppConstants.spaceM,
             ),
             decoration: BoxDecoration(
-              border: Border.all(color: AppColors.borderLight),
+              border: Border.all(
+                color: errorMessage != null ? AppColors.error : AppColors.borderLight,
+                width: errorMessage != null ? 2 : 1,
+              ),
               borderRadius: BorderRadius.circular(AppConstants.radiusM),
             ),
             child: Row(
@@ -2133,22 +2110,34 @@ class _PostAccommodationFormState extends State<_PostAccommodationForm> {
                         ? '${date.day}/${date.month}/${date.year}'
                         : 'Select date',
                     style: AppTextStyles.bodyMedium.copyWith(
-                      color: date != null 
-                          ? AppColors.textPrimary 
-                          : AppColors.textTertiary,
+                      color: errorMessage != null 
+                          ? AppColors.error
+                          : date != null 
+                              ? AppColors.textPrimary 
+                              : AppColors.textTertiary,
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 Icon(
                   Icons.calendar_today,
-                  color: AppColors.textTertiary,
+                  color: errorMessage != null ? AppColors.error : AppColors.textTertiary,
                   size: 20,
                 ),
               ],
             ),
           ),
         ),
+        // Show error message if validation fails
+        if (errorMessage != null) ...[
+          const SizedBox(height: AppConstants.spaceXS),
+          Text(
+            errorMessage,
+            style: AppTextStyles.caption.copyWith(
+              color: AppColors.error,
+            ),
+          ),
+        ],
       ],
     );
   }
@@ -2230,60 +2219,378 @@ class _PostAccommodationFormState extends State<_PostAccommodationForm> {
   }
 
   Widget _buildPhotoUploadSection() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(AppConstants.spaceL),
-      decoration: BoxDecoration(
-        color: AppColors.accent,
-        border: Border.all(
-          color: AppColors.borderLight,
-          style: BorderStyle.solid,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Upload Button and Info
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(AppConstants.spaceL),
+          decoration: BoxDecoration(
+            color: AppColors.accent,
+            border: Border.all(
+              color: AppColors.borderLight,
+              style: BorderStyle.solid,
+            ),
+            borderRadius: BorderRadius.circular(AppConstants.radiusM),
+          ),
+          child: Column(
+            children: [
+              Icon(
+                Icons.cloud_upload_outlined,
+                size: 48,
+                color: AppColors.textTertiary,
+              ),
+              const SizedBox(height: AppConstants.spaceS),
+              Text(
+                'Upload Photos (${_selectedImages.length}/$_maxImages)',
+                style: AppTextStyles.h6.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: AppConstants.spaceXS),
+              Text(
+                'Add photos to make your listing more attractive',
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: AppColors.textTertiary,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: AppConstants.spaceM),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  OutlinedButton.icon(
+                    onPressed: _selectedImages.length >= _maxImages ? null : () => _pickImages(ImageSource.gallery),
+                    icon: Icon(Icons.photo_library),
+                    label: const Text('Gallery'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.primary,
+                      side: BorderSide(color: AppColors.primary),
+                    ),
+                  ),
+                  const SizedBox(width: AppConstants.spaceM),
+                  OutlinedButton.icon(
+                    onPressed: _selectedImages.length >= _maxImages ? null : () => _pickImages(ImageSource.camera),
+                    icon: Icon(Icons.camera_alt),
+                    label: const Text('Camera'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.secondary,
+                      side: BorderSide(color: AppColors.secondary),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
-        borderRadius: BorderRadius.circular(AppConstants.radiusM),
-      ),
-      child: Column(
-        children: [
-          Icon(
-            Icons.cloud_upload_outlined,
-            size: 48,
-            color: AppColors.textTertiary,
+        
+        // Selected Images Preview
+        if (_selectedImages.isNotEmpty) ...[
+          const SizedBox(height: AppConstants.spaceM),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Selected Photos:',
+                style: AppTextStyles.labelMedium.copyWith(
+                  color: AppColors.textSecondary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              TextButton.icon(
+                onPressed: _clearAllImages,
+                icon: Icon(Icons.clear_all, size: 18),
+                label: const Text('Clear All'),
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.error,
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: AppConstants.spaceS),
-          Text(
-            'Upload Photos',
-            style: AppTextStyles.h6.copyWith(
-              color: AppColors.textSecondary,
-            ),
-          ),
-          const SizedBox(height: AppConstants.spaceXS),
-          Text(
-            'Add photos to make your listing more attractive',
-            style: AppTextStyles.bodySmall.copyWith(
-              color: AppColors.textTertiary,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: AppConstants.spaceM),
-          OutlinedButton.icon(
-            onPressed: () {
-              // TODO: Implement photo upload functionality
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: const Text('Photo upload feature coming soon!'),
-                  backgroundColor: AppColors.primary,
-                ),
-              );
-            },
-            icon: Icon(Icons.add_photo_alternate),
-            label: const Text('Choose Photos'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.primary,
-              side: BorderSide(color: AppColors.primary),
+          SizedBox(
+            height: 120,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: _selectedImages.length,
+              itemBuilder: (context, index) {
+                return Container(
+                  width: 120,
+                  margin: EdgeInsets.only(
+                    right: index < _selectedImages.length - 1 ? AppConstants.spaceS : 0,
+                  ),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(AppConstants.radiusM),
+                    border: Border.all(color: AppColors.borderLight),
+                  ),
+                  child: Stack(
+                    children: [
+                      // Image
+                      GestureDetector(
+                        onTap: () => _showImagePreview(index),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(AppConstants.radiusM),
+                          child: _buildImageFromXFile(
+                            _selectedImages[index],
+                            width: 120,
+                            height: 120,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      ),
+                      // Remove Button
+                      Positioned(
+                        top: 4,
+                        right: 4,
+                        child: GestureDetector(
+                          onTap: () => _removeImage(index),
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              color: AppColors.error.withOpacity(0.9),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Icon(
+                              Icons.close,
+                              color: Colors.white,
+                              size: 16,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
             ),
           ),
         ],
-      ),
+      ],
     );
+  }
+
+  // Image picker methods
+  Future<void> _pickImages(ImageSource source) async {
+    try {
+      if (source == ImageSource.gallery) {
+        // Pick single image from gallery (user can repeat to add multiple)
+        final XFile? singleImage = await _imagePicker.pickImage(
+          source: ImageSource.gallery,
+          imageQuality: 85,
+        );
+        
+        List<XFile> images = [];
+        if (singleImage != null) {
+          images = [singleImage];
+        }
+        if (images.isNotEmpty) {
+          // Validate and filter images
+          final List<XFile> validImages = [];
+          final List<String> validationErrors = [];
+          
+          for (final image in images) {
+            // Check file type
+            if (!_isValidImageFile(image)) {
+              validationErrors.add('${image.name}: Invalid file type. Only JPG, PNG, and WebP are allowed.');
+              continue;
+            }
+            
+            // Check file size
+            if (!await _isValidImageSize(image)) {
+              validationErrors.add('${image.name}: File too large. Maximum 10MB per image.');
+              continue;
+            }
+            
+            validImages.add(image);
+          }
+          
+          if (validImages.isNotEmpty) {
+            final remainingSlots = _maxImages - _selectedImages.length;
+            final imagesToAdd = validImages.take(remainingSlots).toList();
+            
+            setState(() {
+              // Add new images but don't exceed max limit
+              _selectedImages.addAll(imagesToAdd);
+            });
+            
+            // Show success message
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Added ${imagesToAdd.length} photo(s) successfully!'),
+                  backgroundColor: Colors.green,
+                ),
+              );
+            }
+          }
+          
+          // Show validation errors if any
+          if (validationErrors.isNotEmpty && mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Some images were skipped: ${validationErrors.join(' ')}'),
+                backgroundColor: AppColors.error,
+                duration: const Duration(seconds: 5),
+              ),
+            );
+          }
+        }
+      } else {
+        // Pick single image from camera
+        final XFile? image = await _imagePicker.pickImage(
+          source: ImageSource.camera,
+          imageQuality: 85, // Compress to reduce file size
+        );
+        
+        if (image != null) {
+          // Validate image
+          if (!_isValidImageFile(image)) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: const Text('Invalid file type. Only JPG, PNG, and WebP are allowed.'),
+                  backgroundColor: AppColors.error,
+                ),
+              );
+            }
+            return;
+          }
+          
+          if (!await _isValidImageSize(image)) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: const Text('Image too large. Maximum 10MB per image.'),
+                  backgroundColor: AppColors.error,
+                ),
+              );
+            }
+            return;
+          }
+          
+          setState(() {
+            _selectedImages.add(image);
+          });
+          
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: const Text('Photo added successfully!'),
+                backgroundColor: Colors.green,
+              ),
+            );
+          }
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error selecting images: ${e.toString()}'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+
+  void _removeImage(int index) {
+    setState(() {
+      _selectedImages.removeAt(index);
+    });
+    
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Photo removed'),
+          backgroundColor: AppColors.primary,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  void _clearAllImages() {
+    if (_selectedImages.isEmpty) return;
+    
+    setState(() {
+      _selectedImages.clear();
+    });
+    
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('All photos cleared'),
+          backgroundColor: AppColors.primary,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  // Image validation helper methods
+  bool _isValidImageFile(XFile imageFile) {
+    final String fileName = imageFile.name.toLowerCase();
+    final List<String> allowedExtensions = ['.jpg', '.jpeg', '.png', '.webp'];
+    
+    return allowedExtensions.any((ext) => fileName.endsWith(ext));
+  }
+
+  Future<bool> _isValidImageSize(XFile imageFile, {double maxSizeMB = 10.0}) async {
+    try {
+      // Use XFile.length() instead of File for cross-platform compatibility
+      final int lengthInBytes = await imageFile.length();
+      final double sizeInMB = lengthInBytes / (1024 * 1024);
+      
+      // Log file size for debugging
+      print('📏 Image size check: ${imageFile.name} is ${sizeInMB.toStringAsFixed(2)}MB (max: ${maxSizeMB}MB)');
+      
+      return sizeInMB <= maxSizeMB;
+    } catch (e) {
+      print('❌ Error checking image size: $e');
+      return false;
+    }
+  }
+
+  void _showImagePreview(int index) {
+    if (index >= 0 && index < _selectedImages.length) {
+      showDialog(
+        context: context,
+        barrierColor: Colors.black87,
+        builder: (context) => Dialog(
+          backgroundColor: Colors.transparent,
+          child: Stack(
+            children: [
+              Center(
+                child: InteractiveViewer(
+                  child: _buildImageFromXFile(
+                    _selectedImages[index],
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              ),
+              Positioned(
+                top: 40,
+                right: 40,
+                child: IconButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: Icon(
+                    Icons.close,
+                    color: Colors.white,
+                    size: 32,
+                  ),
+                  style: IconButton.styleFrom(
+                    backgroundColor: Colors.black54,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
   }
 
   void _submitForm() async {
@@ -2342,37 +2649,71 @@ class _PostAccommodationFormState extends State<_PostAccommodationForm> {
       return;
     }
 
+    if (_availableTo == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Please select availability end date'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+
+    // Critical date validation - this should prevent the database constraint error
+    if (_availableTo!.isBefore(_availableFrom!) || _availableTo!.isAtSameMomentAs(_availableFrom!)) {
+      print('❌ DATE VALIDATION FAILED: availableFrom: $_availableFrom, availableTo: $_availableTo');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Available end date must be after the start date'),
+          backgroundColor: AppColors.error,
+          duration: const Duration(seconds: 4),
+        ),
+      );
+      return;
+    }
+
     setState(() {
       _isSubmitting = true;
     });
 
     try {
-      // TODO: Replace with actual API call
-      await Future.delayed(const Duration(seconds: 2));
-
-      // Create the accommodation data
+      // Create the accommodation data in the format expected by the API
       final accommodationData = {
         'title': _titleController.text.trim(),
         'location': '$_selectedCity, $_selectedCountry',
-        'country': _selectedCountry,
-        'city': _selectedCity,
-        'propertyType': _selectedRoomType,
         'rent': double.parse(_rentController.text),
-        'rentPeriod': 'month',
+        'roomType': _selectedRoomType, // Added missing roomType field
         'contactEmail': _contactEmailController.text.trim(),
-        'availableFrom': '${_availableFrom!.day}/${_availableFrom!.month}/${_availableFrom!.year}',
-        'availableTo': _availableTo != null 
-            ? '${_availableTo!.day}/${_availableTo!.month}/${_availableTo!.year}'
-            : 'Open-ended',
+        'availableFrom': _availableFrom!.toIso8601String(),
+        'availableTo': _availableTo?.toIso8601String(),
         'genderPreference': _selectedGender,
         'facilities': _selectedFacilities,
         'description': _descriptionController.text.trim(),
-        'isRoommateRequest': true,
-        'postedDate': DateTime.now().toIso8601String(),
       };
 
-      // TODO: Send accommodationData to backend API
-      print('Accommodation data to be sent: $accommodationData');
+      print('🏠 Creating accommodation via API...');
+      print('📝 Accommodation data: $accommodationData');
+
+      // Create accommodation via API
+      final apiService = AccommodationApiService();
+      final createdAccommodation = await apiService.createAccommodation(accommodationData);
+      
+      print('✅ Accommodation created with ID: ${createdAccommodation['id']}');
+
+      // Upload images if any were selected (hybrid approach)
+      if (_selectedImages.isNotEmpty) {
+        print('🖼️ Uploading ${_selectedImages.length} images...');
+        try {
+          final imageUrls = await apiService.uploadImagesToAccommodation(
+            createdAccommodation['id'], 
+            _selectedImages
+          );
+          print('✅ Images uploaded successfully: ${imageUrls.length} URLs');
+        } catch (imageError) {
+          print('⚠️ Image upload failed but accommodation was created: $imageError');
+          // Continue with success - accommodation was created even if images failed
+        }
+      }
 
       // Show success message
       if (mounted) {
@@ -2396,13 +2737,45 @@ class _PostAccommodationFormState extends State<_PostAccommodationForm> {
         );
 
         Navigator.pop(context);
+        
+        // Call the callback to refresh the accommodation list
+        widget.onAccommodationCreated?.call();
       }
     } catch (e) {
+      print('❌ Form submission error: $e');
+      
       if (mounted) {
+        String errorMessage = 'Error posting accommodation. Please try again.';
+        
+        // Handle different types of errors
+        if (e is ApiError) {
+          if (e.statusCode == 401) {
+            errorMessage = 'Your session has expired. Please log in again.';
+            // Close form and redirect to login
+            Navigator.pop(context); // Close form
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const LoginPage()),
+            );
+            return;
+          } else if (e.statusCode == 403) {
+            errorMessage = 'You do not have permission to post accommodations.';
+          } else if (e.statusCode == 400) {
+            errorMessage = 'Please check your input data and try again.';
+          } else if (e.statusCode == 500) {
+            errorMessage = 'Server error. Please try again later.';
+          } else {
+            errorMessage = e.message;
+          }
+        } else if (e.toString().contains('network') || e.toString().contains('connection')) {
+          errorMessage = 'Network error. Please check your internet connection.';
+        }
+        
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error posting accommodation: ${e.toString()}'),
+            content: Text(errorMessage),
             backgroundColor: AppColors.error,
+            duration: const Duration(seconds: 4),
           ),
         );
       }
@@ -2438,11 +2811,168 @@ class _AccommodationDetailsDialogState extends State<_AccommodationDetailsDialog
     super.dispose();
   }
 
-  // Mock photos list - in real app, this would come from the listing data
+  // Check if current user owns this accommodation
+  bool get _isOwner {
+    // Check authentication status first
+    final isAuthenticated = StorageService.isLoggedIn();
+    final accessToken = StorageService.getAccessToken();
+    final currentUser = StorageService.getUserData();
+    
+    // Try multiple field names for posted_by (backend inconsistency)
+    final postedBy = widget.listing['posted_by']?.toString() ?? 
+                     widget.listing['postedBy']?.toString() ?? 
+                     widget.listing['posted_by_id']?.toString();
+    
+    print('🔍 OWNERSHIP DEBUG:');
+    print('  Is authenticated: $isAuthenticated');
+    print('  Access token exists: ${accessToken != null}');
+    if (accessToken != null && accessToken.length > 20) {
+      print('  Access token preview: ${accessToken.substring(0, 20)}...');
+    }
+    print('  Current user ID: ${currentUser?.id} (type: ${currentUser?.id.runtimeType})');
+    print('  Posted by field: $postedBy (type: ${postedBy.runtimeType})');
+    print('  Available listing keys: ${widget.listing.keys.toList()}');
+    
+    if (currentUser == null || postedBy == null) {
+      print('  ❌ Missing data: currentUser=${currentUser != null}, postedBy=${postedBy != null}');
+      
+      // If user is authenticated but currentUser is null, try to fetch profile
+      if (isAuthenticated && currentUser == null) {
+        print('  🔄 User authenticated but data missing - attempting to fetch profile...');
+        _fetchUserProfileIfNeeded();
+      }
+      
+      return false;
+    }
+    
+    // Ensure both IDs are strings for comparison
+    final currentUserId = currentUser.id.toString().trim();
+    final postedById = postedBy.toString().trim();
+    
+    print('  Normalized current user ID: "$currentUserId"');
+    print('  Normalized posted by ID: "$postedById"');
+    print('  String comparison result: ${currentUserId == postedById}');
+    
+    final isOwner = currentUserId == postedById;
+    print('  🏆 Final ownership result: $isOwner');
+    
+    return isOwner;
+  }
+
+  // Handle edit accommodation
+  void _handleEdit() async {
+    // Don't close details dialog yet - keep it open until edit completes
+    // Use the current context for the edit dialog
+    final result = await showDialog<dynamic>(
+      context: context,
+      builder: (context) => EditAccommodationDialog(
+        listing: widget.listing,
+        onUpdated: () {
+          Navigator.pop(context, 'edited'); // Return 'edited' to indicate edit success
+        },
+      ),
+    );
+    
+    print('🔄 Edit completed. Result: $result');
+    
+    // If edit was successful, close details dialog and signal refresh to main page
+    if (result == 'edited') {
+      print('✅ Edit successful - closing details dialog with refresh signal');
+      Navigator.pop(context, 'edited'); // Close details dialog and pass edit result to main page
+    }
+  }
+
+  // Handle delete accommodation
+  Future<void> _handleDelete() async {
+    final result = await showDialog<dynamic>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.backgroundSecondary,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppConstants.radiusL),
+        ),
+        title: Text(
+          'Delete Accommodation',
+          style: AppTextStyles.h4.copyWith(
+            color: AppColors.textPrimary,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        content: Text(
+          'Are you sure you want to delete this accommodation? This action cannot be undone.',
+          style: AppTextStyles.bodyMedium.copyWith(
+            color: AppColors.textSecondary,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'Cancel',
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: AppColors.textTertiary,
+              ),
+            ),
+          ),
+          PrimaryButton(
+            text: 'Delete',
+            size: ButtonSize.small,
+            backgroundColor: AppColors.error,
+            onPressed: () async {
+              try {
+                final accommodationId = widget.listing['id']?.toString();
+                if (accommodationId == null) {
+                  throw Exception('Invalid accommodation ID');
+                }
+
+                print('🗑️ Attempting to delete accommodation: $accommodationId');
+                
+                final apiService = AccommodationApiService();
+                final success = await apiService.deleteAccommodation(accommodationId);
+
+                if (success) {
+                  print('✅ Delete successful, closing dialog with success');
+                  Navigator.pop(context, true); // Return true to indicate successful deletion
+                } else {
+                  throw Exception('Delete operation failed');
+                }
+              } catch (e) {
+                print('❌ Delete error: $e');
+                Navigator.pop(context, 'error:${e.toString()}');
+              }
+            },
+          ),
+        ],
+      ),
+    );
+    
+    // Handle the result
+    if (result == true) {
+      print('✅ Delete operation successful, refreshing accommodations');
+      // Close the details dialog with delete success signal
+      if (mounted && context.mounted) {
+        Navigator.pop(context, true);
+      }
+    } else if (result != null && result.toString().startsWith('error:')) {
+      print('❌ Delete operation failed: $result');
+      // Show error message but don't close details dialog
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to delete accommodation: ${result.toString().substring(6)}'),
+            backgroundColor: AppColors.error,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+    }
+  }
+
+  // Photos from backend API - imageUrls field
   List<String> get _photos {
-    // Return empty list if no photos, or mock photos for demo
-    final photos = widget.listing['photos'] as List<String>?;
-    return photos ?? [];
+    // Get photos from backend data - backend returns 'imageUrls' field
+    final photos = widget.listing['imageUrls'] as List<dynamic>?;
+    return photos?.cast<String>() ?? [];
   }
 
   @override
@@ -2537,6 +3067,12 @@ class _AccommodationDetailsDialogState extends State<_AccommodationDetailsDialog
 
                         // Posted Information
                         _buildPostedInfoSection(),
+                        
+                        // Action buttons for owner
+                        if (_isOwner) ...[
+                          const SizedBox(height: AppConstants.spaceXL),
+                          _buildActionButtons(),
+                        ],
                       ],
                     ),
                   ),
@@ -2753,7 +3289,7 @@ class _AccommodationDetailsDialogState extends State<_AccommodationDetailsDialog
             icon: Icons.location_on,
             iconColor: AppColors.error,
             title: 'Location',
-            content: '📍 ${widget.listing['country']}, ${widget.listing['city']}',
+            content: '${widget.listing['country']}, ${widget.listing['city']}',
           ),
 
           const SizedBox(height: AppConstants.spaceM),
@@ -2763,7 +3299,7 @@ class _AccommodationDetailsDialogState extends State<_AccommodationDetailsDialog
             icon: Icons.home,
             iconColor: AppColors.primary,
             title: 'Room Type',
-            content: '🛏️ ${widget.listing['propertyType']}',
+            content: '${widget.listing['roomType'] ?? 'Room'}',
           ),
 
           const SizedBox(height: AppConstants.spaceM),
@@ -2773,7 +3309,7 @@ class _AccommodationDetailsDialogState extends State<_AccommodationDetailsDialog
             icon: Icons.attach_money,
             iconColor: Colors.green,
             title: 'Price per Month',
-            content: '💰 £${widget.listing['rent']} ${widget.listing['rentPeriod']}',
+            content: '${_formatRent(widget.listing['monthly_rent'] ?? widget.listing['rent'])}',
           ),
 
           const SizedBox(height: AppConstants.spaceM),
@@ -2783,7 +3319,7 @@ class _AccommodationDetailsDialogState extends State<_AccommodationDetailsDialog
             icon: Icons.people,
             iconColor: AppColors.secondary,
             title: 'Gender Preference',
-            content: '🚻 ${widget.listing['genderPreference']}',
+            content: '${widget.listing['genderPreference']}',
           ),
 
           const SizedBox(height: AppConstants.spaceM),
@@ -2793,7 +3329,7 @@ class _AccommodationDetailsDialogState extends State<_AccommodationDetailsDialog
             icon: Icons.calendar_today,
             iconColor: AppColors.accent.withOpacity(0.8),
             title: 'Availability',
-            content: '🗓️ From: ${widget.listing['availableFrom']}\n🕒 Until: ${widget.listing['availableTo'] ?? 'Open-ended'}',
+            content: 'From: ${_formatDate(widget.listing['availableFrom'])}\n🕒 Until: ${_formatDate(widget.listing['availableTo']) ?? 'Open-ended'}',
           ),
 
           const SizedBox(height: AppConstants.spaceM),
@@ -2812,7 +3348,7 @@ class _AccommodationDetailsDialogState extends State<_AccommodationDetailsDialog
                     icon: Icons.bed,
                     iconColor: AppColors.primary,
                     title: 'Bedrooms',
-                    content: '🛏️ ${widget.listing['bedrooms']}',
+                    content: '${widget.listing['bedrooms']}',
                   ),
                 ),
                 const SizedBox(width: AppConstants.spaceM),
@@ -2821,7 +3357,7 @@ class _AccommodationDetailsDialogState extends State<_AccommodationDetailsDialog
                     icon: Icons.bathroom,
                     iconColor: AppColors.secondary,
                     title: 'Bathrooms',
-                    content: '🛁 ${widget.listing['bathrooms']}',
+                    content: '${widget.listing['bathrooms']}',
                   ),
                 ),
               ],
@@ -3056,7 +3592,7 @@ class _AccommodationDetailsDialogState extends State<_AccommodationDetailsDialog
               ),
               const SizedBox(width: AppConstants.spaceS),
               Text(
-                '📧 ',
+                ' ',
                 style: AppTextStyles.bodyMedium,
               ),
               Expanded(
@@ -3143,7 +3679,13 @@ class _AccommodationDetailsDialogState extends State<_AccommodationDetailsDialog
                 ),
               ),
               Text(
-                widget.listing['postedBy'] ?? 'Anonymous User',
+                () {
+                  final userName = widget.listing['posted_by_name'] ?? widget.listing['postedByName'] ?? 'Anonymous User';
+                  print('🔍 USER NAME DEBUG: $userName');
+                  print('  posted_by_name: ${widget.listing['posted_by_name']}');
+                  print('  postedByName: ${widget.listing['postedByName']}');
+                  return userName;
+                }(),
                 style: AppTextStyles.bodyMedium.copyWith(
                   color: AppColors.textPrimary,
                   fontWeight: FontWeight.w500,
@@ -3182,11 +3724,1240 @@ class _AccommodationDetailsDialogState extends State<_AccommodationDetailsDialog
     );
   }
 
+  Widget _buildActionButtons() {
+    return Container(
+      padding: const EdgeInsets.all(AppConstants.spaceM),
+      decoration: BoxDecoration(
+        color: AppColors.backgroundSecondary,
+        borderRadius: BorderRadius.circular(AppConstants.radiusL),
+        border: Border.all(color: AppColors.borderLight),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Manage Listing',
+            style: AppTextStyles.h5.copyWith(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: AppConstants.spaceM),
+          Row(
+            children: [
+              Expanded(
+                child: SecondaryButton(
+                  text: 'Edit',
+                  icon: Icons.edit,
+                  onPressed: _handleEdit,
+                ),
+              ),
+              const SizedBox(width: AppConstants.spaceM),
+              Expanded(
+                child: PrimaryButton(
+                  text: 'Delete',
+                  icon: Icons.delete,
+                  backgroundColor: AppColors.error,
+                  onPressed: _handleDelete,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Helper method to format rent display
+  String _formatRent(dynamic rent) {
+    if (rent == null) return '\$0/month';
+    
+    double? rentValue;
+    if (rent is double) {
+      rentValue = rent;
+    } else if (rent is int) {
+      rentValue = rent.toDouble();
+    } else if (rent is String) {
+      rentValue = double.tryParse(rent);
+    }
+    
+    if (rentValue == null) return '\$0/month';
+    
+    // Format as integer if it's a whole number, otherwise with decimal
+    if (rentValue == rentValue.toInt()) {
+      return '\$${rentValue.toInt()}/month';
+    } else {
+      return '\$${rentValue.toStringAsFixed(2)}/month';
+    }
+  }
+
   String _getMonthName(int month) {
     const months = [
       'January', 'February', 'March', 'April', 'May', 'June',
       'July', 'August', 'September', 'October', 'November', 'December'
     ];
     return months[month - 1];
+  }
+
+  String? _formatDate(String? dateString) {
+    if (dateString == null || dateString.isEmpty) return null;
+    
+    try {
+      final date = DateTime.parse(dateString);
+      return '${date.day} ${_getMonthName(date.month)} ${date.year}';
+    } catch (e) {
+      return dateString; // Return original if parsing fails
+    }
+  }
+
+  // Fetch user profile if missing
+  void _fetchUserProfileIfNeeded() async {
+    try {
+      print('🔄 Attempting to fetch user profile...');
+      final authService = AuthService();
+      await authService.getProfile();
+      print('✅ User profile fetched successfully');
+      
+      // Trigger a rebuild to refresh ownership status
+      if (mounted) {
+        setState(() {});
+      }
+    } catch (e) {
+      print('❌ Failed to fetch user profile: $e');
+    }
+  }
+}
+
+// Edit Accommodation Dialog
+class EditAccommodationDialog extends StatefulWidget {
+  final Map<String, dynamic> listing;
+  final VoidCallback onUpdated;
+
+  const EditAccommodationDialog({
+    Key? key,
+    required this.listing,
+    required this.onUpdated,
+  }) : super(key: key);
+
+  @override
+  State<EditAccommodationDialog> createState() => _EditAccommodationDialogState();
+}
+
+class _EditAccommodationDialogState extends State<EditAccommodationDialog> {
+  final _formKey = GlobalKey<FormState>();
+  final _titleController = TextEditingController();
+  final _descriptionController = TextEditingController();
+  final _priceController = TextEditingController();
+  final _contactController = TextEditingController();
+  
+  String _selectedStatus = 'available';
+  String _selectedCountry = 'UK';
+  String _selectedCity = 'London';
+  String _selectedRoomType = 'Room';
+  String _selectedGender = 'Any';
+  DateTime? _availableFrom;
+  DateTime? _availableTo;
+  List<String> _selectedFacilities = [];
+  List<XFile> _selectedImages = [];
+  List<String> _existingImageUrls = [];
+  final ImagePicker _imagePicker = ImagePicker();
+  static const int _maxImages = 5;
+  bool _isLoading = false;
+
+  // Available options (matching the post form)
+  final List<String> _countries = ['UK', 'USA', 'Canada', 'Australia'];
+  final Map<String, List<String>> _citiesByCountry = {
+    'UK': ['London', 'Birmingham', 'Manchester', 'Edinburgh', 'Cardiff'],
+    'USA': ['New York', 'Los Angeles', 'Chicago', 'Houston', 'Phoenix'],
+    'Canada': ['Toronto', 'Vancouver', 'Montreal', 'Calgary', 'Ottawa'],
+    'Australia': ['Sydney', 'Melbourne', 'Brisbane', 'Perth', 'Adelaide'],
+  };
+  final List<String> _roomTypes = ['Room', 'Studio', 'Apartment', 'House'];
+  final List<String> _genderOptions = ['Any', 'Male', 'Female'];
+  final List<String> _availableFacilities = [
+    'Wifi', 'Kitchen', 'Washing Machine', 'Dryer', 'Garden', 'Parking',
+    'Gym', 'Pool', 'Air Conditioning', 'Heating', 'Furnished', 'Balcony'
+  ];
+
+  /// Helper function to create image widget that works on both web and mobile
+  Widget _buildImageFromXFile(XFile imageFile, {double? width, double? height, BoxFit? fit}) {
+    if (kIsWeb) {
+      // On web, XFile.path returns a blob URL that works with Image.network
+      return Image.network(
+        imageFile.path,
+        width: width,
+        height: height,
+        fit: fit ?? BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return Container(
+            width: width,
+            height: height,
+            color: Colors.grey[300],
+            child: const Icon(Icons.error),
+          );
+        },
+      );
+    } else {
+      // On mobile platforms, use Image.file with File
+      return Image.file(
+        File(imageFile.path),
+        width: width,
+        height: height,
+        fit: fit ?? BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return Container(
+            width: width,
+            height: height,
+            color: Colors.grey[300],
+            child: const Icon(Icons.error),
+          );
+        },
+      );
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeFields();
+  }
+
+  void _initializeFields() {
+    // Debug: Print all available fields in the listing
+    print('🔍 EDIT DIALOG - Available listing fields:');
+    widget.listing.forEach((key, value) {
+      print('  $key: $value');
+    });
+    
+    _titleController.text = widget.listing['title'] ?? '';
+    _descriptionController.text = widget.listing['description'] ?? '';
+    
+    // Try multiple possible field names for rent
+    final rentValue = widget.listing['monthly_rent'] ?? 
+                     widget.listing['rent'] ?? 
+                     widget.listing['price'];
+    _priceController.text = rentValue?.toString() ?? '';
+    print('🔍 RENT VALUE: $rentValue (from monthly_rent: ${widget.listing['monthly_rent']}, rent: ${widget.listing['rent']}, price: ${widget.listing['price']})');
+    
+    // Try multiple possible field names for contact
+    final contactValue = widget.listing['contact_info'] ?? 
+                        widget.listing['contactEmail'] ?? 
+                        widget.listing['contact_email'];
+    _contactController.text = contactValue ?? '';
+    print('🔍 CONTACT VALUE: $contactValue (from contact_info: ${widget.listing['contact_info']}, contactEmail: ${widget.listing['contactEmail']})');
+    
+    _selectedStatus = widget.listing['status'] ?? 'available';
+    
+    // Initialize country and city with validation
+    final listingCountry = widget.listing['country'] ?? 'UK';
+    final listingCity = widget.listing['city'] ?? 'London';
+    
+    // Validate if the city belongs to the country
+    if (_citiesByCountry[listingCountry]?.contains(listingCity) == true) {
+      // Valid combination - use as is
+      _selectedCountry = listingCountry;
+      _selectedCity = listingCity;
+    } else {
+      // Invalid combination - find the correct country for the city or use defaults
+      String? correctCountry;
+      for (String country in _citiesByCountry.keys) {
+        if (_citiesByCountry[country]?.contains(listingCity) == true) {
+          correctCountry = country;
+          break;
+        }
+      }
+      
+      if (correctCountry != null) {
+        // Found the correct country for this city
+        _selectedCountry = correctCountry;
+        _selectedCity = listingCity;
+        print('🔧 Fixed country/city mismatch: $listingCity is in $correctCountry, not $listingCountry');
+      } else {
+        // City not found in any country - use defaults
+        _selectedCountry = listingCountry.isNotEmpty ? listingCountry : 'UK';
+        _selectedCity = _citiesByCountry[_selectedCountry]?.first ?? 'London';
+        print('⚠️ Unknown city "$listingCity" - using defaults: $_selectedCountry/$_selectedCity');
+      }
+    }
+    
+    _selectedRoomType = widget.listing['roomType'] ?? 'Room';
+    _selectedGender = widget.listing['genderPreference'] ?? 'Any';
+    
+    // Initialize dates - try multiple possible field names
+    print('🔍 DATE FIELDS: availableFrom: ${widget.listing['availableFrom']}, availability_from: ${widget.listing['availability_from']}');
+    print('🔍 DATE FIELDS: availableTo: ${widget.listing['availableTo']}, availability_to: ${widget.listing['availability_to']}');
+    
+    // Available From date
+    final availableFromValue = widget.listing['availableFrom'] ?? 
+                              widget.listing['availability_from'];
+    if (availableFromValue != null) {
+      try {
+        _availableFrom = DateTime.parse(availableFromValue);
+        print('✅ Parsed availableFrom: $_availableFrom');
+      } catch (e) {
+        print('❌ Failed to parse availableFrom: $e');
+        _availableFrom = null;
+      }
+    }
+    
+    // Available To date  
+    final availableToValue = widget.listing['availableTo'] ?? 
+                            widget.listing['availability_to'];
+    if (availableToValue != null) {
+      try {
+        _availableTo = DateTime.parse(availableToValue);
+        print('✅ Parsed availableTo: $_availableTo');
+      } catch (e) {
+        print('❌ Failed to parse availableTo: $e');
+        _availableTo = null;
+      }
+    }
+    
+    // Initialize facilities
+    if (widget.listing['facilities'] != null) {
+      _selectedFacilities = List<String>.from(widget.listing['facilities']);
+    }
+    
+    // Initialize existing images
+    if (widget.listing['imageUrls'] != null) {
+      _existingImageUrls = List<String>.from(widget.listing['imageUrls']);
+    }
+  }
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _descriptionController.dispose();
+    _priceController.dispose();
+    _contactController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final screenWidth = MediaQuery.of(context).size.width;
+    
+    // Reserve space for title, padding, and action buttons
+    final availableHeight = screenHeight * 0.75; // Use 75% instead of 85%
+    final dialogWidth = screenWidth > 600 ? 600.0 : screenWidth * 0.9;
+    
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      child: Container(
+        width: dialogWidth,
+        constraints: BoxConstraints(
+          maxHeight: screenHeight * 0.9, // Maximum dialog height
+        ),
+        decoration: BoxDecoration(
+          color: AppColors.backgroundSecondary,
+          borderRadius: BorderRadius.circular(AppConstants.radiusL),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Title section with fixed height
+            Container(
+              padding: const EdgeInsets.all(AppConstants.spaceL),
+              decoration: BoxDecoration(
+                color: AppColors.backgroundSecondary,
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(AppConstants.radiusL),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Edit Accommodation',
+                      style: AppTextStyles.h4.copyWith(
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: Icon(Icons.close, color: AppColors.textSecondary),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
+                ],
+              ),
+            ),
+            
+            // Divider
+            Divider(height: 1, color: AppColors.borderLight),
+            
+            // Scrollable content area
+            Flexible(
+              child: Container(
+                constraints: BoxConstraints(
+                  maxHeight: availableHeight,
+                ),
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(AppConstants.spaceL),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                // Title Field
+                TextFormField(
+                  controller: _titleController,
+                  decoration: InputDecoration(
+                    labelText: 'Title *',
+                    labelStyle: AppTextStyles.bodyMedium.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                    filled: true,
+                    fillColor: AppColors.backgroundPrimary,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppConstants.radiusM),
+                      borderSide: BorderSide(color: AppColors.borderLight),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppConstants.radiusM),
+                      borderSide: BorderSide(color: AppColors.borderLight),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppConstants.radiusM),
+                      borderSide: BorderSide(color: AppColors.primary),
+                    ),
+                  ),
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: AppColors.textPrimary,
+                  ),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Title is required';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: AppConstants.spaceM),
+
+                // Description Field
+                TextFormField(
+                  controller: _descriptionController,
+                  maxLines: 3,
+                  decoration: InputDecoration(
+                    labelText: 'Description *',
+                    labelStyle: AppTextStyles.bodyMedium.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                    filled: true,
+                    fillColor: AppColors.backgroundPrimary,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppConstants.radiusM),
+                      borderSide: BorderSide(color: AppColors.borderLight),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppConstants.radiusM),
+                      borderSide: BorderSide(color: AppColors.borderLight),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppConstants.radiusM),
+                      borderSide: BorderSide(color: AppColors.primary),
+                    ),
+                  ),
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: AppColors.textPrimary,
+                  ),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Description is required';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: AppConstants.spaceM),
+
+                // Price Field
+                TextFormField(
+                  controller: _priceController,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    labelText: 'Price (per month) *',
+                    labelStyle: AppTextStyles.bodyMedium.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                    prefixText: '৳ ',
+                    filled: true,
+                    fillColor: AppColors.backgroundPrimary,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppConstants.radiusM),
+                      borderSide: BorderSide(color: AppColors.borderLight),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppConstants.radiusM),
+                      borderSide: BorderSide(color: AppColors.borderLight),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppConstants.radiusM),
+                      borderSide: BorderSide(color: AppColors.primary),
+                    ),
+                  ),
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: AppColors.textPrimary,
+                  ),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Price is required';
+                    }
+                    final price = double.tryParse(value.trim());
+                    if (price == null || price <= 0) {
+                      return 'Please enter a valid price';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: AppConstants.spaceM),
+
+                // Contact Field
+                TextFormField(
+                  controller: _contactController,
+                  decoration: InputDecoration(
+                    labelText: 'Contact Information *',
+                    labelStyle: AppTextStyles.bodyMedium.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                    filled: true,
+                    fillColor: AppColors.backgroundPrimary,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppConstants.radiusM),
+                      borderSide: BorderSide(color: AppColors.borderLight),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppConstants.radiusM),
+                      borderSide: BorderSide(color: AppColors.borderLight),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppConstants.radiusM),
+                      borderSide: BorderSide(color: AppColors.primary),
+                    ),
+                  ),
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: AppColors.textPrimary,
+                  ),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Contact information is required';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: AppConstants.spaceM),
+
+                // Country Dropdown
+                DropdownButtonFormField<String>(
+                  value: _selectedCountry,
+                  decoration: InputDecoration(
+                    labelText: 'Country *',
+                    labelStyle: AppTextStyles.bodyMedium.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                    filled: true,
+                    fillColor: AppColors.backgroundPrimary,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppConstants.radiusM),
+                      borderSide: BorderSide(color: AppColors.borderLight),
+                    ),
+                  ),
+                  items: _countries.map((String country) {
+                    return DropdownMenuItem<String>(
+                      value: country,
+                      child: Text(country, style: AppTextStyles.bodyMedium),
+                    );
+                  }).toList(),
+                  onChanged: (String? newValue) {
+                    if (newValue != null) {
+                      setState(() {
+                        _selectedCountry = newValue;
+                        // Reset city when country changes
+                        _selectedCity = _citiesByCountry[newValue]?.first ?? 'London';
+                      });
+                    }
+                  },
+                  validator: (value) => value == null ? 'Please select a country' : null,
+                ),
+                const SizedBox(height: AppConstants.spaceM),
+
+                // City Dropdown
+                DropdownButtonFormField<String>(
+                  value: _selectedCity,
+                  decoration: InputDecoration(
+                    labelText: 'City *',
+                    labelStyle: AppTextStyles.bodyMedium.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                    filled: true,
+                    fillColor: AppColors.backgroundPrimary,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppConstants.radiusM),
+                      borderSide: BorderSide(color: AppColors.borderLight),
+                    ),
+                  ),
+                  items: (_citiesByCountry[_selectedCountry] ?? []).map((String city) {
+                    return DropdownMenuItem<String>(
+                      value: city,
+                      child: Text(city, style: AppTextStyles.bodyMedium),
+                    );
+                  }).toList(),
+                  onChanged: (String? newValue) {
+                    if (newValue != null) {
+                      setState(() {
+                        _selectedCity = newValue;
+                      });
+                    }
+                  },
+                  validator: (value) => value == null ? 'Please select a city' : null,
+                ),
+                const SizedBox(height: AppConstants.spaceM),
+
+                // Room Type Dropdown
+                DropdownButtonFormField<String>(
+                  value: _selectedRoomType,
+                  decoration: InputDecoration(
+                    labelText: 'Room Type *',
+                    labelStyle: AppTextStyles.bodyMedium.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                    filled: true,
+                    fillColor: AppColors.backgroundPrimary,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppConstants.radiusM),
+                      borderSide: BorderSide(color: AppColors.borderLight),
+                    ),
+                  ),
+                  items: _roomTypes.map((String roomType) {
+                    return DropdownMenuItem<String>(
+                      value: roomType,
+                      child: Text(roomType, style: AppTextStyles.bodyMedium),
+                    );
+                  }).toList(),
+                  onChanged: (String? newValue) {
+                    if (newValue != null) {
+                      setState(() {
+                        _selectedRoomType = newValue;
+                      });
+                    }
+                  },
+                  validator: (value) => value == null ? 'Please select a room type' : null,
+                ),
+                const SizedBox(height: AppConstants.spaceM),
+
+                // Gender Preference Dropdown
+                DropdownButtonFormField<String>(
+                  value: _selectedGender,
+                  decoration: InputDecoration(
+                    labelText: 'Gender Preference',
+                    labelStyle: AppTextStyles.bodyMedium.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                    filled: true,
+                    fillColor: AppColors.backgroundPrimary,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppConstants.radiusM),
+                      borderSide: BorderSide(color: AppColors.borderLight),
+                    ),
+                  ),
+                  items: _genderOptions.map((String gender) {
+                    return DropdownMenuItem<String>(
+                      value: gender,
+                      child: Text(gender, style: AppTextStyles.bodyMedium),
+                    );
+                  }).toList(),
+                  onChanged: (String? newValue) {
+                    if (newValue != null) {
+                      setState(() {
+                        _selectedGender = newValue;
+                      });
+                    }
+                  },
+                ),
+                const SizedBox(height: AppConstants.spaceM),
+
+                // Available From Date
+                TextFormField(
+                  readOnly: true,
+                  autovalidateMode: AutovalidateMode.onUserInteraction,
+                  validator: (value) {
+                    if (_availableFrom == null) {
+                      return 'Please select an available from date';
+                    }
+                    return null;
+                  },
+                  decoration: InputDecoration(
+                    labelText: 'Available From',
+                    labelStyle: AppTextStyles.bodyMedium.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                    hintText: _availableFrom != null 
+                        ? '${_availableFrom!.day}/${_availableFrom!.month}/${_availableFrom!.year}'
+                        : 'Select date',
+                    filled: true,
+                    fillColor: AppColors.backgroundPrimary,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppConstants.radiusM),
+                      borderSide: BorderSide(color: AppColors.borderLight),
+                    ),
+                    suffixIcon: Icon(Icons.calendar_today, color: AppColors.primary),
+                  ),
+                  onTap: () async {
+                    final DateTime? picked = await showDatePicker(
+                      context: context,
+                      initialDate: _availableFrom ?? DateTime.now(),
+                      firstDate: DateTime.now(),
+                      lastDate: DateTime.now().add(const Duration(days: 365)),
+                    );
+                    if (picked != null) {
+                      setState(() {
+                        _availableFrom = picked;
+                        // Reset availableTo if it's now invalid
+                        if (_availableTo != null && _availableTo!.isBefore(picked)) {
+                          _availableTo = null;
+                        }
+                      });
+                      // Trigger form validation
+                      _formKey.currentState?.validate();
+                    }
+                  },
+                ),
+                const SizedBox(height: AppConstants.spaceM),
+
+                // Available To Date
+                TextFormField(
+                  readOnly: true,
+                  autovalidateMode: AutovalidateMode.onUserInteraction,
+                  validator: (value) {
+                    if (_availableTo == null) {
+                      return 'Please select an available to date';
+                    }
+                    if (_availableFrom != null && _availableTo != null) {
+                      if (_availableTo!.isBefore(_availableFrom!) || _availableTo!.isAtSameMomentAs(_availableFrom!)) {
+                        return 'Available to date must be after available from date';
+                      }
+                    }
+                    return null;
+                  },
+                  decoration: InputDecoration(
+                    labelText: 'Available To',
+                    labelStyle: AppTextStyles.bodyMedium.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                    hintText: _availableTo != null 
+                        ? '${_availableTo!.day}/${_availableTo!.month}/${_availableTo!.year}'
+                        : 'Select date',
+                    filled: true,
+                    fillColor: AppColors.backgroundPrimary,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppConstants.radiusM),
+                      borderSide: BorderSide(color: AppColors.borderLight),
+                    ),
+                    suffixIcon: Icon(Icons.calendar_today, color: AppColors.primary),
+                  ),
+                  onTap: () async {
+                    final DateTime? picked = await showDatePicker(
+                      context: context,
+                      initialDate: _availableTo ?? (_availableFrom != null ? _availableFrom!.add(const Duration(days: 30)) : DateTime.now().add(const Duration(days: 30))),
+                      firstDate: _availableFrom ?? DateTime.now(),
+                      lastDate: DateTime.now().add(const Duration(days: 365)),
+                    );
+                    if (picked != null) {
+                      setState(() {
+                        _availableTo = picked;
+                      });
+                      // Trigger form validation to show any errors
+                      _formKey.currentState?.validate();
+                    }
+                  },
+                ),
+                const SizedBox(height: AppConstants.spaceM),
+
+                // Facilities Selection
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Facilities',
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        color: AppColors.textSecondary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: AppConstants.spaceS),
+                    Wrap(
+                      spacing: 8.0,
+                      runSpacing: 8.0,
+                      children: _availableFacilities.map((facility) {
+                        final isSelected = _selectedFacilities.contains(facility);
+                        return GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              if (isSelected) {
+                                _selectedFacilities.remove(facility);
+                              } else {
+                                _selectedFacilities.add(facility);
+                              }
+                            });
+                          },
+                          child: Chip(
+                            label: Text(
+                              facility,
+                              style: AppTextStyles.bodySmall.copyWith(
+                                color: isSelected ? AppColors.textOnPrimary : AppColors.textPrimary,
+                              ),
+                            ),
+                            backgroundColor: isSelected ? AppColors.primary : AppColors.backgroundPrimary,
+                            side: BorderSide(
+                              color: isSelected ? AppColors.primary : AppColors.borderLight,
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppConstants.spaceM),
+
+                // Images Section
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Photos',
+                          style: AppTextStyles.bodyMedium.copyWith(
+                            color: AppColors.textSecondary,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        Text(
+                          '${_existingImageUrls.length + _selectedImages.length}/$_maxImages',
+                          style: AppTextStyles.bodySmall.copyWith(
+                            color: AppColors.textTertiary,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: AppConstants.spaceS),
+                    
+                    // Existing Images
+                    if (_existingImageUrls.isNotEmpty) ...[
+                      Text(
+                        'Current Photos',
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: AppColors.textTertiary,
+                        ),
+                      ),
+                      const SizedBox(height: AppConstants.spaceXS),
+                      SizedBox(
+                        height: 80,
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: _existingImageUrls.length,
+                          itemBuilder: (context, index) {
+                            final imageUrl = _existingImageUrls[index];
+                            return Container(
+                              margin: const EdgeInsets.only(right: AppConstants.spaceS),
+                              width: 80,
+                              height: 80,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(AppConstants.radiusS),
+                                border: Border.all(color: AppColors.borderLight),
+                              ),
+                              child: Stack(
+                                children: [
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(AppConstants.radiusS),
+                                    child: Image.network(
+                                      imageUrl,
+                                      width: 80,
+                                      height: 80,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (context, error, stackTrace) {
+                                        return Container(
+                                          color: AppColors.backgroundTertiary,
+                                          child: Icon(
+                                            Icons.image_not_supported,
+                                            color: AppColors.textTertiary,
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                  Positioned(
+                                    top: 2,
+                                    right: 2,
+                                    child: GestureDetector(
+                                      onTap: () {
+                                        setState(() {
+                                          _existingImageUrls.removeAt(index);
+                                        });
+                                      },
+                                      child: Container(
+                                        padding: const EdgeInsets.all(2),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.error,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Icon(
+                                          Icons.close,
+                                          size: 16,
+                                          color: AppColors.textOnPrimary,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: AppConstants.spaceS),
+                    ],
+                    
+                    // New Images
+                    if (_selectedImages.isNotEmpty) ...[
+                      Text(
+                        'New Photos',
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: AppColors.textTertiary,
+                        ),
+                      ),
+                      const SizedBox(height: AppConstants.spaceXS),
+                      SizedBox(
+                        height: 80,
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: _selectedImages.length,
+                          itemBuilder: (context, index) {
+                            final image = _selectedImages[index];
+                            return Container(
+                              margin: const EdgeInsets.only(right: AppConstants.spaceS),
+                              width: 80,
+                              height: 80,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(AppConstants.radiusS),
+                                border: Border.all(color: AppColors.borderLight),
+                              ),
+                              child: Stack(
+                                children: [
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(AppConstants.radiusS),
+                                    child: _buildImageFromXFile(
+                                      image,
+                                      width: 80,
+                                      height: 80,
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                  Positioned(
+                                    top: 2,
+                                    right: 2,
+                                    child: GestureDetector(
+                                      onTap: () {
+                                        setState(() {
+                                          _selectedImages.removeAt(index);
+                                        });
+                                      },
+                                      child: Container(
+                                        padding: const EdgeInsets.all(2),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.error,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Icon(
+                                          Icons.close,
+                                          size: 16,
+                                          color: AppColors.textOnPrimary,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: AppConstants.spaceS),
+                    ],
+                    
+                    // Add Photo Button
+                    if (_existingImageUrls.length + _selectedImages.length < _maxImages)
+                      OutlinedButton.icon(
+                        onPressed: _pickImage,
+                        icon: Icon(Icons.add_photo_alternate, color: AppColors.primary),
+                        label: Text(
+                          'Add Photo',
+                          style: AppTextStyles.bodyMedium.copyWith(color: AppColors.primary),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(color: AppColors.primary),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(AppConstants.radiusM),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: AppConstants.spaceM),
+
+                // Status Field
+                DropdownButtonFormField<String>(
+                  value: _selectedStatus,
+                  decoration: InputDecoration(
+                    labelText: 'Status *',
+                    labelStyle: AppTextStyles.bodyMedium.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                    filled: true,
+                    fillColor: AppColors.backgroundPrimary,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppConstants.radiusM),
+                      borderSide: BorderSide(color: AppColors.borderLight),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppConstants.radiusM),
+                      borderSide: BorderSide(color: AppColors.borderLight),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppConstants.radiusM),
+                      borderSide: BorderSide(color: AppColors.primary),
+                    ),
+                  ),
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: AppColors.textPrimary,
+                  ),
+                  dropdownColor: AppColors.backgroundSecondary,
+                  items: [
+                    DropdownMenuItem(
+                      value: 'available',
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.check_circle,
+                            color: AppColors.success,
+                            size: 20,
+                          ),
+                          const SizedBox(width: AppConstants.spaceS),
+                          Text('Available'),
+                        ],
+                      ),
+                    ),
+                    DropdownMenuItem(
+                      value: 'booked',
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.event_busy,
+                            color: AppColors.warning,
+                            size: 20,
+                          ),
+                          const SizedBox(width: AppConstants.spaceS),
+                          Text('Booked'),
+                        ],
+                      ),
+                    ),
+                  ],
+                  onChanged: (String? newValue) {
+                    if (newValue != null) {
+                      setState(() {
+                        _selectedStatus = newValue;
+                      });
+                    }
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+        ),
+      ),
+            
+            // Action buttons section
+            Container(
+              padding: const EdgeInsets.all(AppConstants.spaceL),
+              decoration: BoxDecoration(
+                color: AppColors.backgroundSecondary,
+                borderRadius: const BorderRadius.vertical(
+                  bottom: Radius.circular(AppConstants.radiusL),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: _isLoading ? null : () => Navigator.pop(context),
+                    child: Text(
+                      'Cancel',
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        color: _isLoading ? AppColors.textTertiary : AppColors.textSecondary,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: AppConstants.spaceM),
+                  PrimaryButton(
+                    text: _isLoading ? 'Updating...' : 'Update',
+                    isLoading: _isLoading,
+                    onPressed: _isLoading ? null : _handleUpdate,
+                    size: ButtonSize.small,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Pick image from gallery
+  Future<void> _pickImage() async {
+    try {
+      final image = await _imagePicker.pickImage(source: ImageSource.gallery);
+      if (image != null) {
+        setState(() {
+          _selectedImages.add(image);
+        });
+      }
+    } catch (e) {
+      print('Error picking image: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to pick image: ${e.toString()}'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    }
+  }
+
+  Future<void> _handleUpdate() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    // Additional date validation for edit form
+    if (_availableFrom != null && _availableTo != null) {
+      if (_availableTo!.isBefore(_availableFrom!) || _availableTo!.isAtSameMomentAs(_availableFrom!)) {
+        print('❌ EDIT DATE VALIDATION FAILED: availableFrom: $_availableFrom, availableTo: $_availableTo');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Available end date must be after the start date'),
+            backgroundColor: AppColors.error,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+        return;
+      }
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final accommodationId = widget.listing['id']?.toString();
+      if (accommodationId == null) {
+        throw Exception('Invalid accommodation ID');
+      }
+
+      final price = double.tryParse(_priceController.text.trim());
+      if (price == null) {
+        throw Exception('Invalid price format');
+      }
+
+      final updatedData = {
+        'title': _titleController.text.trim(),
+        'description': _descriptionController.text.trim(),
+        'price': price,
+        'monthly_rent': price, // Include both for compatibility
+        'contact_info': _contactController.text.trim(),
+        'status': _selectedStatus,
+        'country': _selectedCountry,
+        'city': _selectedCity,
+        'roomType': _selectedRoomType,
+        'genderPreference': _selectedGender,
+        'availableFrom': _availableFrom?.toIso8601String(),
+        'availableTo': _availableTo?.toIso8601String(),
+        'facilities': _selectedFacilities,
+      };
+
+      print('🔍 UPDATE DATA BEING SENT:');
+      updatedData.forEach((key, value) {
+        print('  $key: $value');
+      });
+
+      final apiService = AccommodationApiService();
+      final result = await apiService.updateAccommodation(accommodationId, updatedData);
+
+      print('🔍 UPDATE RESULT RECEIVED: $result');
+
+      // Check if update was successful
+      if (result['success'] == true) {
+        print('✅ Update successful, uploading images if any...');
+        
+        // Upload new images if any were selected
+        if (_selectedImages.isNotEmpty) {
+          try {
+            print('🖼️ Uploading ${_selectedImages.length} new images...');
+            final imageUrls = await apiService.uploadImagesToAccommodation(
+              accommodationId, 
+              _selectedImages
+            );
+            print('✅ Images uploaded successfully: ${imageUrls.length} URLs');
+          } catch (imageError) {
+            print('⚠️ Image upload failed but accommodation was updated: $imageError');
+            // Continue with success - accommodation was updated even if images failed
+          }
+        }
+        
+        print('✅ All updates complete, showing success message...');
+        
+        // Show success message BEFORE closing dialog
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Accommodation updated successfully'),
+              backgroundColor: AppColors.success,
+              behavior: SnackBarBehavior.floating,
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+        
+        // Small delay to ensure snackbar is shown, then close dialog
+        await Future.delayed(Duration(milliseconds: 100));
+        
+        print('✅ Closing dialog and triggering refresh...');
+        if (mounted) {
+          widget.onUpdated(); // This will close the dialog and trigger refresh
+        }
+        
+      } else {
+        throw Exception(result['message'] ?? 'Failed to update accommodation');
+      }
+    } catch (e) {
+      print('❌ Update failed: ${e.toString()}');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to update accommodation: ${e.toString()}'),
+            backgroundColor: AppColors.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 }

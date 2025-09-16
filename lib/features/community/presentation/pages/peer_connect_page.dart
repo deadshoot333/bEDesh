@@ -25,15 +25,31 @@ class _PeerConnectPageState extends State<PeerConnectPage>
   late TabController _tabController;
   final TextEditingController _searchController = TextEditingController();
 
-  // 🔹 Replace this with your logged-in userId from auth/session
-  final String currentUserId = "1fa5ba70-6a6c-473c-97c2-d0d4e33dea1e";
-  // User? currentUser;
+  User? currentUser;
+
+  // Persisted per-item states
+  final Map<String, bool> _isSending = {}; // in-flight request lock
+  final Map<String, String> _statusOverride =
+      {}; // optimistic status: pending/accepted/rejected
+
   @override
   void initState() {
-    _tabController = TabController(length: 2, vsync: this);
     super.initState();
-    // fetch user from StorageService
-    // currentUser = StorageService.getUserData();
+    _tabController = TabController(
+      length: 3,
+      vsync: this,
+    ); // + Requests tab [4]
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final user = StorageService.getUserData();
+      if (user != null) {
+        setState(() {
+          currentUser = user;
+        });
+      } else {
+        // ignore: avoid_print
+        print("⚠️ No user data found in StorageService");
+      }
+    });
   }
 
   @override
@@ -44,22 +60,121 @@ class _PeerConnectPageState extends State<PeerConnectPage>
   }
 
   Future<List<Map<String, dynamic>>> fetchPeers(String filterType) async {
-    // if (currentUser == null) return [];
-
+    if (currentUser == null) {
+      // ignore: avoid_print
+      print("⚠️ currentUser is null, cannot fetch peers");
+      return [];
+    }
     final url = Uri.parse(
-      "${ApiConstants.baseUrl}/api/peer/$filterType/$currentUserId",
+      "${ApiConstants.baseUrl}/api/peer/$filterType/${currentUser!.id}",
     );
-
+    final token = StorageService.getAccessToken();
+    if (token == null) {
+      throw Exception("No access token found");
+    }
     final response = await http.get(
       url,
-      headers: {"Authorization": "Bearer ${StorageService.getAccessToken()}"},
+      headers: {
+        "Authorization": "Bearer $token",
+        "Content-Type": "application/json",
+      },
     );
-
+    // ignore: avoid_print
+    print("GET $url -> ${response.statusCode}");
     if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      return List<Map<String, dynamic>>.from(data);
+      final List<dynamic> data = jsonDecode(response.body);
+      return data.cast<Map<String, dynamic>>();
     } else {
-      throw Exception("Failed to load peers");
+      throw Exception("Failed to load peers: ${response.body}");
+    }
+  }
+
+  Future<void> sendConnectionRequest(String receiverId) async {
+    if (currentUser == null) throw Exception("Not authenticated");
+    final url = Uri.parse("${ApiConstants.baseUrl}/api/peer/connect");
+    final token = StorageService.getAccessToken();
+    if (token == null) throw Exception("No access token found");
+    final response = await http.post(
+      url,
+      headers: {
+        "Authorization": "Bearer $token",
+        "Content-Type": "application/json",
+      },
+      body: jsonEncode({
+        "requesterId": currentUser!.id,
+        "receiverId": receiverId,
+      }),
+    );
+    // ignore: avoid_print
+    print("POST $url -> ${response.statusCode} ${response.body}");
+    if (response.statusCode != 200 && response.statusCode != 201) {
+      throw Exception("Failed to send connection: ${response.body}");
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> fetchReceivedRequests() async {
+    if (currentUser == null) return [];
+    final url = Uri.parse(
+      "${ApiConstants.baseUrl}/api/peer/requests/received/${currentUser!.id}",
+    );
+    final token = StorageService.getAccessToken();
+    if (token == null) throw Exception("No access token found");
+    final response = await http.get(
+      url,
+      headers: {
+        "Authorization": "Bearer $token",
+        "Content-Type": "application/json",
+      },
+    );
+    if (response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(response.body);
+      return data.cast<Map<String, dynamic>>();
+    } else {
+      throw Exception("Failed to load received requests: ${response.body}");
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> fetchSentRequests() async {
+    if (currentUser == null) return [];
+    final url = Uri.parse(
+      "${ApiConstants.baseUrl}/api/peer/requests/sent/${currentUser!.id}",
+    );
+    final token = StorageService.getAccessToken();
+    if (token == null) throw Exception("No access token found");
+    final response = await http.get(
+      url,
+      headers: {
+        "Authorization": "Bearer $token",
+        "Content-Type": "application/json",
+      },
+    );
+    if (response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(response.body);
+      return data.cast<Map<String, dynamic>>();
+    } else {
+      throw Exception("Failed to load sent requests: ${response.body}");
+    }
+  }
+
+  Future<void> respondToRequest({
+    required String connectionId,
+    required String action, // "accept" or "reject"
+  }) async {
+    final url = Uri.parse("${ApiConstants.baseUrl}/api/peer/respond");
+    final token = StorageService.getAccessToken();
+    if (token == null) throw Exception("No access token found");
+    final response = await http.post(
+      url,
+      headers: {
+        "Authorization": "Bearer $token",
+        "Content-Type": "application/json",
+      },
+      body: jsonEncode({"connectionId": connectionId, "action": action}),
+    );
+    // ignore: avoid_print
+    print("POST $url -> ${response.statusCode} ${response.body}");
+    if (response.statusCode != 200) {
+      throw Exception("Failed to respond: ${response.body}");
     }
   }
 
@@ -70,7 +185,6 @@ class _PeerConnectPageState extends State<PeerConnectPage>
       body: Column(
         children: [
           _buildModernHeader(),
-
           Container(
             color: AppColors.backgroundCard,
             child: TabBar(
@@ -78,27 +192,30 @@ class _PeerConnectPageState extends State<PeerConnectPage>
               labelColor: AppColors.primary,
               unselectedLabelColor: AppColors.textSecondary,
               indicatorColor: AppColors.primary,
-              tabs: const [Tab(text: "University"), Tab(text: "City")],
+              tabs: const [
+                Tab(text: "University"),
+                Tab(text: "City"),
+                Tab(text: "Requests"),
+              ],
             ),
           ),
-
           Padding(
             padding: const EdgeInsets.all(AppConstants.spaceM),
             child: ModernSearchBar(
               hintText: "Search students...",
               controller: _searchController,
               onChanged: (query) {
-                setState(() {}); // refresh list on search
+                setState(() {}); // refresh list on search [17]
               },
             ),
           ),
-
           Expanded(
             child: TabBarView(
               controller: _tabController,
               children: [
                 buildStudentList("university"),
                 buildStudentList("city"),
+                buildRequestsTab(),
               ],
             ),
           ),
@@ -185,14 +302,18 @@ class _PeerConnectPageState extends State<PeerConnectPage>
         }
 
         final peers = snapshot.data ?? [];
-        print(peers);
-        // Apply search filtering
         final query = _searchController.text.toLowerCase();
+        bool matches(Map<String, dynamic> peer, String field) {
+          final v = (peer[field] ?? "").toString().toLowerCase();
+          return v.contains(query);
+        }
+
         final filteredPeers =
             peers.where((peer) {
-              return peer['name'].contains(query) ||
-                  peer['university'].contains(query) ||
-                  peer['city'].contains(query);
+              if (query.isEmpty) return true;
+              return matches(peer, 'name') ||
+                  matches(peer, 'university') ||
+                  matches(peer, 'city');
             }).toList();
 
         if (filteredPeers.isEmpty) {
@@ -206,6 +327,27 @@ class _PeerConnectPageState extends State<PeerConnectPage>
             final peer = filteredPeers[index];
             final screenWidth = MediaQuery.of(context).size.width;
             final isSmallScreen = screenWidth < 380;
+
+            final String peerId = peer['id'].toString();
+            final bool sending = _isSending[peerId] == true;
+
+            // Use optimistic override if present
+            final String effectiveStatus =
+                (_statusOverride[peerId] ?? (peer['connection_status'] ?? ''))
+                    .toString();
+
+            final bool canConnect =
+                !sending &&
+                (effectiveStatus.isEmpty || effectiveStatus == "rejected");
+
+            final String connectLabel =
+                sending
+                    ? "Pending…"
+                    : effectiveStatus == "accepted"
+                    ? "Connected"
+                    : effectiveStatus == "pending"
+                    ? "Pending"
+                    : "Connect";
 
             return Container(
               margin: const EdgeInsets.only(bottom: AppConstants.spaceM),
@@ -225,7 +367,10 @@ class _PeerConnectPageState extends State<PeerConnectPage>
                           backgroundColor: AppColors.primary,
                           radius: isSmallScreen ? 20 : 25,
                           child: Text(
-                            peer['name'].substring(0, 1).toUpperCase(),
+                            (peer['name'] ?? 'U')
+                                .toString()
+                                .substring(0, 1)
+                                .toUpperCase(),
                             style: AppTextStyles.h4.copyWith(
                               color: AppColors.textOnPrimary,
                               fontWeight: FontWeight.w600,
@@ -239,7 +384,7 @@ class _PeerConnectPageState extends State<PeerConnectPage>
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                peer['name'],
+                                (peer['name'] ?? '').toString(),
                                 style: AppTextStyles.h5.copyWith(
                                   color: AppColors.textPrimary,
                                   fontWeight: FontWeight.w600,
@@ -249,48 +394,19 @@ class _PeerConnectPageState extends State<PeerConnectPage>
                               const SizedBox(height: AppConstants.spaceXS),
                               Text(
                                 filterType == 'university'
-                                    ? peer['university']
-                                    : "Lives in ${peer['city']}",
+                                    ? (peer['university'] ?? '').toString()
+                                    : "Lives in ${(peer['city'] ?? '').toString()}",
                                 style: AppTextStyles.bodyMedium.copyWith(
                                   color: AppColors.textSecondary,
                                   fontSize: isSmallScreen ? 12 : null,
                                 ),
                               ),
                               const SizedBox(height: AppConstants.spaceS),
-                              Wrap(
+                              const Wrap(
                                 spacing: AppConstants.spaceS,
                                 runSpacing: AppConstants.spaceXS,
                                 children: [
-                                  Container(
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal:
-                                          isSmallScreen
-                                              ? 6
-                                              : AppConstants.spaceS,
-                                      vertical: AppConstants.spaceXS,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.accent,
-                                      borderRadius: BorderRadius.circular(
-                                        AppConstants.radiusS,
-                                      ),
-                                    ),
-                                  ),
-                                  Container(
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal:
-                                          isSmallScreen
-                                              ? 6
-                                              : AppConstants.spaceS,
-                                      vertical: AppConstants.spaceXS,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.primaryLight,
-                                      borderRadius: BorderRadius.circular(
-                                        AppConstants.radiusS,
-                                      ),
-                                    ),
-                                  ),
+                                  // optional tags
                                 ],
                               ),
                             ],
@@ -303,22 +419,67 @@ class _PeerConnectPageState extends State<PeerConnectPage>
                       children: [
                         Expanded(
                           child: PrimaryButton(
-                            text: "Connect",
-                            icon: Icons.person_add_alt,
+                            key: ValueKey(
+                              "connect-$peerId-$sending-$effectiveStatus",
+                            ), // force rebuild of button when state changes [4][3]
+                            text: connectLabel,
+                            icon:
+                                sending
+                                    ? Icons.hourglass_top
+                                    : effectiveStatus == "accepted"
+                                    ? Icons.check_circle_outline
+                                    : Icons.person_add_alt,
                             size:
                                 isSmallScreen
                                     ? ButtonSize.small
                                     : ButtonSize.medium,
-                            onPressed: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    "Connection request sent to ${peer['name']}",
-                                  ),
-                                  backgroundColor: AppColors.success,
-                                ),
-                              );
-                            },
+                            onPressed:
+                                canConnect
+                                    ? () async {
+                                      // lock immediately and show Pending…
+                                      if (mounted) {
+                                        setState(() {
+                                          _isSending[peerId] = true;
+                                        });
+                                      }
+                                      try {
+                                        await sendConnectionRequest(peerId);
+                                        if (!mounted) return;
+                                        // optimistic: show Pending status and unlock
+                                        setState(() {
+                                          _statusOverride[peerId] =
+                                              'pending'; // guarantees label change [16]
+                                          _isSending[peerId] = false;
+                                        });
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              "Connection request sent to ${peer['name']}",
+                                            ),
+                                            backgroundColor: AppColors.success,
+                                          ),
+                                        );
+                                        // Optional: trigger a refresh to pull authoritative status
+                                        // setState(() {});
+                                      } catch (e) {
+                                        if (!mounted) return;
+                                        setState(() {
+                                          _isSending[peerId] =
+                                              false; // re-enable button on failure [8][14]
+                                        });
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          SnackBar(
+                                            content: Text("Failed: $e"),
+                                            backgroundColor: AppColors.error,
+                                          ),
+                                        );
+                                      }
+                                    }
+                                    : null, // disabled while sending or if already pending/accepted [8][11]
                           ),
                         ),
                         const SizedBox(width: AppConstants.spaceS),
@@ -336,10 +497,13 @@ class _PeerConnectPageState extends State<PeerConnectPage>
                                 MaterialPageRoute(
                                   builder:
                                       (_) => PeerMessagingPage(
-                                        peerId: peer['id'],
-                                        peerName: peer['name'],
-                                        peerUniversity: peer['university'],
-                                        currentUserId: currentUserId,
+                                        peerId: peerId,
+                                        peerName:
+                                            (peer['name'] ?? '').toString(),
+                                        peerUniversity:
+                                            (peer['university'] ?? '')
+                                                .toString(),
+                                        currentUserId: currentUser!.id,
                                       ),
                                 ),
                               );
@@ -355,6 +519,201 @@ class _PeerConnectPageState extends State<PeerConnectPage>
           },
         );
       },
+    );
+  }
+
+  Widget buildRequestsTab() {
+    return RefreshIndicator(
+      onRefresh: () async {
+        setState(() {});
+      },
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: Padding(
+          padding: const EdgeInsets.all(AppConstants.spaceM),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "Received",
+                style: AppTextStyles.h5.copyWith(fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: AppConstants.spaceS),
+              FutureBuilder<List<Map<String, dynamic>>>(
+                future: fetchReceivedRequests(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Padding(
+                      padding: EdgeInsets.all(16),
+                      child: Center(child: CircularProgressIndicator()),
+                    );
+                  }
+                  if (snapshot.hasError) {
+                    return Text(
+                      "Error: ${snapshot.error}",
+                      style: const TextStyle(color: Colors.red),
+                    );
+                  }
+                  final items = snapshot.data ?? [];
+                  if (items.isEmpty) {
+                    return const Text("No received requests");
+                  }
+                  return Column(
+                    children:
+                        items.map((req) {
+                          final isPending = (req['status'] ?? '') == 'pending';
+                          return Card(
+                            color: AppColors.backgroundCard,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(
+                                AppConstants.radiusL,
+                              ),
+                              side: BorderSide(color: AppColors.borderLight),
+                            ),
+                            child: ListTile(
+                              leading: CircleAvatar(
+                                backgroundColor: AppColors.primary,
+                                child: Text(
+                                  ((req['name'] ?? 'U') as String)
+                                      .substring(0, 1)
+                                      .toUpperCase(),
+                                ),
+                              ),
+                              title: Text((req['name'] ?? '').toString()),
+                              subtitle: Text(
+                                "${req['university'] ?? ''} • ${req['city'] ?? ''} • ${(req['status'] ?? '').toString()}",
+                              ),
+                              trailing:
+                                  isPending
+                                      ? Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          IconButton(
+                                            icon: const Icon(
+                                              Icons.check_circle,
+                                              color: Colors.green,
+                                            ),
+                                            onPressed: () async {
+                                              try {
+                                                await respondToRequest(
+                                                  connectionId:
+                                                      req['connection_id']
+                                                          .toString(),
+                                                  action: "accept",
+                                                );
+                                                if (!mounted) return;
+                                                setState(() {});
+                                              } catch (e) {
+                                                if (!mounted) return;
+                                                ScaffoldMessenger.of(
+                                                  context,
+                                                ).showSnackBar(
+                                                  SnackBar(
+                                                    content: Text("Failed: $e"),
+                                                    backgroundColor:
+                                                        AppColors.error,
+                                                  ),
+                                                );
+                                              }
+                                            },
+                                          ),
+                                          IconButton(
+                                            icon: const Icon(
+                                              Icons.cancel,
+                                              color: Colors.red,
+                                            ),
+                                            onPressed: () async {
+                                              try {
+                                                await respondToRequest(
+                                                  connectionId:
+                                                      req['connection_id']
+                                                          .toString(),
+                                                  action: "reject",
+                                                );
+                                                if (!mounted) return;
+                                                setState(() {});
+                                              } catch (e) {
+                                                if (!mounted) return;
+                                                ScaffoldMessenger.of(
+                                                  context,
+                                                ).showSnackBar(
+                                                  SnackBar(
+                                                    content: Text("Failed: $e"),
+                                                    backgroundColor:
+                                                        AppColors.error,
+                                                  ),
+                                                );
+                                              }
+                                            },
+                                          ),
+                                        ],
+                                      )
+                                      : const SizedBox.shrink(),
+                            ),
+                          );
+                        }).toList(),
+                  );
+                },
+              ),
+              const SizedBox(height: AppConstants.spaceL),
+              Text(
+                "Sent",
+                style: AppTextStyles.h5.copyWith(fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: AppConstants.spaceS),
+              FutureBuilder<List<Map<String, dynamic>>>(
+                future: fetchSentRequests(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Padding(
+                      padding: EdgeInsets.all(16),
+                      child: Center(child: CircularProgressIndicator()),
+                    );
+                  }
+                  if (snapshot.hasError) {
+                    return Text(
+                      "Error: ${snapshot.error}",
+                      style: const TextStyle(color: Colors.red),
+                    );
+                  }
+                  final items = snapshot.data ?? [];
+                  if (items.isEmpty) {
+                    return const Text("No sent requests");
+                  }
+                  return Column(
+                    children:
+                        items.map((req) {
+                          return Card(
+                            color: AppColors.backgroundCard,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(
+                                AppConstants.radiusL,
+                              ),
+                              side: BorderSide(color: AppColors.borderLight),
+                            ),
+                            child: ListTile(
+                              leading: CircleAvatar(
+                                backgroundColor: AppColors.primary,
+                                child: Text(
+                                  ((req['name'] ?? 'U') as String)
+                                      .substring(0, 1)
+                                      .toUpperCase(),
+                                ),
+                              ),
+                              title: Text((req['name'] ?? '').toString()),
+                              subtitle: Text(
+                                "${req['university'] ?? ''} • ${req['city'] ?? ''} • ${(req['status'] ?? '').toString()}",
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
