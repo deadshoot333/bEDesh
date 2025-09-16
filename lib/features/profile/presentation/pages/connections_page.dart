@@ -6,7 +6,6 @@ import '../../../../core/services/connections_service.dart';
 import '../../../../core/services/storage_service.dart';
 import '../../../../shared/widgets/buttons/modern_buttons.dart';
 import '../../../community/presentation/pages/peer_messaging_page.dart';
-import '../../../community/presentation/pages/user_profile_page.dart';
 
 class ConnectionsPage extends StatefulWidget {
   const ConnectionsPage({super.key});
@@ -428,18 +427,6 @@ class _ConnectionsPageState extends State<ConnectionsPage> {
                           ),
                         );
                         break;
-                      case 'profile':
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => UserProfilePage(
-                              userId: userId,
-                              userName: userName,
-                              userLocation: city,
-                            ),
-                          ),
-                        );
-                        break;
                       case 'remove':
                         _removeConnection(connectionId, userName);
                         break;
@@ -454,21 +441,6 @@ class _ConnectionsPageState extends State<ConnectionsPage> {
                           const SizedBox(width: AppConstants.spaceS),
                           Text(
                             'Message',
-                            style: AppTextStyles.bodyMedium.copyWith(
-                              color: AppColors.textPrimary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    PopupMenuItem(
-                      value: 'profile',
-                      child: Row(
-                        children: [
-                          const Icon(Icons.person_outline, color: AppColors.primary),
-                          const SizedBox(width: AppConstants.spaceS),
-                          Text(
-                            'View Profile',
                             style: AppTextStyles.bodyMedium.copyWith(
                               color: AppColors.textPrimary,
                             ),
@@ -512,25 +484,6 @@ class _ConnectionsPageState extends State<ConnectionsPage> {
                             peerName: userName,
                             peerUniversity: university,
                             currentUserId: _currentUserId ?? '',
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-                const SizedBox(width: AppConstants.spaceS),
-                Expanded(
-                  child: SecondaryButton(
-                    text: 'View Profile',
-                    icon: Icons.person_outline,
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => UserProfilePage(
-                            userId: userId,
-                            userName: userName,
-                            userLocation: city,
                           ),
                         ),
                       );
