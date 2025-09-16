@@ -45,10 +45,8 @@ class _DynamicUniversityPageState extends State<DynamicUniversityPage>
   bool _isFavorite = false;
 
   // Filter states
-  String? _selectedCourseLevel;
-  String? _selectedCourseField;
-  String? _selectedScholarshipType;
-  String? _selectedFunding;
+  String? _selectedCourseFilter; // Combined level and field filter
+  String? _selectedScholarshipFilter; // Combined type and funding filter
 
   @override
   void initState() {
@@ -680,28 +678,28 @@ class _DynamicUniversityPageState extends State<DynamicUniversityPage>
       children: [
         _buildFilterChip(
           'All Types',
-          _selectedScholarshipType == null,
-          () => setState(() => _selectedScholarshipType = null),
+          _selectedScholarshipFilter == null,
+          () => setState(() => _selectedScholarshipFilter = null),
         ),
         _buildFilterChip(
           'International',
-          _selectedScholarshipType == 'International',
-          () => setState(() => _selectedScholarshipType = 'International'),
+          _selectedScholarshipFilter == 'International',
+          () => setState(() => _selectedScholarshipFilter = 'International'),
         ),
         _buildFilterChip(
           'Merit-based',
-          _selectedScholarshipType == 'Merit',
-          () => setState(() => _selectedScholarshipType = 'Merit'),
+          _selectedScholarshipFilter == 'Merit',
+          () => setState(() => _selectedScholarshipFilter = 'Merit'),
         ),
         _buildFilterChip(
           'Full Funding',
-          _selectedFunding == 'Full Funding',
-          () => setState(() => _selectedFunding = 'Full Funding'),
+          _selectedScholarshipFilter == 'Full Funding',
+          () => setState(() => _selectedScholarshipFilter = 'Full Funding'),
         ),
         _buildFilterChip(
           'Partial Funding',
-          _selectedFunding == 'Partial Funding',
-          () => setState(() => _selectedFunding = 'Partial Funding'),
+          _selectedScholarshipFilter == 'Partial Funding',
+          () => setState(() => _selectedScholarshipFilter = 'Partial Funding'),
         ),
       ],
     );
@@ -713,29 +711,29 @@ class _DynamicUniversityPageState extends State<DynamicUniversityPage>
       runSpacing: AppConstants.spaceS,
       children: [
         _buildFilterChip(
-          'All Levels',
-          _selectedCourseLevel == null,
-          () => setState(() => _selectedCourseLevel = null),
+          'All Courses',
+          _selectedCourseFilter == null,
+          () => setState(() => _selectedCourseFilter = null),
         ),
         _buildFilterChip(
           'Undergraduate',
-          _selectedCourseLevel == 'Undergraduate',
-          () => setState(() => _selectedCourseLevel = 'Undergraduate'),
+          _selectedCourseFilter == 'Undergraduate',
+          () => setState(() => _selectedCourseFilter = 'Undergraduate'),
         ),
         _buildFilterChip(
           'Masters',
-          _selectedCourseLevel == 'Masters',
-          () => setState(() => _selectedCourseLevel = 'Masters'),
+          _selectedCourseFilter == 'Masters',
+          () => setState(() => _selectedCourseFilter = 'Masters'),
         ),
         _buildFilterChip(
           'Computer Science',
-          _selectedCourseField == 'Computer Science',
-          () => setState(() => _selectedCourseField = 'Computer Science'),
+          _selectedCourseFilter == 'Computer Science',
+          () => setState(() => _selectedCourseFilter = 'Computer Science'),
         ),
         _buildFilterChip(
           'Engineering',
-          _selectedCourseField == 'Engineering',
-          () => setState(() => _selectedCourseField = 'Engineering'),
+          _selectedCourseFilter == 'Engineering',
+          () => setState(() => _selectedCourseFilter = 'Engineering'),
         ),
       ],
     );
@@ -770,15 +768,10 @@ class _DynamicUniversityPageState extends State<DynamicUniversityPage>
   List<Scholarship> _getFilteredScholarships() {
     List<Scholarship> filtered = scholarships;
     
-    if (_selectedScholarshipType != null) {
+    if (_selectedScholarshipFilter != null) {
       filtered = filtered.where((s) => 
-        s.type.toLowerCase().contains(_selectedScholarshipType!.toLowerCase())
-      ).toList();
-    }
-    
-    if (_selectedFunding != null) {
-      filtered = filtered.where((s) => 
-        s.weightage.toLowerCase().contains(_selectedFunding!.toLowerCase())
+        s.type.toLowerCase().contains(_selectedScholarshipFilter!.toLowerCase()) ||
+        s.weightage.toLowerCase().contains(_selectedScholarshipFilter!.toLowerCase())
       ).toList();
     }
     
@@ -788,15 +781,10 @@ class _DynamicUniversityPageState extends State<DynamicUniversityPage>
   List<Course> _getFilteredCourses() {
     List<Course> filtered = courses;
     
-    if (_selectedCourseLevel != null) {
+    if (_selectedCourseFilter != null) {
       filtered = filtered.where((c) => 
-        c.level.toLowerCase().contains(_selectedCourseLevel!.toLowerCase())
-      ).toList();
-    }
-    
-    if (_selectedCourseField != null) {
-      filtered = filtered.where((c) => 
-        c.fieldOfStudy.toLowerCase().contains(_selectedCourseField!.toLowerCase())
+        c.level.toLowerCase().contains(_selectedCourseFilter!.toLowerCase()) ||
+        c.fieldOfStudy.toLowerCase().contains(_selectedCourseFilter!.toLowerCase())
       ).toList();
     }
     
@@ -941,23 +929,7 @@ class _DynamicUniversityPageState extends State<DynamicUniversityPage>
                         Navigator.of(context).pop(); // Close dialog first
                         
                         // Open course URL if available
-                        final url = course.url;
-                        if (url.isNotEmpty) {
-                          try {
-                            if (await canLaunchUrl(Uri.parse(url))) {
-                              await launchUrl(
-                                Uri.parse(url),
-                                mode: LaunchMode.externalApplication,
-                              );
-                            } else {
-                              _showErrorSnackBar('Could not open course page');
-                            }
-                          } catch (e) {
-                            _showErrorSnackBar('Error opening course page');
-                          }
-                        } else {
-                          _showErrorSnackBar('Course page URL not available');
-                        }
+                        await _launchCourseUrl(course.url);
                       },
                       icon: const Icon(Icons.open_in_new, color: Colors.white),
                       label: const Text(
@@ -1014,6 +986,39 @@ class _DynamicUniversityPageState extends State<DynamicUniversityPage>
         ],
       ),
     );
+  }
+
+  Future<void> _launchCourseUrl(String url) async {
+    try {
+      // Check if URL is empty or null
+      if (url.isEmpty) {
+        _showErrorSnackBar('Course page URL not available');
+        return;
+      }
+
+      // Clean and validate URL
+      String cleanUrl = url.trim();
+      
+      // Add protocol if missing
+      if (!cleanUrl.startsWith('http://') && !cleanUrl.startsWith('https://')) {
+        cleanUrl = 'https://$cleanUrl';
+      }
+
+      // Parse URL to validate format
+      final uri = Uri.tryParse(cleanUrl);
+      if (uri == null) {
+        _showErrorSnackBar('Invalid course page URL format');
+        return;
+      }
+
+      // Launch URL directly (skip canLaunchUrl as it can be unreliable)
+      await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
+    } catch (e) {
+      _showErrorSnackBar('Error opening course page');
+    }
   }
 
   void _showErrorSnackBar(String message) {
