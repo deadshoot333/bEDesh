@@ -77,7 +77,36 @@ async function fetchAccommodations(filters = {}) {
   console.log('🔧 Filters:', JSON.stringify(filters, null, 2));
   
   try {
-    const accommodations = await getAccommodations(filters);
+    // Process date strings into Date objects for database
+    if (filters.available_from && typeof filters.available_from === 'string') {
+      filters.available_from = new Date(filters.available_from);
+    }
+    if (filters.available_to && typeof filters.available_to === 'string') {
+      filters.available_to = new Date(filters.available_to);
+    }
+
+    // Convert filter names from frontend to backend format
+    const dbFilters = {
+      ...filters,
+      location: filters.city || filters.location,
+      room_type: filters.roomType || filters.room_type,
+      min_rent: parseFloat(filters.minRent || filters.min_rent) || undefined,
+      max_rent: parseFloat(filters.maxRent || filters.max_rent) || undefined,
+      gender_preference: filters.genderPreference || filters.gender_preference,
+      available_from: filters.availableFrom || filters.available_from,
+      available_to: filters.availableTo || filters.available_to,
+      facilities: filters.facilities || []
+    };
+
+    // Clean undefined values
+    Object.keys(dbFilters).forEach(key => {
+      if (dbFilters[key] === undefined || dbFilters[key] === null) {
+        delete dbFilters[key];
+      }
+    });
+
+    console.log('🔧 Processed database filters:', JSON.stringify(dbFilters, null, 2));
+    const accommodations = await getAccommodations(dbFilters);
     
     // Process accommodations for frontend
     const processedAccommodations = accommodations.map(acc => ({
@@ -278,12 +307,43 @@ async function removeAccommodation(id, userId) {
 }
 
 // Get user's accommodations
-async function fetchUserAccommodations(userId) {
+async function fetchUserAccommodations(userId, filters = {}) {
   console.log('\n👤 ACCOMMODATION SERVICE - fetchUserAccommodations called');
   console.log('👤 User ID:', userId);
+  console.log('🔧 Filters:', JSON.stringify(filters, null, 2));
   
   try {
-    const accommodations = await getAccommodationsByUserId(userId);
+    // Process date strings into Date objects for database
+    if (filters.available_from && typeof filters.available_from === 'string') {
+      filters.available_from = new Date(filters.available_from);
+    }
+    if (filters.available_to && typeof filters.available_to === 'string') {
+      filters.available_to = new Date(filters.available_to);
+    }
+
+    // Convert filter names from frontend to backend format
+    const dbFilters = {
+      ...filters,
+      location: filters.city || filters.location,
+      room_type: filters.roomType || filters.room_type,
+      min_rent: parseFloat(filters.minRent || filters.min_rent) || undefined,
+      max_rent: parseFloat(filters.maxRent || filters.max_rent) || undefined,
+      gender_preference: filters.genderPreference || filters.gender_preference,
+      available_from: filters.availableFrom || filters.available_from,
+      available_to: filters.availableTo || filters.available_to,
+      facilities: filters.facilities || [],
+      userId // Add user ID to filters
+    };
+
+    // Clean undefined values
+    Object.keys(dbFilters).forEach(key => {
+      if (dbFilters[key] === undefined || dbFilters[key] === null) {
+        delete dbFilters[key];
+      }
+    });
+
+    console.log('🔧 Processed database filters:', JSON.stringify(dbFilters, null, 2));
+    const accommodations = await getAccommodations(dbFilters);
     
     // Process accommodations for frontend
     const processedAccommodations = accommodations.map(acc => ({

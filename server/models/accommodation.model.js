@@ -122,13 +122,22 @@ async function getAccommodations(filters = {}) {
   try {
     // 1. First, build the base query for accommodations
     let baseQuery = `
-      SELECT 
+      SELECT DISTINCT
         a.*,
         u.email as posted_by_name
       FROM accommodations a
       LEFT JOIN users u ON a.posted_by = u.id
-      WHERE 1=1
     `;
+
+    // Add JOIN for facilities filter if needed
+    if (filters.facilities && filters.facilities.length > 0) {
+      baseQuery += `
+        LEFT JOIN accommodation_facilities af ON a.id = af.accommodation_id
+        LEFT JOIN facilities f ON af.facility_id = f.id
+      `;
+    }
+
+    baseQuery += ' WHERE 1=1';
     
     const baseValues = [];
     let paramCount = 0;
@@ -141,6 +150,12 @@ async function getAccommodations(filters = {}) {
     }
 
     // Add filters to the BASE query
+    if (filters.userId) {
+      paramCount++;
+      baseQuery += ` AND a.posted_by = $${paramCount}`;
+      baseValues.push(filters.userId);
+    }
+
     if (filters.location) {
       paramCount++;
       baseQuery += ` AND LOWER(a.city) LIKE LOWER($${paramCount})`;
@@ -163,6 +178,42 @@ async function getAccommodations(filters = {}) {
       paramCount++;
       baseQuery += ` AND a.gender_preference = $${paramCount}`;
       baseValues.push(filters.gender_preference);
+    }
+
+    if (filters.room_type) {
+      paramCount++;
+      baseQuery += ` AND LOWER(a.room_type) = LOWER($${paramCount})`;
+      baseValues.push(filters.room_type);
+    }
+
+    // Date range filters
+    if (filters.available_from) {
+      paramCount++;
+      baseQuery += ` AND (a.availability_from IS NULL OR a.availability_from >= $${paramCount})`;
+      baseValues.push(filters.available_from);
+    }
+
+    if (filters.available_to) {
+      paramCount++;
+      baseQuery += ` AND (a.availability_to IS NULL OR a.availability_to <= $${paramCount})`;
+      baseValues.push(filters.available_to);
+    }
+
+    // Facilities filter - requires the JOINs added above
+    if (filters.facilities && filters.facilities.length > 0) {
+      const facilitiesArray = Array.isArray(filters.facilities) 
+        ? filters.facilities 
+        : filters.facilities.split(',');
+
+      paramCount++;
+      baseQuery += ` AND f.name = ANY($${paramCount}::text[])`;
+      baseValues.push(facilitiesArray);
+
+      // Count matching facilities to ensure ALL requested facilities are present
+      baseQuery += ` GROUP BY a.id, u.email
+                    HAVING COUNT(DISTINCT f.name) = $${paramCount + 1}`;
+      baseValues.push(facilitiesArray.length);
+      paramCount++;
     }
 
     // Add pagination to the base query

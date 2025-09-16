@@ -166,10 +166,14 @@ class _PrimaryButtonState extends State<PrimaryButton>
                         ),
                         const SizedBox(width: AppConstants.spaceS),
                       ],
-                      Text(
-                        widget.text,
-                        style: _textStyle.copyWith(
-                          color: isDisabled ? AppColors.textSecondary : textColor,
+                      Flexible(
+                        child: Text(
+                          widget.text,
+                          style: _textStyle.copyWith(
+                            color: isDisabled ? AppColors.textSecondary : textColor,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
                         ),
                       ),
                     ],
