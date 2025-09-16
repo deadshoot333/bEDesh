@@ -41,7 +41,25 @@ router.get('/', async (req, res) => {
   console.log('🔍 Query params:', req.query);
   
   try {
-    const accommodations = await fetchAccommodations(req.query);
+    // Parse filter values from query parameters
+    const filters = {
+      ...req.query,
+      // Parse numeric values
+      min_rent: req.query.min_rent ? parseFloat(req.query.min_rent) : undefined,
+      max_rent: req.query.max_rent ? parseFloat(req.query.max_rent) : undefined,
+      minRent: req.query.minRent ? parseFloat(req.query.minRent) : undefined,
+      maxRent: req.query.maxRent ? parseFloat(req.query.maxRent) : undefined,
+      // Parse date values
+      available_from: req.query.available_from ? new Date(req.query.available_from) : undefined,
+      available_to: req.query.available_to ? new Date(req.query.available_to) : undefined,
+      availableFrom: req.query.availableFrom ? new Date(req.query.availableFrom) : undefined,
+      availableTo: req.query.availableTo ? new Date(req.query.availableTo) : undefined,
+      // Parse facilities array
+      facilities: req.query.facilities ? req.query.facilities.split(',') : undefined
+    };
+
+    console.log('🔧 Processed filters:', filters);
+    const accommodations = await fetchAccommodations(filters);
     console.log(`✅ Found ${accommodations.length} accommodations`);
     
     res.json({
@@ -140,9 +158,28 @@ router.post('/', authenticateToken, async (req, res) => {
 router.get('/user/my', authenticateToken, async (req, res) => {
   console.log('\n👤 GET /accommodations/user/my - Route called');
   console.log('👤 User ID:', req.user.userId);
+  console.log('🔍 Query params:', req.query);
   
   try {
-    const userAccommodations = await fetchUserAccommodations(req.user.userId);
+    // Parse filter values from query parameters
+    const filters = {
+      ...req.query,
+      // Parse numeric values
+      min_rent: req.query.min_rent ? parseFloat(req.query.min_rent) : undefined,
+      max_rent: req.query.max_rent ? parseFloat(req.query.max_rent) : undefined,
+      minRent: req.query.minRent ? parseFloat(req.query.minRent) : undefined,
+      maxRent: req.query.maxRent ? parseFloat(req.query.maxRent) : undefined,
+      // Parse date values
+      available_from: req.query.available_from ? new Date(req.query.available_from) : undefined,
+      available_to: req.query.available_to ? new Date(req.query.available_to) : undefined,
+      availableFrom: req.query.availableFrom ? new Date(req.query.availableFrom) : undefined,
+      availableTo: req.query.availableTo ? new Date(req.query.availableTo) : undefined,
+      // Parse facilities array
+      facilities: req.query.facilities ? req.query.facilities.split(',') : undefined
+    };
+
+    console.log('🔧 Processed filters:', filters);
+    const userAccommodations = await fetchUserAccommodations(req.user.userId, filters);
     console.log(`✅ Found ${userAccommodations.length} user accommodations`);
     
     res.json({

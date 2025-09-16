@@ -222,8 +222,19 @@ class _AccommodationPageState extends State<AccommodationPage>
           return;
         }
         
-        // Get user's accommodations
-        final userAccommodations = await _apiService.getUserAccommodations();
+        // Get user's accommodations with filters
+        final userAccommodations = await _apiService.getUserAccommodations(
+          location: _selectedCity != 'All Cities' ? _selectedCity : null,
+          maxRent: _priceRange[1] > 0 ? _priceRange[1] : null,
+          minRent: _priceRange[0] > 0 ? _priceRange[0] : null,
+          genderPreference: _selectedGender != 'Any' ? _selectedGender : null,
+          roomType: _selectedRoomType != 'All Types' ? _selectedRoomType : null,
+          facilities: _selectedFacilities.isNotEmpty ? _selectedFacilities : null,
+          availableFrom: _availableFrom,
+          availableTo: _availableTo,
+          limit: 50,
+          offset: 0,
+        );
 
         print('✅ Loaded ${userAccommodations.length} user accommodations from API');
         
@@ -325,30 +336,70 @@ class _AccommodationPageState extends State<AccommodationPage>
         ? _accommodations 
         : _userAccommodations;
     
-    // Apply client-side filters for additional refinement (only for All Listings)
-    // Note: Basic filters (location, price, gender) are already applied at API level for public listings
-    if (_currentListingView == ListingViewType.allListings) {
-      // Filter by country (client-side for additional filtering)
-      if (_selectedCountry != 'All Countries') {
-        listings = listings.where((l) {
-          final country = l['country']?.toString() ?? '';
-          return country.contains(_selectedCountry);
-        }).toList();
-      }
-      
-      // Filter by room type - backend returns 'roomType' field
-      if (_selectedRoomType != 'All Types') {
-        listings = listings.where((l) => 
-          l['roomType'] == _selectedRoomType
-        ).toList();
-      }
-      
-      // Apply show all toggle for public listings
-      return _showAllListings ? listings : listings.take(3).toList();
-    } else {
-      // For My Listings, show all user accommodations without filtering
-      return listings;
+    // Apply client-side filters for all listings
+    // Filter by country
+    if (_selectedCountry != 'All Countries') {
+      listings = listings.where((l) {
+        final country = l['country']?.toString() ?? '';
+        return country.contains(_selectedCountry);
+      }).toList();
     }
+    
+    // Filter by room type
+    if (_selectedRoomType != 'All Types') {
+      listings = listings.where((l) => 
+        l['roomType'] == _selectedRoomType
+      ).toList();
+    }
+
+    // Filter by gender preference
+    if (_selectedGender != 'Any') {
+      listings = listings.where((l) =>
+        l['genderPreference'] == _selectedGender
+      ).toList();
+    }
+
+    // Filter by price range
+    listings = listings.where((l) {
+      final rent = _parseDouble(l['rent'] ?? l['monthly_rent']) ?? 0.0;
+      return rent >= _priceRange[0] && rent <= _priceRange[1];
+    }).toList();
+
+    // Filter by facilities
+    if (_selectedFacilities.isNotEmpty) {
+      listings = listings.where((l) {
+        final facilities = List<String>.from(l['facilities'] ?? []);
+        return _selectedFacilities.every((f) => facilities.contains(f));
+      }).toList();
+    }
+
+    // Apply date range filter if set
+    if (_availableFrom != null || _availableTo != null) {
+      listings = listings.where((l) {
+        final availableFromStr = l['availableFrom']?.toString();
+        if (availableFromStr == null) return false;
+
+        final availableFrom = DateTime.tryParse(availableFromStr);
+        if (availableFrom == null) return false;
+
+        if (_availableFrom != null && availableFrom.isBefore(_availableFrom!)) {
+          return false;
+        }
+
+        if (_availableTo != null && availableFrom.isAfter(_availableTo!)) {
+          return false;
+        }
+
+        return true;
+      }).toList();
+    }
+    
+    // Apply show all toggle for public listings only
+    if (_currentListingView == ListingViewType.allListings) {
+      return _showAllListings ? listings : listings.take(3).toList();
+    }
+    
+    return listings;
   }
 
   @override

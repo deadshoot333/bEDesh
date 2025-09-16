@@ -14,7 +14,6 @@ import '../../domain/models/post.dart';
 import '../../../profile/presentation/pages/profile_page.dart';
 import 'package:http/http.dart' as http;
 import '../../../../core/constants/api_constants.dart';
-import '../../../../core/services/storage_service.dart';
 
 class CommunityFeedPage extends StatefulWidget {
   const CommunityFeedPage({super.key});
@@ -28,6 +27,7 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   static const String _baseUrl = ApiConstants.baseUrl;
+
   String _selectedFilter = 'All';
   final List<String> _filters = [
     'All',
@@ -39,133 +39,16 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
     'Canada',
     'Australia',
   ];
+
   User? currentUser;
-  List<Post> posts = [];
-  bool isLoading = false;
-  
-  // User data
-  User? _currentUser;
   String _userName = 'User';
   String _userLocation = 'Unknown Location';
   String _userId = '';
-  // void initState() {
-  //   super.initState();
-  //   _animationController = AnimationController(
-  //     duration: const Duration(milliseconds: 400),
-  //     vsync: this,
-  //   );
-  //   _fadeAnimation = CurvedAnimation(
-  //     parent: _animationController,
-  //     curve: Curves.easeIn,
-  //   );
-  //   _animationController.forward();
-  //   fetchPosts();
-  // }
 
-  Future<void> fetchPosts() async {
-    setState(() {
-      isLoading = true;
-    });
-    try {
-      if (currentUser == null) {
-        // ignore: avoid_print
-        print("⚠️ currentUser is null, cannot fetch posts");
-        return;
-      }
-      final response = await http.get(
-        Uri.parse(
-          '$_baseUrl/api/community/get-posts?user_id=${currentUser!.id}',
-        ),
-      );
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final List<dynamic> postsJson = data['posts'];
-        setState(() {
-          posts = postsJson.map((json) => Post.fromJson(json)).toList();
-        });
-      } else {
-        // Handle error
-        // ignore: use_build_context_synchronously
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Failed to load posts')));
-      }
-    } catch (e) {
-      // ignore: use_build_context_synchronously
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error: $e')));
-    }
-  }
+  String? _authToken;
 
-  Future<void> addPost(Post post) async {
-    final url = Uri.parse('$_baseUrl/api/community/post');
-    try {
-      final response = await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode(post.toJson()),
-      );
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final newPost = Post.fromJson(data['post']);
-        setState(() {
-          posts.insert(0, newPost);
-        });
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Post added!')));
-      } else {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Failed to add post')));
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error: $e')));
-    }
-  }
-
-  void _onCreatePost() async {
-    final newPost = await showDialog<Post>(
-      context: context,
-      builder: (context) => CreatePostDialog(
-        userName: _userName,
-        userId: _userId,
-        userLocation: _userLocation,
-      ),
-    );
-    if (newPost != null) {
-      await addPost(newPost);
-    }
-  }
-
-  // Get filtered posts based on selected filter
-  List<Post> get filteredPosts {
-    if (_selectedFilter == 'All') {
-      return posts;
-    }
-
-    return posts.where((post) {
-      // Check if filter matches post type
-      if (_selectedFilter == 'Questions' &&
-          post.postType == PostType.question) {
-        return true;
-      }
-      if (_selectedFilter == 'Tips' && post.postType == PostType.tips) {
-        return true;
-      }
-      if (_selectedFilter == 'Experiences' && post.postType == PostType.text) {
-        return true;
-      }
-
-      // Check if filter matches any tag (case-insensitive)
-      return post.tags.any(
-        (tag) => tag.toLowerCase() == _selectedFilter.toLowerCase(),
-      );
-    }).toList();
-  }
+  List<Post> posts = [];
+  bool isLoading = false;
 
   @override
   void initState() {
@@ -184,14 +67,123 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
 
   void _loadUserData() {
     final user = StorageService.getUserData();
-    if (user != null) {
-      setState(() {
-        _currentUser = user;
+    final token = StorageService.getAccessToken(); // Ensure this returns a JWT
+    setState(() {
+      currentUser = user;
+      _authToken = token;
+      if (user != null) {
         _userName = user.name;
         _userLocation = '${user.city}, ${user.university}';
         _userId = user.id;
-      });
+      }
+    });
+  }
+
+  Future<void> fetchPosts() async {
+    setState(() {
+      isLoading = true;
+    });
+    try {
+      if (_authToken == null) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Not authenticated')));
+        setState(() {
+          isLoading = false;
+        });
+        return;
+      }
+
+      final response = await http.get(
+        Uri.parse('$_baseUrl/api/community/get-posts'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $_authToken',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body) as Map<String, dynamic>;
+        final List<dynamic> postsJson = data['posts'] ?? [];
+        setState(() {
+          posts = postsJson.map((json) => Post.fromJson(json)).toList();
+        });
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to load posts (${response.statusCode})'),
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error loading posts: $e')));
+    } finally {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
     }
+  }
+
+  Future<void> addPost(Post post) async {
+    try {
+      if (_authToken == null) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Not authenticated')));
+        return;
+      }
+
+      final url = Uri.parse('$_baseUrl/api/community/post');
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $_authToken',
+        },
+        body: json.encode(post.toJson()),
+      );
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        final data = json.decode(response.body) as Map<String, dynamic>;
+        final newPost = Post.fromJson(data['post']);
+        setState(() {
+          posts.insert(0, newPost);
+        });
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Post added!')));
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to add post (${response.statusCode})'),
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error adding post: $e')));
+    }
+  }
+// #TODO:Fix Post connection
+  // Filters
+  List<Post> get filteredPosts {
+    if (_selectedFilter == 'All') return posts;
+    return posts.where((post) {
+      if (_selectedFilter == 'Questions' && post.postType == PostType.question)
+        return true;
+      if (_selectedFilter == 'Tips' && post.postType == PostType.tips)
+        return true;
+      if (_selectedFilter == 'Experiences' && post.postType == PostType.text)
+        return true;
+      return post.tags.any(
+        (tag) => tag.toLowerCase() == _selectedFilter.toLowerCase(),
+      );
+    }).toList();
   }
 
   @override
@@ -200,6 +192,7 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
     super.dispose();
   }
 
+  // UI
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -208,135 +201,16 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
         opacity: _fadeAnimation,
         child: Column(
           children: [
-            // Modern Header (like home page)
             _buildModernHeader(),
-            // Quick Actions Bar
-            Container(
-              color: AppColors.backgroundCard,
-              padding: const EdgeInsets.all(AppConstants.spaceM),
-              child: Row(
-                children: [
-                  GestureDetector(
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const ProfilePage(),
-                      ),
-                    ),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: AppColors.primary.withOpacity(0.3),
-                          width: 2,
-                        ),
-                      ),
-                      child: CircleAvatar(
-                        radius: 20,
-                        backgroundColor: AppColors.primary.withOpacity(0.1),
-                        child: Text(
-                          _userName.isNotEmpty ? _userName[0].toUpperCase() : 'U',
-                          style: AppTextStyles.bodyLarge.copyWith(
-                            color: AppColors.primary,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: AppConstants.spaceM),
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () => _showCreatePostDialog(context),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppConstants.spaceM,
-                          vertical: AppConstants.spaceM,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.backgroundSecondary,
-                          borderRadius: BorderRadius.circular(
-                            AppConstants.radiusXL,
-                          ),
-                          border: Border.all(
-                            color: AppColors.borderLight,
-                            width: 1,
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                'Share your experience or ask a question...',
-                                style: AppTextStyles.bodyMedium.copyWith(
-                                  color: AppColors.textTertiary,
-                                ),
-                              ),
-                            ),
-                            Icon(
-                              Icons.edit_outlined,
-                              color: AppColors.textTertiary,
-                              size: 18,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // Filter Tabs
-            Container(
-              color: AppColors.backgroundCard,
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppConstants.spaceM,
-                  vertical: AppConstants.spaceS,
-                ),
-                child: Row(
-                  children:
-                      _filters
-                          .map((filter) => _buildFilterChip(filter))
-                          .toList(),
-                ),
-              ),
-            ),
-
-            // Posts Feed
+            _buildActionsBar(context),
+            _buildFilterRow(),
             Expanded(
               child:
-                  filteredPosts.isEmpty
-                      ? _buildEmptyState()
-                      : ListView.separated(
-                        padding: const EdgeInsets.symmetric(
-                          vertical: AppConstants.spaceS,
-                        ),
-                        itemCount: filteredPosts.length,
-                        separatorBuilder:
-                            (context, index) =>
-                                const SizedBox(height: AppConstants.spaceS),
-                        itemBuilder: (context, index) {
-                          final post = filteredPosts[index];
-                          final originalIndex = posts.indexOf(post);
-                          return AnimatedContainer(
-                            duration: Duration(
-                              milliseconds: 300 + (index * 100),
-                            ),
-                            curve: Curves.easeOutBack,
-                            child: PostCard(
-                              post: post,
-                              onLike: () => _toggleLike(originalIndex),
-                              onComment:
-                                  () => _showCommentsDialog(context, post),
-                              onShare: () => _sharePost(post),
-                              onTagTap: _filterByTag,
-                            ),
-                          );
-                        },
-                      ),
+                  isLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : (filteredPosts.isEmpty
+                          ? _buildEmptyState()
+                          : _buildFeedList()),
             ),
           ],
         ),
@@ -348,6 +222,118 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
         elevation: 8,
         child: const Icon(Icons.add, size: 24),
       ),
+    );
+  }
+
+  Widget _buildActionsBar(BuildContext context) {
+    return Container(
+      color: AppColors.backgroundCard,
+      padding: const EdgeInsets.all(AppConstants.spaceM),
+      child: Row(
+        children: [
+          GestureDetector(
+            onTap:
+                () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const ProfilePage()),
+                ),
+            child: Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: AppColors.primary.withOpacity(0.3),
+                  width: 2,
+                ),
+              ),
+              child: CircleAvatar(
+                radius: 20,
+                backgroundColor: AppColors.primary.withOpacity(0.1),
+                child: Text(
+                  _userName.isNotEmpty ? _userName.toUpperCase() : 'U',
+                  style: AppTextStyles.bodyLarge.copyWith(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: AppConstants.spaceM),
+          Expanded(
+            child: GestureDetector(
+              onTap: () => _showCreatePostDialog(context),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppConstants.spaceM,
+                  vertical: AppConstants.spaceM,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.backgroundSecondary,
+                  borderRadius: BorderRadius.circular(AppConstants.radiusXL),
+                  border: Border.all(color: AppColors.borderLight, width: 1),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Share your experience or ask a question...',
+                        style: AppTextStyles.bodyMedium.copyWith(
+                          color: AppColors.textTertiary,
+                        ),
+                      ),
+                    ),
+                    Icon(
+                      Icons.edit_outlined,
+                      color: AppColors.textTertiary,
+                      size: 18,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFilterRow() {
+    return Container(
+      color: AppColors.backgroundCard,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppConstants.spaceM,
+          vertical: AppConstants.spaceS,
+        ),
+        child: Row(
+          children: _filters.map((filter) => _buildFilterChip(filter)).toList(),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFeedList() {
+    return ListView.separated(
+      padding: const EdgeInsets.symmetric(vertical: AppConstants.spaceS),
+      itemCount: filteredPosts.length,
+      separatorBuilder:
+          (context, index) => const SizedBox(height: AppConstants.spaceS),
+      itemBuilder: (context, index) {
+        final post = filteredPosts[index];
+        final originalIndex = posts.indexOf(post);
+        return AnimatedContainer(
+          duration: Duration(milliseconds: 300 + (index * 100)),
+          curve: Curves.easeOutBack,
+          child: PostCard(
+            post: post,
+            onLike: () => _toggleLike(originalIndex),
+            onComment: () => _showCommentsDialog(context, post),
+            onShare: () => _sharePost(post),
+            onTagTap: _filterByTag,
+          ),
+        );
+      },
     );
   }
 
@@ -365,7 +351,6 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
           padding: const EdgeInsets.all(AppConstants.spaceM),
           child: Row(
             children: [
-              // Back button
               Container(
                 margin: const EdgeInsets.only(right: AppConstants.spaceM),
                 decoration: BoxDecoration(
@@ -378,12 +363,9 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
                     color: AppColors.textOnPrimary,
                     size: 20,
                   ),
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
+                  onPressed: () => Navigator.pop(context),
                 ),
               ),
-              // Community Feed title
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -407,7 +389,6 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
                   ],
                 ),
               ),
-              // Action buttons
               ModernIconButton(
                 icon: Icons.person_outline,
                 backgroundColor: AppColors.textOnPrimary.withOpacity(0.2),
@@ -436,11 +417,7 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
       child: ModernChip(
         label: filter,
         isSelected: isSelected,
-        onTap: () {
-          setState(() {
-            _selectedFilter = filter;
-          });
-        },
+        onTap: () => setState(() => _selectedFilter = filter),
         backgroundColor:
             isSelected ? AppColors.primary : AppColors.backgroundSecondary,
         textColor:
@@ -452,19 +429,11 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
   void _toggleLike(int index) {
     setState(() {
       posts[index].isLiked = !posts[index].isLiked;
-      if (posts[index].isLiked) {
-        posts[index].likes++;
-      } else {
-        posts[index].likes--;
-      }
+      posts[index].likes += posts[index].isLiked ? 1 : -1;
     });
   }
 
-  void _filterByTag(String tag) {
-    setState(() {
-      _selectedFilter = tag;
-    });
-  }
+  void _filterByTag(String tag) => setState(() => _selectedFilter = tag);
 
   Widget _buildEmptyState() {
     return Center(
@@ -494,11 +463,7 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
             PrimaryButton(
               text: 'Clear Filter',
               size: ButtonSize.medium,
-              onPressed: () {
-                setState(() {
-                  _selectedFilter = 'All';
-                });
-              },
+              onPressed: () => setState(() => _selectedFilter = 'All'),
             ),
           ],
         ),
@@ -511,19 +476,18 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => CreatePostDialog(
-        onPostCreated: _addNewPost,
-        userName: _userName,
-        userId: _userId,
-        userLocation: _userLocation,
-      ),
+      builder:
+          (context) => CreatePostDialog(
+            onPostCreated: _addNewPostAndSend,
+            userName: _userName,
+            userId: _userId,
+            userLocation: _userLocation,
+          ),
     );
   }
 
-  void _addNewPost(Post newPost) {
-    setState(() {
-      posts.insert(0, newPost); // Add to beginning of list
-    });
+  void _addNewPostAndSend(Post newPost) async {
+    await addPost(newPost);
   }
 
   void _showCommentsDialog(BuildContext context, Post post) {
