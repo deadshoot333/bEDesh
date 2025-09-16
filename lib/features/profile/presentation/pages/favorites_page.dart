@@ -201,23 +201,6 @@ class _FavoritesPageState extends State<FavoritesPage>
                     height: 1.5,
                   ),
                 ),
-                const SizedBox(height: AppConstants.spaceXL),
-                ElevatedButton.icon(
-                  onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.explore_outlined),
-                  label: const Text('Explore Universities'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: AppColors.textOnPrimary,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppConstants.spaceL,
-                      vertical: AppConstants.spaceM,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppConstants.radiusM),
-                    ),
-                  ),
-                ),
               ],
             ),
           ),
