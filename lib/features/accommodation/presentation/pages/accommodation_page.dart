@@ -238,21 +238,20 @@ class _AccommodationPageState extends State<AccommodationPage>
         
         // Get user's accommodations WITH booked posts included and all filters applied
         // My Listings should show user posts with all filters except status filtering
+        // Note: Removing facilities from backend filter as it's handled better on frontend
         final userAccommodations = await _apiService.getUserAccommodations(
           location: _selectedCity != 'All Cities' ? _selectedCity : null,
           maxRent: _priceRange[1] > 0 ? _priceRange[1] : null,
           minRent: _priceRange[0] > 0 ? _priceRange[0] : null,
           genderPreference: _selectedGender != 'Any' ? _selectedGender : null,
           roomType: _selectedRoomType != 'All Types' ? _selectedRoomType : null,
-          facilities: _selectedFacilities.isNotEmpty ? _selectedFacilities : null,
+          facilities: null, // Let frontend handle facilities filtering
           availableFrom: _availableFrom,
           availableTo: _availableTo,
           limit: 50,
           offset: 0,
           includeBooked: true,
         );
-
-        print('✅ Loaded ${userAccommodations.length} user accommodations from API');
         
         setState(() {
           _userAccommodations = userAccommodations;
@@ -398,6 +397,7 @@ class _AccommodationPageState extends State<AccommodationPage>
     if (_selectedFacilities.isNotEmpty) {
       listings = listings.where((l) {
         final facilities = List<String>.from(l['facilities'] ?? []);
+        
         // Convert both selected and available facilities to lowercase for case-insensitive comparison
         final facilitiesLower = facilities.map((f) => f.toLowerCase().trim()).toList();
         final selectedFacilitiesLower = _selectedFacilities.map((f) => f.toLowerCase().trim()).toList();

@@ -141,10 +141,26 @@ class UniversityApiService {
   // Get universities by country
   static Future<List<University>> getUniversitiesByCountry(String country) async {
     try {
-      // Use search endpoint to find universities by country
-      return await searchUniversities(country);
+      // Use the dedicated by-country endpoint for better ranking-based ordering
+      final response = await http.get(
+        Uri.parse('$_baseUrl/api/university/by-country/${Uri.encodeComponent(country)}'),
+        headers: ApiConstants.defaultHeaders,
+      ).timeout(ApiConstants.requestTimeout);
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = json.decode(response.body);
+        final List<dynamic> universitiesJson = data['universities'] ?? [];
+        
+        return universitiesJson
+            .map((json) => University.fromJson(json))
+            .toList();
+      } else {
+        // Fallback to search if by-country endpoint fails
+        return await searchUniversities(country);
+      }
     } catch (e) {
-      throw Exception('Error fetching universities by country: $e');
+      // Fallback to search if by-country endpoint fails
+      return await searchUniversities(country);
     }
   }
 }
