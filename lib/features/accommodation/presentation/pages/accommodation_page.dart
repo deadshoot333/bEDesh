@@ -133,6 +133,11 @@ class _AccommodationPageState extends State<AccommodationPage>
     return token != null && token.isNotEmpty;
   }
 
+  /// Check if user should be able to see accommodation listings
+  bool _shouldShowListings() {
+    return _checkAuthentication();
+  }
+
   /// Show login required dialog
   void _showLoginRequiredDialog() {
     showDialog(
@@ -190,6 +195,15 @@ class _AccommodationPageState extends State<AccommodationPage>
         _errorMessage = null;
       });
 
+      // Check authentication for both All Listings and My Listings
+      if (!_shouldShowListings()) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = 'Login required to view accommodations';
+        });
+        return;
+      }
+
       if (_currentListingView == ListingViewType.allListings) {
         print('🔍 Loading all accommodations from API...');
         
@@ -211,16 +225,6 @@ class _AccommodationPageState extends State<AccommodationPage>
         });
       } else {
         print('👤 Loading user accommodations from API...');
-        
-        // Check if user is authenticated
-        if (!_checkAuthentication()) {
-          setState(() {
-            _isLoading = false;
-            _errorMessage = 'Please log in to view your listings.';
-          });
-          _showLoginRequiredDialog();
-          return;
-        }
         
         // Get user's accommodations
         final userAccommodations = await _apiService.getUserAccommodations();
@@ -665,7 +669,13 @@ class _AccommodationPageState extends State<AccommodationPage>
   }
 
   Widget _buildListView() {
-    final listings = _filteredListings;    if (listings.isEmpty) {
+    // Check if user should be able to see listings
+    if (!_shouldShowListings()) {
+      return _buildAuthenticationRequiredState();
+    }
+    
+    final listings = _filteredListings;
+    if (listings.isEmpty) {
       return _buildEmptyState();
     }
     
@@ -745,6 +755,90 @@ class _AccommodationPageState extends State<AccommodationPage>
               ),
             ),
           ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAuthenticationRequiredState() {
+    final isMyListings = _currentListingView == ListingViewType.myListings;
+    return Container(
+      padding: const EdgeInsets.all(AppConstants.spaceXL),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(AppConstants.spaceL),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(AppConstants.radiusXL),
+              border: Border.all(
+                color: AppColors.primary.withOpacity(0.3),
+                width: 2,
+              ),
+            ),
+            child: Icon(
+              Icons.lock_outline,
+              size: 64,
+              color: AppColors.primary,
+            ),
+          ),
+          const SizedBox(height: AppConstants.spaceL),
+          Text(
+            'Login Required',
+            style: AppTextStyles.h3.copyWith(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: AppConstants.spaceS),
+          Text(
+            isMyListings 
+                ? 'Please log in to view and manage your accommodation posts'
+                : 'Please log in to browse accommodation listings from students worldwide',
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: AppColors.textSecondary,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: AppConstants.spaceL),
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [AppColors.primary, AppColors.primary.withOpacity(0.8)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(AppConstants.radiusM),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primary.withOpacity(0.3),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: PrimaryButton(
+              text: 'Login Now',
+              icon: Icons.login_outlined,
+              size: ButtonSize.medium,
+              backgroundColor: Colors.transparent,
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const LoginPage()),
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: AppConstants.spaceM),
+          Text(
+            'Join thousands of students finding accommodation worldwide',
+            style: AppTextStyles.labelMedium.copyWith(
+              color: AppColors.textTertiary,
+              fontStyle: FontStyle.italic,
+            ),
+            textAlign: TextAlign.center,
+          ),
         ],
       ),
     );
