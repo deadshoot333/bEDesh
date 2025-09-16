@@ -16,6 +16,7 @@ class AccommodationCard extends StatelessWidget {
   final String? country;
   final String? genderPreference;
   final List<String>? facilities;
+  final String? status; // New field for accommodation status
 
   const AccommodationCard({
     super.key,
@@ -30,6 +31,7 @@ class AccommodationCard extends StatelessWidget {
     this.country,
     this.genderPreference,
     this.facilities,
+    this.status, // New parameter
   });
 
   @override
@@ -187,8 +189,13 @@ class AccommodationCard extends StatelessWidget {
                         ),
                         const SizedBox(width: AppConstants.spaceS),
                         _buildDetailChip(
-                          Icons.calendar_today,
-                          'Available',
+                          status?.toLowerCase() == 'booked' 
+                            ? Icons.event_busy 
+                            : Icons.calendar_today,
+                          status ?? 'Available',
+                          color: status?.toLowerCase() == 'booked' 
+                            ? AppColors.error 
+                            : AppColors.success,
                         ),
                       ],
                     ),
@@ -253,19 +260,23 @@ class AccommodationCard extends StatelessWidget {
     );
   }
 
-  Widget _buildDetailChip(IconData icon, String text) {
+  Widget _buildDetailChip(IconData icon, String text, {Color? color}) {
+    final chipColor = color ?? AppColors.accent;
+    final textColor = color != null ? AppColors.textOnPrimary : AppColors.textSecondary;
+    final iconColor = color != null ? AppColors.textOnPrimary : AppColors.textSecondary;
+    
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: AppConstants.spaceS,
         vertical: 4,
       ),
       decoration: BoxDecoration(
-        color: AppColors.accent,
+        color: chipColor,
         borderRadius: BorderRadius.circular(AppConstants.radiusS),
-        border: Border.all(
+        border: color == null ? Border.all(
           color: AppColors.borderLight,
           width: 1,
-        ),
+        ) : null,
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -273,13 +284,13 @@ class AccommodationCard extends StatelessWidget {
           Icon(
             icon,
             size: 14,
-            color: AppColors.textSecondary,
+            color: iconColor,
           ),
           const SizedBox(width: 4),
           Text(
             text,
             style: AppTextStyles.labelSmall.copyWith(
-              color: AppColors.textSecondary,
+              color: textColor,
               fontWeight: FontWeight.w500,
             ),
           ),

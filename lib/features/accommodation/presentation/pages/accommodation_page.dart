@@ -236,7 +236,8 @@ class _AccommodationPageState extends State<AccommodationPage>
           return;
         }
         
-        // Get user's accommodations with filters
+        // Get user's accommodations WITH booked posts included and all filters applied
+        // My Listings should show user posts with all filters except status filtering
         final userAccommodations = await _apiService.getUserAccommodations(
           location: _selectedCity != 'All Cities' ? _selectedCity : null,
           maxRent: _priceRange[1] > 0 ? _priceRange[1] : null,
@@ -248,6 +249,7 @@ class _AccommodationPageState extends State<AccommodationPage>
           availableTo: _availableTo,
           limit: 50,
           offset: 0,
+          includeBooked: true,
         );
 
         print('✅ Loaded ${userAccommodations.length} user accommodations from API');
@@ -309,7 +311,19 @@ class _AccommodationPageState extends State<AccommodationPage>
       List<Map<String, dynamic>> userAccommodations = [];
       if (_checkAuthentication()) {
         print('🔄 Refreshing user accommodations...');
-        userAccommodations = await _apiService.getUserAccommodations();
+        userAccommodations = await _apiService.getUserAccommodations(
+          location: _selectedCity != 'All Cities' ? _selectedCity : null,
+          maxRent: _priceRange[1] > 0 ? _priceRange[1] : null,
+          minRent: _priceRange[0] > 0 ? _priceRange[0] : null,
+          genderPreference: _selectedGender != 'Any' ? _selectedGender : null,
+          roomType: _selectedRoomType != 'All Types' ? _selectedRoomType : null,
+          facilities: _selectedFacilities.isNotEmpty ? _selectedFacilities : null,
+          availableFrom: _availableFrom,
+          availableTo: _availableTo,
+          limit: 50,
+          offset: 0,
+          includeBooked: true,
+        );
         print('✅ Loaded ${userAccommodations.length} user accommodations');
       }
 
@@ -350,7 +364,8 @@ class _AccommodationPageState extends State<AccommodationPage>
         ? _accommodations 
         : _userAccommodations;
     
-    // Apply client-side filters for all listings
+    // Apply client-side filters for both All Listings and My Listings
+    // (Status filtering is handled at the backend level)
     // Filter by country
     if (_selectedCountry != 'All Countries') {
       listings = listings.where((l) {
@@ -766,6 +781,7 @@ class _AccommodationPageState extends State<AccommodationPage>
           facilities: listing['facilities'] != null 
               ? List<String>.from(listing['facilities']) 
               : [], // Get facilities from backend
+          status: _formatStatus(listing['status']?.toString()), // Format status from backend
           onTap: () => _showAccommodationDetails(listing),
         );
       }).toList(),
@@ -995,6 +1011,13 @@ class _AccommodationPageState extends State<AccommodationPage>
 
   String _formatDate(DateTime date) {
     return '${date.day}/${date.month}/${date.year}';
+  }
+
+  /// Format status text for display
+  String _formatStatus(String? status) {
+    if (status == null || status.isEmpty) return 'Available';
+    // Capitalize first letter
+    return status[0].toUpperCase() + status.substring(1).toLowerCase();
   }
 
   // Helper function to format date string from backend

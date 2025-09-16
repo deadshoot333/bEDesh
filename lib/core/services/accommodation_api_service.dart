@@ -279,6 +279,7 @@ class AccommodationApiService {
     DateTime? availableTo,
     int limit = 20,
     int offset = 0,
+    bool includeBooked = false,
   }) async {
     final authToken = _getAuthToken();
     return _getUserAccommodationsWithToken(
@@ -293,6 +294,7 @@ class AccommodationApiService {
       availableTo: availableTo,
       limit: limit,
       offset: offset,
+      includeBooked: includeBooked,
     );
   }
 
@@ -309,6 +311,7 @@ class AccommodationApiService {
     DateTime? availableTo,
     int limit = 20,
     int offset = 0,
+    bool includeBooked = false,
   }) async {
     try {
       print('👤 Fetching user accommodations...');
@@ -342,6 +345,9 @@ class AccommodationApiService {
       }
       if (availableTo != null) {
         queryParams['available_to'] = availableTo.toIso8601String();
+      }
+      if (includeBooked) {
+        queryParams['include_booked'] = 'true';
       }
 
       final uri = Uri.parse('$_baseUrl$_userAccommodationsEndpoint').replace(
