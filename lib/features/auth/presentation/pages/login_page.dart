@@ -8,6 +8,7 @@ import '../../../../core/services/auth_service.dart';
 import '../../../../core/models/api_error.dart';
 import '../../../../MainNavigationPage.dart';
 import 'signup_page.dart';
+import '../../../onboarding/presentation/pages/modern_onboarding_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -91,6 +92,34 @@ class _LoginPageState extends State<LoginPage> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
+                          // Back Button
+                          Row(
+                            children: [
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: IconButton(
+                                  icon: Icon(
+                                    Icons.arrow_back_ios_new,
+                                    color: AppColors.primary,
+                                    size: 20,
+                                  ),
+                                  onPressed: () {
+                                    Navigator.pushReplacement(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => const ModernOnboardingPage(),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: AppConstants.spaceM),
+                          
                           // Logo/Title
                           Text(
                             AppConstants.appName,
