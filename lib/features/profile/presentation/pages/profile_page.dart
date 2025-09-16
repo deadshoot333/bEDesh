@@ -18,6 +18,7 @@ import '../../../../core/models/user.dart';
 import '../../services/profile_service.dart';
 import '../pages/favorites_page.dart';
 import '../pages/connections_page.dart';
+import '../../../auth/presentation/pages/login_page.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -92,6 +93,16 @@ class _ProfilePageState extends State<ProfilePage>
         _errorMessage = null;
       });
 
+      // Check if user is authenticated first
+      final AuthService authService = AuthService();
+      if (!authService.isAuthenticated()) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = 'login_required'; // Special flag for login required
+        });
+        return;
+      }
+
       // First try to get user from local storage
       User? localUser = StorageService.getUserData();
       
@@ -103,7 +114,6 @@ class _ProfilePageState extends State<ProfilePage>
 
       // Then try to fetch fresh profile data from server
       try {
-        final AuthService authService = AuthService();
         final User freshUser = await authService.getProfile();
         
         setState(() {
@@ -197,6 +207,11 @@ class _ProfilePageState extends State<ProfilePage>
 
   @override
   Widget build(BuildContext context) {
+    // Show login required screen if not authenticated
+    if (_errorMessage == 'login_required') {
+      return _buildLoginRequiredScreen();
+    }
+
     return Scaffold(
       backgroundColor: AppColors.backgroundPrimary,
       body: FadeTransition(
@@ -943,6 +958,217 @@ class _ProfilePageState extends State<ProfilePage>
           onPressed: () {},
         ),
       ),
+    );
+  }
+
+  Widget _buildLoginRequiredScreen() {
+    return Scaffold(
+      backgroundColor: AppColors.backgroundPrimary,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              AppColors.backgroundPrimary,
+              AppColors.primaryLight,
+            ],
+            stops: [0.7, 1.0],
+          ),
+        ),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppConstants.spaceL,
+              vertical: AppConstants.spaceM,
+            ),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minHeight: MediaQuery.of(context).size.height - 
+                          MediaQuery.of(context).padding.top - 
+                          MediaQuery.of(context).padding.bottom - 32,
+              ),
+              child: IntrinsicHeight(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const SizedBox(height: AppConstants.spaceL),
+                    
+                    // Animated Icon Container
+                    Container(
+                      width: 120,
+                      height: 120,
+                      decoration: BoxDecoration(
+                        color: AppColors.backgroundCard,
+                        borderRadius: BorderRadius.circular(25),
+                        border: Border.all(
+                          color: AppColors.primary.withOpacity(0.2),
+                          width: 2,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.primary.withOpacity(0.1),
+                            offset: const Offset(0, 6),
+                            blurRadius: 20,
+                            spreadRadius: 0,
+                          ),
+                          const BoxShadow(
+                            color: AppColors.shadowLight,
+                            offset: Offset(0, 3),
+                            blurRadius: 10,
+                            spreadRadius: 0,
+                          ),
+                        ],
+                      ),
+                      child: const Icon(
+                        Icons.account_circle_outlined,
+                        size: 60,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                    const SizedBox(height: AppConstants.spaceXL),
+                    
+                    // Title
+                    Text(
+                      'Profile Access Required',
+                      style: AppTextStyles.h2.copyWith(
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.5,
+                        fontSize: 24,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: AppConstants.spaceM),
+                    
+                    // Main Description
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppConstants.spaceM,
+                        vertical: AppConstants.spaceS,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.backgroundCard.withOpacity(0.7),
+                        borderRadius: BorderRadius.circular(AppConstants.radiusM),
+                        border: Border.all(
+                          color: AppColors.primary.withOpacity(0.1),
+                          width: 1,
+                        ),
+                      ),
+                      child: Text(
+                        'To view Profile one needs to login first',
+                        style: AppTextStyles.bodyLarge.copyWith(
+                          color: AppColors.textPrimary,
+                          fontWeight: FontWeight.w600,
+                          height: 1.3,
+                          fontSize: 16,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    const SizedBox(height: AppConstants.spaceM),
+                    
+                    // Subtitle
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: AppConstants.spaceS),
+                      child: Text(
+                        'Access your personal profile, stats, and connect with students worldwide',
+                        style: AppTextStyles.bodyMedium.copyWith(
+                          color: AppColors.textSecondary,
+                          height: 1.4,
+                          fontSize: 14,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    const SizedBox(height: AppConstants.spaceXL),
+                    
+                    // Login Button with enhanced styling
+                    Container(
+                      width: double.infinity,
+                      height: 50,
+                      margin: const EdgeInsets.symmetric(horizontal: AppConstants.spaceS),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(AppConstants.radiusL),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.primary.withOpacity(0.25),
+                            offset: const Offset(0, 3),
+                            blurRadius: 10,
+                            spreadRadius: 0,
+                          ),
+                        ],
+                      ),
+                      child: PrimaryButton(
+                        text: 'Login Now',
+                        icon: Icons.login_rounded,
+                        onPressed: () {
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const LoginPage(),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: AppConstants.spaceL),
+                    
+                    // Feature highlights - Made more compact
+                    Container(
+                      margin: const EdgeInsets.symmetric(horizontal: AppConstants.spaceS),
+                      padding: const EdgeInsets.all(AppConstants.spaceM),
+                      decoration: BoxDecoration(
+                        color: AppColors.backgroundCard.withOpacity(0.5),
+                        borderRadius: BorderRadius.circular(AppConstants.radiusM),
+                        border: Border.all(
+                          color: AppColors.borderLight,
+                          width: 1,
+                        ),
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _buildFeatureRow(Icons.people_outline, 'Connect with students'),
+                          const SizedBox(height: AppConstants.spaceXS),
+                          _buildFeatureRow(Icons.favorite_outline, 'Save favorite accommodations'),
+                          const SizedBox(height: AppConstants.spaceXS),
+                          _buildFeatureRow(Icons.article_outlined, 'Share your experiences'),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: AppConstants.spaceL),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFeatureRow(IconData icon, String text) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(
+          icon,
+          size: 14,
+          color: AppColors.textSecondary,
+        ),
+        const SizedBox(width: 6),
+        Flexible(
+          child: Text(
+            text,
+            style: AppTextStyles.bodySmall.copyWith(
+              color: AppColors.textSecondary,
+              fontSize: 12,
+            ),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
     );
   }
 }
