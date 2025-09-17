@@ -152,8 +152,20 @@ class _UniversityListPageState extends State<UniversityListPage>
     if (_selectedFilter == 'Top 10') {
       filtered = filtered.where((uni) => uni.worldRanking <= 10).toList();
     } else if (_selectedFilter == 'With Scholarships') {
-      // This would need scholarship data in the model
-      // For now, we'll assume all universities have scholarships
+      // Most top-ranked universities offer scholarships
+      filtered = filtered.where((uni) => uni.worldRanking <= 200).toList();
+    }
+    
+    // Apply level filter
+    if (_selectedLevel != 'All Levels') {
+      // Filter universities that typically offer the selected level
+      filtered = filtered.where((uni) => _universitySupportsLevel(uni, _selectedLevel)).toList();
+    }
+    
+    // Apply field filter
+    if (_selectedField != 'All Fields') {
+      // Filter universities that typically offer the selected field
+      filtered = filtered.where((uni) => _universitySupportsField(uni, _selectedField)).toList();
     }
     
     // Apply sorting
@@ -162,18 +174,21 @@ class _UniversityListPageState extends State<UniversityListPage>
         case 'Ranking':
           return a.worldRanking.compareTo(b.worldRanking);
         case 'Tuition (Low to High)':
-          // Since we don't have tuition in the model, sort by ranking
-          return a.worldRanking.compareTo(b.worldRanking);
+          final aTuition = a.tuitionFeeUSD ?? 0.0;
+          final bTuition = b.tuitionFeeUSD ?? 0.0;
+          return aTuition.compareTo(bTuition);
         case 'Tuition (High to Low)':
-          // Since we don't have tuition in the model, sort by ranking
-          return b.worldRanking.compareTo(a.worldRanking);
+          final aTuition = a.tuitionFeeUSD ?? 0.0;
+          final bTuition = b.tuitionFeeUSD ?? 0.0;
+          return bTuition.compareTo(aTuition);
         case 'Acceptance Rate':
-          // Since we don't have acceptance rate in the model, sort by ranking
-          return a.worldRanking.compareTo(b.worldRanking);
+          final aRate = a.acceptanceRate ?? 100.0;
+          final bRate = b.acceptanceRate ?? 100.0;
+          return aRate.compareTo(bRate);
         case 'Name A-Z':
           return a.name.compareTo(b.name);
         default:
-          return 0;
+          return a.worldRanking.compareTo(b.worldRanking);
       }
     });
     
@@ -316,27 +331,7 @@ class _UniversityListPageState extends State<UniversityListPage>
                   color: AppColors.textOnPrimary.withOpacity(0.1),
                 ),
               ),
-              Positioned(
-                left: AppConstants.spaceL,
-                bottom: 60,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Discover',
-                      style: AppTextStyles.h4.copyWith(
-                        color: AppColors.textOnPrimary.withOpacity(0.9),
-                      ),
-                    ),
-                    Text(
-                      '${_filteredUniversities.length} Universities',
-                      style: AppTextStyles.bodyLarge.copyWith(
-                        color: AppColors.textOnPrimary.withOpacity(0.8),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+
             ],
           ),
         ),
@@ -619,50 +614,73 @@ class _UniversityListPageState extends State<UniversityListPage>
     showModalBottomSheet(
       context: context,
       backgroundColor: AppColors.backgroundCard,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(
           top: Radius.circular(AppConstants.radiusXL),
         ),
       ),
       builder: (context) => Container(
-        padding: const EdgeInsets.all(AppConstants.spaceL),
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.6,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Sort By',
-              style: AppTextStyles.h4.copyWith(
-                color: AppColors.textPrimary,
-                fontWeight: FontWeight.bold,
+            // Handle bar
+            Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.symmetric(vertical: AppConstants.spaceM),
+              decoration: BoxDecoration(
+                color: AppColors.textSecondary.withOpacity(0.3),
+                borderRadius: BorderRadius.circular(2),
               ),
             ),
-            const SizedBox(height: AppConstants.spaceL),
-            ..._sortOptions.map((option) {
-              final isSelected = _sortBy == option;
-              return ListTile(
-                title: Text(
-                  option,
-                  style: AppTextStyles.bodyLarge.copyWith(
-                    color: isSelected ? AppColors.primary : AppColors.textPrimary,
-                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                  ),
+            Flexible(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(AppConstants.spaceL),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Sort By',
+                      style: AppTextStyles.h4.copyWith(
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: AppConstants.spaceL),
+                    ..._sortOptions.map((option) {
+                      final isSelected = _sortBy == option;
+                      return ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: Text(
+                          option,
+                          style: AppTextStyles.bodyLarge.copyWith(
+                            color: isSelected ? AppColors.primary : AppColors.textPrimary,
+                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                          ),
+                        ),
+                        trailing: isSelected
+                            ? Icon(
+                                Icons.check,
+                                color: AppColors.primary,
+                              )
+                            : null,
+                        onTap: () {
+                          setState(() {
+                            _sortBy = option;
+                          });
+                          _applyFiltersAndSorting();
+                          Navigator.pop(context);
+                        },
+                      );
+                    }),
+                  ],
                 ),
-                trailing: isSelected
-                    ? Icon(
-                        Icons.check,
-                        color: AppColors.primary,
-                      )
-                    : null,
-                onTap: () {
-                  setState(() {
-                    _sortBy = option;
-                  });
-                  _applyFiltersAndSorting();
-                  Navigator.pop(context);
-                },
-              );
-            }),
+              ),
+            ),
           ],
         ),
       ),
@@ -736,6 +754,62 @@ class _UniversityListPageState extends State<UniversityListPage>
       _searchController.clear();
     });
     _applyFiltersAndSorting();
+  }
+
+  // Helper method to check if university supports a specific level
+  bool _universitySupportsLevel(University university, String level) {
+    switch (level) {
+      case 'Undergraduate':
+        // Most universities offer undergraduate programs
+        return true;
+      case 'Masters':
+        // Universities with good rankings typically offer masters
+        return university.worldRanking <= 500;
+      case 'PhD':
+        // Top research universities offer PhD programs
+        return university.worldRanking <= 300;
+      case 'MBA':
+        // Business schools and comprehensive universities offer MBA
+        final businessKeywords = ['business', 'management', 'harvard', 'stanford', 'wharton', 'insead', 'london business'];
+        final hasBusinessFocus = businessKeywords.any((keyword) => 
+          university.name.toLowerCase().contains(keyword) || 
+          university.description.toLowerCase().contains(keyword)
+        );
+        return hasBusinessFocus || university.worldRanking <= 100;
+      default:
+        return true;
+    }
+  }
+
+  // Helper method to check if university supports a specific field
+  bool _universitySupportsField(University university, String field) {
+    final uniName = university.name.toLowerCase();
+    
+    switch (field) {
+      case 'Computer Science':
+        final techKeywords = ['technology', 'institute', 'tech', 'mit', 'stanford', 'carnegie', 'berkeley'];
+        return techKeywords.any((keyword) => uniName.contains(keyword)) || university.worldRanking <= 200;
+      case 'Engineering':
+        final engKeywords = ['technology', 'institute', 'tech', 'engineering', 'polytechnic'];
+        return engKeywords.any((keyword) => uniName.contains(keyword)) || university.worldRanking <= 250;
+      case 'Business':
+        final businessKeywords = ['business', 'management', 'harvard', 'stanford', 'wharton', 'insead'];
+        return businessKeywords.any((keyword) => uniName.contains(keyword)) || university.worldRanking <= 150;
+      case 'Medicine':
+        final medKeywords = ['medical', 'medicine', 'health', 'johns hopkins', 'mayo'];
+        return medKeywords.any((keyword) => uniName.contains(keyword)) || university.worldRanking <= 100;
+      case 'Law':
+        final lawKeywords = ['law', 'harvard', 'yale', 'stanford', 'oxford', 'cambridge'];
+        return lawKeywords.any((keyword) => uniName.contains(keyword)) || university.worldRanking <= 80;
+      case 'Arts & Humanities':
+        final artsKeywords = ['arts', 'liberal', 'humanities', 'oxford', 'cambridge', 'harvard', 'yale'];
+        return artsKeywords.any((keyword) => uniName.contains(keyword)) || university.worldRanking <= 200;
+      case 'Sciences':
+        // Most comprehensive universities offer sciences
+        return university.worldRanking <= 300;
+      default:
+        return true;
+    }
   }
 
   void _navigateToUniversity(University university) {

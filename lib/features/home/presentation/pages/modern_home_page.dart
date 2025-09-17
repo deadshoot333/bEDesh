@@ -6,6 +6,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/constants/asset_paths.dart';
+import '../../../../core/services/navigation_service.dart';
 import '../../../../shared/widgets/common/section_header.dart';
 import '../../../../shared/widgets/inputs/modern_search_bar.dart';
 import '../../../../shared/widgets/cards/circular_destination_card.dart';
@@ -14,9 +15,9 @@ import '../../../../shared/widgets/buttons/modern_buttons.dart';
 
 // Import the existing pages for navigation
 import '../../../university/presentation/pages/dynamic_university_page.dart';
+import '../../../university/presentation/pages/swansea_university_page.dart';
 import '../../../destination/presentation/pages/australia_details_page.dart';
 import '../../../university/presentation/pages/university_list_page.dart';
-import '../../../profile/presentation/pages/profile_page.dart';
 import '../../../onboarding/presentation/pages/modern_onboarding_page.dart';
 
 class ModernHomePage extends StatefulWidget {
@@ -281,12 +282,8 @@ class _ModernHomePageState extends State<ModernHomePage>
                       backgroundColor: AppColors.textOnPrimary.withOpacity(0.2),
                       iconColor: AppColors.textOnPrimary,
                       onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const ProfilePage(),
-                          ),
-                        );
+                        // Switch to profile tab instead of pushing new page
+                        NavigationService.navigateToProfile();
                       },
                       tooltip: 'Profile',
                     ),
@@ -325,11 +322,11 @@ class _ModernHomePageState extends State<ModernHomePage>
             title: 'Swansea University',
             subtitle: '83% employability rate',
             description: 'High student satisfaction',
-            imageAsset: AssetPaths.abroad11,
+            imageAsset: AssetPaths.swanseaUni,
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const DynamicUniversityPage(universityName: 'Swansea University')),
+                MaterialPageRoute(builder: (context) => const SwanseaUniversityPage()),
               );
             },
           ),
@@ -654,6 +651,20 @@ class _ModernHomePageState extends State<ModernHomePage>
       'subtitle': 'World-leading science and technology',
       'onTap': () {
         // Navigate to Imperial page when implemented
+      },
+    },
+    {
+      'title': 'Swansea University',
+      'location': 'Swansea, Wales',
+      'imageUrl': AssetPaths.swanseaUni,
+      'ranking': 296,
+      'rating': 4.5,
+      'subtitle': '83% employability rate',
+      'onTap': () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const SwanseaUniversityPage()),
+        );
       },
     },
   ];
