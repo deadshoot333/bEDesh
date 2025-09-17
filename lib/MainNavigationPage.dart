@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'core/theme/app_colors.dart';
+import 'core/services/navigation_service.dart';
 import 'features/accommodation/presentation/pages/accommodation_page.dart';
 import 'features/community/presentation/pages/community_feed_page.dart';
 import 'features/community/presentation/pages/peer_connect_page.dart';
@@ -9,14 +10,17 @@ import 'features/profile/presentation/pages/profile_page.dart';
 /// The main navigation page of the application.
 /// This widget handles the bottom navigation bar and page switching.
 class MainNavigationPage extends StatefulWidget {
-  const MainNavigationPage({super.key});
+  final int initialIndex;
+  
+  const MainNavigationPage({super.key, this.initialIndex = 0});
 
   @override
   State<MainNavigationPage> createState() => _MainNavigationPageState();
 }
 
 class _MainNavigationPageState extends State<MainNavigationPage> {
-  int _currentIndex = 0;
+  late int _currentIndex;
+  final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
   
   // List of pages for navigation with lazy loading
   final List<Widget> _pages = const [
@@ -26,18 +30,32 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
     PeerConnectPage(),
     ProfilePage(),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _currentIndex = widget.initialIndex;
+    
+    // Initialize navigation service
+    NavigationService.init(_navigatorKey, _switchToTab);
+  }
+
+  void _switchToTab(int index) {
+    if (mounted) {
+      setState(() {
+        _currentIndex = index;
+      });
+    }
+  }
 //
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: _navigatorKey,
       body: _pages[_currentIndex],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
-        onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
+        onTap: _switchToTab,
         selectedItemColor: AppColors.primary,
         unselectedItemColor: AppColors.textSecondary,
         backgroundColor: AppColors.backgroundCard,

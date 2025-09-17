@@ -91,7 +91,7 @@ class _UniversityCardState extends State<UniversityCard>
             onTapCancel: _onTapCancel,
             child: Container(
               width: 280,
-              height: 280, // Fixed height to prevent overflow
+              height: 320, // Increased height to accommodate longer descriptions
               margin: const EdgeInsets.only(right: AppConstants.spaceM),
               decoration: BoxDecoration(
                 color: AppColors.backgroundCard,
@@ -270,13 +270,16 @@ class _UniversityCardState extends State<UniversityCard>
                         
                         if (widget.subtitle != null) ...[
                           const SizedBox(height: AppConstants.spaceXS),
-                          Text(
-                            widget.subtitle!,
-                            style: AppTextStyles.bodySmall.copyWith(
-                              color: AppColors.textTertiary,
+                          Expanded(
+                            child: Text(
+                              widget.subtitle!,
+                              style: AppTextStyles.bodySmall.copyWith(
+                                color: AppColors.textTertiary,
+                                height: 1.4,
+                              ),
+                              maxLines: 3,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                           ),
                         ],
                         

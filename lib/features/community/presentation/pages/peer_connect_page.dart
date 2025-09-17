@@ -6,12 +6,13 @@ import 'package:http/http.dart' as http;
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/app_constants.dart';
+import '../../../../core/services/navigation_service.dart';
 import '../../../../shared/widgets/buttons/modern_buttons.dart';
 import '../../../../shared/widgets/inputs/modern_search_bar.dart';
-import '../../../profile/presentation/pages/profile_page.dart';
 import '../../../../core/models/user.dart';
 import '../../../../core/services/storage_service.dart';
 import '../../../../core/constants/api_constants.dart';
+import '../../../../MainNavigationPage.dart';
 
 class PeerConnectPage extends StatefulWidget {
   const PeerConnectPage({super.key});
@@ -178,6 +179,21 @@ class _PeerConnectPageState extends State<PeerConnectPage>
     }
   }
 
+  void _handleBackNavigation() {
+    // Check if we can pop (go back to previous page)
+    if (Navigator.of(context).canPop()) {
+      Navigator.of(context).pop();
+    } else {
+      // If no previous page (accessed from main nav tabs), go to home tab
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(
+          builder: (context) => const MainNavigationPage(),
+        ),
+        (route) => false,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -251,7 +267,7 @@ class _PeerConnectPageState extends State<PeerConnectPage>
                     size: 20,
                   ),
                   onPressed: () {
-                    Navigator.pop(context);
+                    _handleBackNavigation();
                   },
                 ),
               ),
@@ -269,12 +285,7 @@ class _PeerConnectPageState extends State<PeerConnectPage>
                 backgroundColor: AppColors.textOnPrimary.withOpacity(0.2),
                 iconColor: AppColors.textOnPrimary,
                 onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const ProfilePage(),
-                    ),
-                  );
+                  NavigationService.navigateToProfile();
                 },
                 tooltip: 'Profile',
               ),

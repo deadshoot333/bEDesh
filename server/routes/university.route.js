@@ -4,7 +4,8 @@ const {
   getUniversityByName, 
   getCoursesByUniversity, 
   getScholarshipsByUniversity,
-  searchUniversities 
+  searchUniversities,
+  getUniversitiesByCountry
 } = require('../models/university.model');
 const router = express.Router();
 
@@ -78,6 +79,18 @@ router.get('/search', async (req, res) => {
   } catch (error) {
     console.error('Error searching universities:', error);
     res.status(500).json({ error: 'Failed to search universities' });
+  }
+});
+
+// Get universities by country (ordered by ranking)
+router.get('/by-country/:country', async (req, res) => {
+  try {
+    const { country } = req.params;
+    const universities = await getUniversitiesByCountry(decodeURIComponent(country));
+    res.json({ universities });
+  } catch (error) {
+    console.error('Error fetching universities by country:', error);
+    res.status(500).json({ error: 'Failed to fetch universities by country' });
   }
 });
 

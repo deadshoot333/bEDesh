@@ -7,6 +7,7 @@ import '../../../../core/constants/asset_paths.dart';
 import '../../../../shared/widgets/buttons/modern_buttons.dart';
 import '../../../../shared/widgets/cards/circular_university_card.dart';
 import '../../../../shared/widgets/common/section_header.dart';
+import '../../../../shared/widgets/navigation/navigation_wrapper.dart';
 import '../widgets/destination_stat_card.dart';
 import '../../domain/models/country.dart';
 import '../../data/services/country_api_service.dart';
@@ -155,28 +156,33 @@ class _DynamicCountryDetailsPageState extends State<DynamicCountryDetailsPage>
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return Scaffold(
-        backgroundColor: AppColors.backgroundPrimary,
-        appBar: AppBar(
-          title: Text(widget.countryName),
-          backgroundColor: AppColors.primary,
-          foregroundColor: AppColors.textOnPrimary,
-        ),
-        body: const Center(
-          child: CircularProgressIndicator(),
+      return NavigationWrapper(
+        selectedIndex: 0, // Home tab context
+        child: Scaffold(
+          backgroundColor: AppColors.backgroundPrimary,
+          appBar: AppBar(
+            title: Text(widget.countryName),
+            backgroundColor: AppColors.primary,
+            foregroundColor: AppColors.textOnPrimary,
+          ),
+          body: const Center(
+            child: CircularProgressIndicator(),
+          ),
         ),
       );
     }
 
     if (_error != null) {
-      return Scaffold(
-        backgroundColor: AppColors.backgroundPrimary,
-        appBar: AppBar(
-          title: Text(widget.countryName),
-          backgroundColor: AppColors.primary,
-          foregroundColor: AppColors.textOnPrimary,
-        ),
-        body: Center(
+      return NavigationWrapper(
+        selectedIndex: 0, // Home tab context
+        child: Scaffold(
+          backgroundColor: AppColors.backgroundPrimary,
+          appBar: AppBar(
+            title: Text(widget.countryName),
+            backgroundColor: AppColors.primary,
+            foregroundColor: AppColors.textOnPrimary,
+          ),
+          body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -201,11 +207,14 @@ class _DynamicCountryDetailsPageState extends State<DynamicCountryDetailsPage>
             ],
           ),
         ),
-      );
+      ), // Scaffold closes here
+    ); // NavigationWrapper closes here
     }
 
-    return Scaffold(
-      backgroundColor: AppColors.backgroundPrimary,
+    return NavigationWrapper(
+      selectedIndex: 0, // Home tab context
+      child: Scaffold(
+        backgroundColor: AppColors.backgroundPrimary,
       body: FadeTransition(
         opacity: _fadeAnimation,
         child: SlideTransition(
@@ -238,10 +247,11 @@ class _DynamicCountryDetailsPageState extends State<DynamicCountryDetailsPage>
                 ),
               ),
             ],
-          ),
-        ),
-      ),
-    );
+          ), // CustomScrollView closes here
+        ), // SlideTransition closes here
+      ), // FadeTransition closes here
+    ), // Scaffold closes here
+  ); // NavigationWrapper closes here
   }
 
   Widget _buildSliverAppBar() {

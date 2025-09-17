@@ -8,6 +8,7 @@ import '../../../../shared/widgets/common/section_header.dart';
 import '../../../../shared/widgets/buttons/modern_buttons.dart';
 import '../../../../shared/widgets/cards/dynamic_course_card.dart';
 import '../../../../shared/widgets/cards/scholarship_card.dart';
+import '../../../../shared/widgets/navigation/navigation_wrapper.dart';
 import '../../data/services/university_api_service.dart';
 import '../../domain/models/university.dart';
 import '../../domain/models/course.dart';
@@ -44,10 +45,8 @@ class _DynamicUniversityPageState extends State<DynamicUniversityPage>
   bool _isFavorite = false;
 
   // Filter states
-  String? _selectedCourseLevel;
-  String? _selectedCourseField;
-  String? _selectedScholarshipType;
-  String? _selectedFunding;
+  String? _selectedCourseFilter; // Combined level and field filter
+  String? _selectedScholarshipFilter; // Combined type and funding filter
 
   @override
   void initState() {
@@ -186,88 +185,103 @@ class _DynamicUniversityPageState extends State<DynamicUniversityPage>
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
-      return Scaffold(
-        backgroundColor: AppColors.backgroundPrimary,
-        body: const Center(
-          child: CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+      return NavigationWrapper(
+        selectedIndex: 0, // Home tab context
+        child: Scaffold(
+          backgroundColor: AppColors.backgroundPrimary,
+          body: const Center(
+            child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+            ),
           ),
         ),
       );
     }
 
     if (errorMessage != null) {
-      return Scaffold(
-        backgroundColor: AppColors.backgroundPrimary,
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.error_outline,
-                size: 64,
-                color: AppColors.error,
-              ),
-              const SizedBox(height: AppConstants.spaceM),
-              Text(
-                'Error Loading University',
-                style: AppTextStyles.h3.copyWith(color: AppColors.textPrimary),
-              ),
-              const SizedBox(height: AppConstants.spaceS),
-              Text(
-                errorMessage!,
-                style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: AppConstants.spaceL),
-              PrimaryButton(
-                text: 'Retry',
-                onPressed: _loadUniversityData,
-              ),
-            ],
+      return NavigationWrapper(
+        selectedIndex: 0, // Home tab context
+        child: Scaffold(
+          backgroundColor: AppColors.backgroundPrimary,
+          body: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.error_outline,
+                  size: 64,
+                  color: AppColors.error,
+                ),
+                const SizedBox(height: AppConstants.spaceM),
+                Text(
+                  'Error Loading University',
+                  style: AppTextStyles.h3.copyWith(color: AppColors.textPrimary),
+                ),
+                const SizedBox(height: AppConstants.spaceS),
+                Text(
+                  errorMessage!,
+                  style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: AppConstants.spaceL),
+                PrimaryButton(
+                  text: 'Retry',
+                  onPressed: _loadUniversityData,
+                ),
+              ],
+            ),
           ),
         ),
       );
     }
 
     if (university == null) {
-      return Scaffold(
-        backgroundColor: AppColors.backgroundPrimary,
-        body: const Center(
-          child: Text('University not found'),
+      return NavigationWrapper(
+        selectedIndex: 0, // Home tab context
+        child: Scaffold(
+          backgroundColor: AppColors.backgroundPrimary,
+          body: const Center(
+            child: Text('University not found'),
+          ),
         ),
       );
     }
 
-    return Scaffold(
-      body: FadeTransition(
-        opacity: _fadeAnimation,
-        child: SlideTransition(
-          position: _slideAnimation,
-          child: CustomScrollView(
-            slivers: [
-              _buildUniversityHeader(),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.all(AppConstants.spaceM),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildUniversityDescription(),
-                      const SizedBox(height: AppConstants.spaceL),
-                      _buildUniversityStats(),
-                      const SizedBox(height: AppConstants.spaceXL),
-                      _buildScholarshipsSection(),
-                      const SizedBox(height: AppConstants.spaceXL),
-                      _buildCoursesSection(),
-                      const SizedBox(height: AppConstants.spaceXL),
-                      _buildApplySection(),
-                      const SizedBox(height: AppConstants.spaceXL),
-                    ],
+    return NavigationWrapper(
+      selectedIndex: 0, // Home tab context since users navigate here from country pages
+      child: Scaffold(
+        body: FadeTransition(
+          opacity: _fadeAnimation,
+          child: SlideTransition(
+            position: _slideAnimation,
+            child: CustomScrollView(
+              slivers: [
+                _buildUniversityHeader(),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8.0, // Further reduced to prevent any overflow
+                      vertical: AppConstants.spaceM,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildUniversityDescription(),
+                        const SizedBox(height: AppConstants.spaceL),
+                        _buildUniversityStats(),
+                        const SizedBox(height: AppConstants.spaceXL),
+                        _buildScholarshipsSection(),
+                        const SizedBox(height: AppConstants.spaceXL),
+                        _buildCoursesSection(),
+                        const SizedBox(height: AppConstants.spaceXL),
+                        _buildApplySection(),
+                        const SizedBox(height: AppConstants.spaceXL),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -664,28 +678,28 @@ class _DynamicUniversityPageState extends State<DynamicUniversityPage>
       children: [
         _buildFilterChip(
           'All Types',
-          _selectedScholarshipType == null,
-          () => setState(() => _selectedScholarshipType = null),
+          _selectedScholarshipFilter == null,
+          () => setState(() => _selectedScholarshipFilter = null),
         ),
         _buildFilterChip(
           'International',
-          _selectedScholarshipType == 'International',
-          () => setState(() => _selectedScholarshipType = 'International'),
+          _selectedScholarshipFilter == 'International',
+          () => setState(() => _selectedScholarshipFilter = 'International'),
         ),
         _buildFilterChip(
           'Merit-based',
-          _selectedScholarshipType == 'Merit',
-          () => setState(() => _selectedScholarshipType = 'Merit'),
+          _selectedScholarshipFilter == 'Merit',
+          () => setState(() => _selectedScholarshipFilter = 'Merit'),
         ),
         _buildFilterChip(
           'Full Funding',
-          _selectedFunding == 'Full Funding',
-          () => setState(() => _selectedFunding = 'Full Funding'),
+          _selectedScholarshipFilter == 'Full Funding',
+          () => setState(() => _selectedScholarshipFilter = 'Full Funding'),
         ),
         _buildFilterChip(
           'Partial Funding',
-          _selectedFunding == 'Partial Funding',
-          () => setState(() => _selectedFunding = 'Partial Funding'),
+          _selectedScholarshipFilter == 'Partial Funding',
+          () => setState(() => _selectedScholarshipFilter = 'Partial Funding'),
         ),
       ],
     );
@@ -697,29 +711,29 @@ class _DynamicUniversityPageState extends State<DynamicUniversityPage>
       runSpacing: AppConstants.spaceS,
       children: [
         _buildFilterChip(
-          'All Levels',
-          _selectedCourseLevel == null,
-          () => setState(() => _selectedCourseLevel = null),
+          'All Courses',
+          _selectedCourseFilter == null,
+          () => setState(() => _selectedCourseFilter = null),
         ),
         _buildFilterChip(
           'Undergraduate',
-          _selectedCourseLevel == 'Undergraduate',
-          () => setState(() => _selectedCourseLevel = 'Undergraduate'),
+          _selectedCourseFilter == 'Undergraduate',
+          () => setState(() => _selectedCourseFilter = 'Undergraduate'),
         ),
         _buildFilterChip(
           'Masters',
-          _selectedCourseLevel == 'Masters',
-          () => setState(() => _selectedCourseLevel = 'Masters'),
+          _selectedCourseFilter == 'Masters',
+          () => setState(() => _selectedCourseFilter = 'Masters'),
         ),
         _buildFilterChip(
           'Computer Science',
-          _selectedCourseField == 'Computer Science',
-          () => setState(() => _selectedCourseField = 'Computer Science'),
+          _selectedCourseFilter == 'Computer Science',
+          () => setState(() => _selectedCourseFilter = 'Computer Science'),
         ),
         _buildFilterChip(
           'Engineering',
-          _selectedCourseField == 'Engineering',
-          () => setState(() => _selectedCourseField = 'Engineering'),
+          _selectedCourseFilter == 'Engineering',
+          () => setState(() => _selectedCourseFilter = 'Engineering'),
         ),
       ],
     );
@@ -754,15 +768,10 @@ class _DynamicUniversityPageState extends State<DynamicUniversityPage>
   List<Scholarship> _getFilteredScholarships() {
     List<Scholarship> filtered = scholarships;
     
-    if (_selectedScholarshipType != null) {
+    if (_selectedScholarshipFilter != null) {
       filtered = filtered.where((s) => 
-        s.type.toLowerCase().contains(_selectedScholarshipType!.toLowerCase())
-      ).toList();
-    }
-    
-    if (_selectedFunding != null) {
-      filtered = filtered.where((s) => 
-        s.weightage.toLowerCase().contains(_selectedFunding!.toLowerCase())
+        s.type.toLowerCase().contains(_selectedScholarshipFilter!.toLowerCase()) ||
+        s.weightage.toLowerCase().contains(_selectedScholarshipFilter!.toLowerCase())
       ).toList();
     }
     
@@ -772,15 +781,10 @@ class _DynamicUniversityPageState extends State<DynamicUniversityPage>
   List<Course> _getFilteredCourses() {
     List<Course> filtered = courses;
     
-    if (_selectedCourseLevel != null) {
+    if (_selectedCourseFilter != null) {
       filtered = filtered.where((c) => 
-        c.level.toLowerCase().contains(_selectedCourseLevel!.toLowerCase())
-      ).toList();
-    }
-    
-    if (_selectedCourseField != null) {
-      filtered = filtered.where((c) => 
-        c.fieldOfStudy.toLowerCase().contains(_selectedCourseField!.toLowerCase())
+        c.level.toLowerCase().contains(_selectedCourseFilter!.toLowerCase()) ||
+        c.fieldOfStudy.toLowerCase().contains(_selectedCourseFilter!.toLowerCase())
       ).toList();
     }
     
@@ -925,23 +929,7 @@ class _DynamicUniversityPageState extends State<DynamicUniversityPage>
                         Navigator.of(context).pop(); // Close dialog first
                         
                         // Open course URL if available
-                        final url = course.url;
-                        if (url.isNotEmpty) {
-                          try {
-                            if (await canLaunchUrl(Uri.parse(url))) {
-                              await launchUrl(
-                                Uri.parse(url),
-                                mode: LaunchMode.externalApplication,
-                              );
-                            } else {
-                              _showErrorSnackBar('Could not open course page');
-                            }
-                          } catch (e) {
-                            _showErrorSnackBar('Error opening course page');
-                          }
-                        } else {
-                          _showErrorSnackBar('Course page URL not available');
-                        }
+                        await _launchCourseUrl(course.url);
                       },
                       icon: const Icon(Icons.open_in_new, color: Colors.white),
                       label: const Text(
@@ -998,6 +986,39 @@ class _DynamicUniversityPageState extends State<DynamicUniversityPage>
         ],
       ),
     );
+  }
+
+  Future<void> _launchCourseUrl(String url) async {
+    try {
+      // Check if URL is empty or null
+      if (url.isEmpty) {
+        _showErrorSnackBar('Course page URL not available');
+        return;
+      }
+
+      // Clean and validate URL
+      String cleanUrl = url.trim();
+      
+      // Add protocol if missing
+      if (!cleanUrl.startsWith('http://') && !cleanUrl.startsWith('https://')) {
+        cleanUrl = 'https://$cleanUrl';
+      }
+
+      // Parse URL to validate format
+      final uri = Uri.tryParse(cleanUrl);
+      if (uri == null) {
+        _showErrorSnackBar('Invalid course page URL format');
+        return;
+      }
+
+      // Launch URL directly (skip canLaunchUrl as it can be unreliable)
+      await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
+    } catch (e) {
+      _showErrorSnackBar('Error opening course page');
+    }
   }
 
   void _showErrorSnackBar(String message) {

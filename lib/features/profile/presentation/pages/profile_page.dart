@@ -7,11 +7,10 @@ import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/services/favorites_service.dart';
 import '../../../../core/services/connections_service.dart';
+import '../../../../core/services/navigation_service.dart';
 import '../../../../shared/widgets/buttons/modern_buttons.dart';
 import '../widgets/profile_stat_card.dart';
 import '../widgets/profile_option_card.dart';
-import '../../../community/presentation/pages/community_feed_page.dart';
-import '../../../community/presentation/pages/peer_connect_page.dart';
 import '../../../../core/services/storage_service.dart';
 import '../../../../core/services/auth_service.dart';
 import '../../../../core/models/user.dart';
@@ -570,12 +569,8 @@ class _ProfilePageState extends State<ProfilePage>
   }
 
   void _navigateToCommunityFeed() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const CommunityFeedPage(),
-      ),
-    );
+    // Switch to community tab instead of pushing new page
+    NavigationService.navigateToCommunity();
   }
 
   void _navigateToFavorites() async {

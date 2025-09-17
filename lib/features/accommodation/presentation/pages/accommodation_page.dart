@@ -7,10 +7,10 @@ import 'package:image_picker/image_picker.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/app_constants.dart';
+import '../../../../core/services/navigation_service.dart';
 import '../../../../shared/widgets/buttons/modern_buttons.dart';
 import '../../../../shared/widgets/inputs/modern_search_bar.dart';
 import '../widgets/accommodation_card.dart';
-import '../../../profile/presentation/pages/profile_page.dart';
 import '../../../../core/services/storage_service.dart';
 import '../../../../core/services/auth_service.dart';
 import '../../../../core/services/accommodation_api_service.dart';
@@ -238,21 +238,20 @@ class _AccommodationPageState extends State<AccommodationPage>
         
         // Get user's accommodations WITH booked posts included and all filters applied
         // My Listings should show user posts with all filters except status filtering
+        // Note: Removing facilities from backend filter as it's handled better on frontend
         final userAccommodations = await _apiService.getUserAccommodations(
           location: _selectedCity != 'All Cities' ? _selectedCity : null,
           maxRent: _priceRange[1] > 0 ? _priceRange[1] : null,
           minRent: _priceRange[0] > 0 ? _priceRange[0] : null,
           genderPreference: _selectedGender != 'Any' ? _selectedGender : null,
           roomType: _selectedRoomType != 'All Types' ? _selectedRoomType : null,
-          facilities: _selectedFacilities.isNotEmpty ? _selectedFacilities : null,
+          facilities: null, // Let frontend handle facilities filtering
           availableFrom: _availableFrom,
           availableTo: _availableTo,
           limit: 50,
           offset: 0,
           includeBooked: true,
         );
-
-        print('✅ Loaded ${userAccommodations.length} user accommodations from API');
         
         setState(() {
           _userAccommodations = userAccommodations;
@@ -398,6 +397,7 @@ class _AccommodationPageState extends State<AccommodationPage>
     if (_selectedFacilities.isNotEmpty) {
       listings = listings.where((l) {
         final facilities = List<String>.from(l['facilities'] ?? []);
+        
         // Convert both selected and available facilities to lowercase for case-insensitive comparison
         final facilitiesLower = facilities.map((f) => f.toLowerCase().trim()).toList();
         final selectedFacilitiesLower = _selectedFacilities.map((f) => f.toLowerCase().trim()).toList();
@@ -507,12 +507,7 @@ class _AccommodationPageState extends State<AccommodationPage>
                           child: IconButton(
                             onPressed: () {
                               // Navigate to profile page
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const ProfilePage(),
-                                ),
-                              );
+                              NavigationService.navigateToProfile();
                             },
                             icon: Icon(
                               Icons.person,

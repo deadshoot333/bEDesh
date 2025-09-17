@@ -1,9 +1,12 @@
 import 'dart:convert';
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/services/storage_service.dart';
+import '../../../../core/services/navigation_service.dart';
 import '../../../../core/models/user.dart';
 import '../../../../shared/widgets/buttons/modern_buttons.dart';
 import '../../../../shared/widgets/chips/modern_chip.dart';
@@ -11,7 +14,6 @@ import '../widgets/post_card.dart';
 import '../widgets/create_post_dialog.dart';
 import '../widgets/comments_dialog.dart';
 import '../../domain/models/post.dart';
-import '../../../profile/presentation/pages/profile_page.dart';
 import 'package:http/http.dart' as http;
 import '../../../../core/constants/api_constants.dart';
 
@@ -44,6 +46,7 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
   String _userName = 'User';
   String _userLocation = 'Unknown Location';
   String _userId = '';
+  String? _profileImagePath;
 
   String? _authToken;
 
@@ -68,9 +71,11 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
   void _loadUserData() {
     final user = StorageService.getUserData();
     final token = StorageService.getAccessToken(); // Ensure this returns a JWT
+    final profileImagePath = StorageService.getProfilePhotoPath();
     setState(() {
       currentUser = user;
       _authToken = token;
+      _profileImagePath = profileImagePath;
       if (user != null) {
         _userName = user.name;
         _userLocation = '${user.city}, ${user.university}';
@@ -193,27 +198,45 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
     super.dispose();
   }
 
+  ImageProvider? _getProfileImageProvider() {
+    if (_profileImagePath != null) {
+      if (kIsWeb) {
+        // For web, use AssetImage as fallback
+        return null; // Will fall back to showing first letter
+      } else {
+        try {
+          return FileImage(File(_profileImagePath!));
+        } catch (e) {
+          return null; // Will fall back to showing first letter
+        }
+      }
+    }
+    return null; // Will fall back to showing first letter
+  }
+
   // UI
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.backgroundPrimary,
-      body: FadeTransition(
-        opacity: _fadeAnimation,
-        child: Column(
-          children: [
-            _buildModernHeader(),
-            _buildActionsBar(context),
-            _buildFilterRow(),
-            Expanded(
-              child:
-                  isLoading
-                      ? const Center(child: CircularProgressIndicator())
-                      : (filteredPosts.isEmpty
-                          ? _buildEmptyState()
-                          : _buildFeedList()),
-            ),
-          ],
+      body: SafeArea(
+        child: FadeTransition(
+          opacity: _fadeAnimation,
+          child: Column(
+            children: [
+              _buildModernHeader(),
+              _buildActionsBar(context),
+              _buildFilterRow(),
+              Expanded(
+                child:
+                    isLoading
+                        ? const Center(child: CircularProgressIndicator())
+                        : (filteredPosts.isEmpty
+                            ? _buildEmptyState()
+                            : _buildFeedList()),
+              ),
+            ],
+          ),
         ),
       ),
       floatingActionButton: FloatingActionButton(
@@ -233,11 +256,7 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
       child: Row(
         children: [
           GestureDetector(
-            onTap:
-                () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const ProfilePage()),
-                ),
+            onTap: () => NavigationService.navigateToProfile(),
             child: Container(
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
@@ -249,13 +268,16 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
               child: CircleAvatar(
                 radius: 20,
                 backgroundColor: AppColors.primary.withOpacity(0.1),
-                child: Text(
-                  _userName.isNotEmpty ? _userName.toUpperCase() : 'U',
-                  style: AppTextStyles.bodyLarge.copyWith(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                backgroundImage: _getProfileImageProvider(),
+                child: _getProfileImageProvider() == null
+                    ? Text(
+                        _userName.isNotEmpty ? _userName[0].toUpperCase() : 'U',
+                        style: AppTextStyles.bodyLarge.copyWith(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      )
+                    : null,
               ),
             ),
           ),
@@ -348,6 +370,7 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
         ),
       ),
       child: SafeArea(
+        bottom: false,
         child: Padding(
           padding: const EdgeInsets.all(AppConstants.spaceM),
           child: Row(
@@ -395,12 +418,7 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
                 backgroundColor: AppColors.textOnPrimary.withOpacity(0.2),
                 iconColor: AppColors.textOnPrimary,
                 onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const ProfilePage(),
-                    ),
-                  );
+                  NavigationService.navigateToProfile();
                 },
                 tooltip: 'Profile',
               ),
@@ -437,38 +455,49 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
   void _filterByTag(String tag) => setState(() => _selectedFilter = tag);
 
   Widget _buildEmptyState() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(AppConstants.spaceXL),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.search_off, size: 64, color: AppColors.textTertiary),
-            const SizedBox(height: AppConstants.spaceL),
-            Text(
-              'No posts found',
-              style: AppTextStyles.h4.copyWith(
-                color: AppColors.textSecondary,
-                fontWeight: FontWeight.w600,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: constraints.maxHeight,
+            ),
+            child: IntrinsicHeight(
+              child: Padding(
+                padding: const EdgeInsets.all(AppConstants.spaceXL),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.search_off, size: 64, color: AppColors.textTertiary),
+                    const SizedBox(height: AppConstants.spaceL),
+                    Text(
+                      'No posts found',
+                      style: AppTextStyles.h4.copyWith(
+                        color: AppColors.textSecondary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: AppConstants.spaceM),
+                    Text(
+                      'No posts match the filter "$_selectedFilter".\nTry selecting a different filter or check back later.',
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        color: AppColors.textTertiary,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: AppConstants.spaceXL),
+                    PrimaryButton(
+                      text: 'Clear Filter',
+                      size: ButtonSize.medium,
+                      onPressed: () => setState(() => _selectedFilter = 'All'),
+                    ),
+                  ],
+                ),
               ),
             ),
-            const SizedBox(height: AppConstants.spaceM),
-            Text(
-              'No posts match the filter "$_selectedFilter".\nTry selecting a different filter or check back later.',
-              style: AppTextStyles.bodyMedium.copyWith(
-                color: AppColors.textTertiary,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: AppConstants.spaceXL),
-            PrimaryButton(
-              text: 'Clear Filter',
-              size: ButtonSize.medium,
-              onPressed: () => setState(() => _selectedFilter = 'All'),
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
