@@ -95,10 +95,10 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
       }
 
       final response = await http.get(
-        Uri.parse('$_baseUrl/api/community/get-posts'),
+        Uri.parse('$_baseUrl/api/community/get-posts/${currentUser!.id}'),
         headers: {
-          'Content-Type': 'application/json',
           'Authorization': 'Bearer $_authToken',
+          'Content-Type': 'application/json',
         },
       );
 
@@ -141,8 +141,8 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
       final response = await http.post(
         url,
         headers: {
-          'Content-Type': 'application/json',
           'Authorization': 'Bearer $_authToken',
+          'Content-Type': 'application/json',
         },
         body: json.encode(post.toJson()),
       );
@@ -169,7 +169,8 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
       ).showSnackBar(SnackBar(content: Text('Error adding post: $e')));
     }
   }
-// #TODO:Fix Post connection
+
+  // #TODO:Fix Post connection
   // Filters
   List<Post> get filteredPosts {
     if (_selectedFilter == 'All') return posts;

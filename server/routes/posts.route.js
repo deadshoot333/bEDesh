@@ -1,12 +1,19 @@
 const express = require("express");
-const { getPosts, addPost, userResult,getUserPostsCount } = require("../models/post.model");
+const {
+  getPosts,
+  addPost,
+  userResult,
+  getUserPostsCount,
+} = require("../models/post.model");
 const authenticateToken = require("../middlewares/auth.middleware.js");
 const router = express.Router();
 
-router.get("/get-posts", authenticateToken, async (req, res) => {
-  const user_id  = req.user.id;
+router.get("/get-posts/:id", authenticateToken, async (req, res) => {
+  // const user_id  = req.user.id;
+  const { id } = req.params;
+  console.log(`UserID:${id}\n`);
   try {
-    const posts = await getPosts(user_id);
+    const posts = await getPosts(id);
     res.json({ posts });
   } catch (error) {
     console.error("Error gettting posts:", error);
