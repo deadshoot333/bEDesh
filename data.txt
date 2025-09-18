@@ -1,0 +1,21 @@
+Data of scholarhsip 
+create table public.scholarships (
+  name text not null,
+  university_name text null,
+  type text null,
+  weightage text null,
+  degree_type text null,
+  url_scolarship text null,
+  constraint scholarships_pkey primary key (name),
+  constraint scholarships_university_name_fkey foreign KEY (university_name) references universities (name) on update CASCADE on delete CASCADE
+) TABLESPACE pg_default;
+create table public.universities (
+  name text not null,
+  country text null,
+  image_url text null,
+  url text null,
+  description text null,
+  "Rank" text null,
+  constraint universities_pkey primary key (name),
+  constraint universities_country_fkey foreign KEY (country) references countries (name) on update CASCADE on delete CASCADE
+) TABLESPACE pg_default;
