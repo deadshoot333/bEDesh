@@ -655,12 +655,68 @@ class _DynamicUniversityPageState extends State<DynamicUniversityPage>
           PrimaryButton(
             text: 'Apply Now',
             onPressed: () async {
-              const url = 'https://www.ox.ac.uk/';
-    if (await canLaunchUrl(Uri.parse(url))) {
-      await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
-    } else {
-      throw 'Could not launch $url';
-    }
+              if (university?.websiteUrl != null && university!.websiteUrl.isNotEmpty) {
+                final url = university!.websiteUrl;
+                try {
+                  final uri = Uri.parse(url);
+                  bool launched = false;
+                  
+                  // Try different launch modes for better mobile compatibility
+                  if (await canLaunchUrl(uri)) {
+                    // First try: External application (opens in browser app)
+                    try {
+                      launched = await launchUrl(
+                        uri, 
+                        mode: LaunchMode.externalApplication,
+                      );
+                    } catch (e) {
+                      print('External application launch failed: $e');
+                    }
+                    
+                    // Fallback: Platform default
+                    if (!launched) {
+                      try {
+                        launched = await launchUrl(
+                          uri, 
+                          mode: LaunchMode.platformDefault,
+                        );
+                      } catch (e) {
+                        print('Platform default launch failed: $e');
+                      }
+                    }
+                  }
+                  
+                  if (!launched) {
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Could not open university website'),
+                          backgroundColor: AppColors.error,
+                        ),
+                      );
+                    }
+                  }
+                } catch (e) {
+                  print('Error launching URL: $e');
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Error opening university website'),
+                        backgroundColor: AppColors.error,
+                      ),
+                    );
+                  }
+                }
+              } else {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('University website URL not available'),
+                      backgroundColor: AppColors.error,
+                    ),
+                  );
+                }
+              }
             },
             backgroundColor: Colors.white,
             textColor: AppColors.primary,

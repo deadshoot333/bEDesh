@@ -38,6 +38,9 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
     
     // Initialize navigation service
     NavigationService.init(_navigatorKey, _switchToTab);
+    
+    // Set initial tab index in NavigationService
+    NavigationService.switchToTab(_currentIndex);
   }
 
   void _switchToTab(int index) {
@@ -55,7 +58,7 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
       body: _pages[_currentIndex],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
-        onTap: _switchToTab,
+        onTap: (index) => NavigationService.switchToTab(index),
         selectedItemColor: AppColors.primary,
         unselectedItemColor: AppColors.textSecondary,
         backgroundColor: AppColors.backgroundCard,

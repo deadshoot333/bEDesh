@@ -481,7 +481,13 @@ class _AccommodationPageState extends State<AccommodationPage>
                                   size: 20,
                                 ),
                                 onPressed: () {
-                                  Navigator.pop(context);
+                                  // Check if we can pop (i.e., there's a previous route)
+                                  if (Navigator.of(context).canPop()) {
+                                    Navigator.pop(context);
+                                  } else {
+                                    // If we can't pop (accessed via bottom nav), go to previous tab
+                                    NavigationService.navigateBackToPreviousTab();
+                                  }
                                 },
                               ),
                             ),

@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 class NavigationService {
   static GlobalKey<NavigatorState>? _navigatorKey;
   static Function(int)? _switchToTab;
+  static int _currentTabIndex = 0;
+  static int _previousTabIndex = 0;
 
   /// Set the navigator key and tab switching function
   static void init(GlobalKey<NavigatorState> navigatorKey, Function(int) switchToTab) {
@@ -14,9 +16,22 @@ class NavigationService {
 
   /// Switch to a specific tab in MainNavigationPage
   static void switchToTab(int index) {
+    _previousTabIndex = _currentTabIndex;
+    _currentTabIndex = index;
     if (_switchToTab != null) {
       _switchToTab!(index);
     }
+  }
+
+  /// Get the current tab index
+  static int get currentTabIndex => _currentTabIndex;
+
+  /// Get the previous tab index
+  static int get previousTabIndex => _previousTabIndex;
+
+  /// Navigate back to the previous tab
+  static void navigateBackToPreviousTab() {
+    switchToTab(_previousTabIndex);
   }
 
   /// Navigate to profile tab (index 4)
