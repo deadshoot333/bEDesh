@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
-import 'dart:math' as math;
 import 'dart:io';
 import 'dart:async';
 import 'package:image_picker/image_picker.dart';
@@ -2028,15 +2027,26 @@ class _PostAccommodationFormState extends State<_PostAccommodationForm> {
   @override
   Widget build(BuildContext context) {
     final screenSize = MediaQuery.of(context).size;
-    final isWideScreen = screenSize.width > 800;
-    final dialogWidth = isWideScreen ? 600.0 : screenSize.width * 0.95;
-    final dialogHeight = screenSize.height * (isWideScreen ? 0.8 : 0.95);
+    final isMobile = screenSize.width < 768;
+    final isTablet = screenSize.width >= 768 && screenSize.width < 1024;
+    
+    // Mobile: Full screen with minimal padding
+    // Tablet: Large dialog with padding
+    // Desktop: Fixed width dialog
+    final dialogWidth = isMobile 
+        ? screenSize.width * 0.95 
+        : isTablet 
+            ? screenSize.width * 0.8 
+            : 600.0;
+    final dialogHeight = isMobile 
+        ? screenSize.height * 0.95 
+        : screenSize.height * 0.85;
     
     return Dialog(
       backgroundColor: Colors.transparent,
       insetPadding: EdgeInsets.symmetric(
-        horizontal: isWideScreen ? 40 : 10,
-        vertical: isWideScreen ? 40 : 20,
+        horizontal: isMobile ? 8 : isTablet ? 20 : 40,
+        vertical: isMobile ? 16 : 20,
       ),
       child: Container(
         width: dialogWidth,
@@ -2083,17 +2093,12 @@ class _PostAccommodationFormState extends State<_PostAccommodationForm> {
             // Form Content
             Expanded(
               child: SingleChildScrollView(
-                scrollDirection: Axis.vertical,
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Container(
-                    width: 500, // Fixed width to ensure horizontal scrolling
-                    padding: const EdgeInsets.all(AppConstants.spaceL),
-                      child: Form(
-                        key: _formKey,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
+                padding: EdgeInsets.all(isMobile ? AppConstants.spaceM : AppConstants.spaceL),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                       // Title Field
                       _buildSectionTitle('Property Title'),
                       TextFormField(
@@ -2111,154 +2116,227 @@ class _PostAccommodationFormState extends State<_PostAccommodationForm> {
                       
                       // Location Section
                       _buildSectionTitle('Location'),
-                      Row(
-                        children: [
-                          SizedBox(
-                            width: 200,
-                            child: _buildDropdownField(
-                              'Country',
-                              _selectedCountry,
-                              widget.countries.where((c) => c != 'All Countries').toList(),
-                              (value) {
-                                setState(() {
-                                  _selectedCountry = value!;
-                                  // Set city to first available city for the selected country
-                                  final availableCities = widget.citiesByCountry[_selectedCountry] ?? [];
-                                  _selectedCity = availableCities.isNotEmpty ? availableCities.first : 'London';
-                                });
-                              },
-                            ),
+                      // Location Section - Responsive Layout
+                      isMobile 
+                        ? Column(
+                            children: [
+                              _buildDropdownField(
+                                'Country',
+                                _selectedCountry,
+                                widget.countries.where((c) => c != 'All Countries').toList(),
+                                (value) {
+                                  setState(() {
+                                    _selectedCountry = value!;
+                                    // Set city to first available city for the selected country
+                                    final availableCities = widget.citiesByCountry[_selectedCountry] ?? [];
+                                    _selectedCity = availableCities.isNotEmpty ? availableCities.first : 'London';
+                                  });
+                                },
+                              ),
+                              const SizedBox(height: AppConstants.spaceM),
+                              _buildDropdownField(
+                                'City',
+                                _selectedCity,
+                                widget.citiesByCountry[_selectedCountry] ?? ['London'],
+                                (value) {
+                                  setState(() {
+                                    _selectedCity = value!;
+                                  });
+                                },
+                              ),
+                            ],
+                          )
+                        : Row(
+                            children: [
+                              Expanded(
+                                child: _buildDropdownField(
+                                  'Country',
+                                  _selectedCountry,
+                                  widget.countries.where((c) => c != 'All Countries').toList(),
+                                  (value) {
+                                    setState(() {
+                                      _selectedCountry = value!;
+                                      // Set city to first available city for the selected country
+                                      final availableCities = widget.citiesByCountry[_selectedCountry] ?? [];
+                                      _selectedCity = availableCities.isNotEmpty ? availableCities.first : 'London';
+                                    });
+                                  },
+                                ),
+                              ),
+                              const SizedBox(width: AppConstants.spaceM),
+                              Expanded(
+                                child: _buildDropdownField(
+                                  'City',
+                                  _selectedCity,
+                                  widget.citiesByCountry[_selectedCountry] ?? ['London'],
+                                  (value) {
+                                    setState(() {
+                                      _selectedCity = value!;
+                                    });
+                                  },
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(width: AppConstants.spaceM),
-                          SizedBox(
-                            width: 200,
-                            child: _buildDropdownField(
-                              'City',
-                              _selectedCity,
-                              widget.citiesByCountry[_selectedCountry] ?? ['London'],
-                              (value) {
-                                setState(() {
-                                  _selectedCity = value!;
-                                });
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
                       
                       const SizedBox(height: AppConstants.spaceL),
                       
                       // Property Details Section
                       _buildSectionTitle('Property Details'),
-                      Row(
-                        children: [
-                          SizedBox(
-                            width: 200,
-                            child: _buildDropdownField(
-                              'Room Type',
-                              _selectedRoomType,
-                              widget.roomTypes,
-                              (value) {
-                                setState(() {
-                                  _selectedRoomType = value!;
-                                });
-                              },
-                            ),
+                      // Property Details Section - Responsive Layout
+                      isMobile 
+                        ? Column(
+                            children: [
+                              _buildDropdownField(
+                                'Room Type',
+                                _selectedRoomType,
+                                widget.roomTypes,
+                                (value) {
+                                  setState(() {
+                                    _selectedRoomType = value!;
+                                  });
+                                },
+                              ),
+                              const SizedBox(height: AppConstants.spaceM),
+                              TextFormField(
+                                controller: _rentController,
+                                decoration: _buildInputDecoration('Monthly rent (\$)'),
+                                keyboardType: TextInputType.number,
+                                validator: (value) {
+                                  if (value == null || value.trim().isEmpty) {
+                                    return 'Please enter rent amount';
+                                  }
+                                  final rent = double.tryParse(value);
+                                  if (rent == null) {
+                                    return 'Please enter a valid number';
+                                  }
+                                  if (rent < 0) {
+                                    return 'Rent cannot be negative';
+                                  }
+                                  if (rent > 10000) {
+                                    return 'Rent cannot exceed \$10,000';
+                                  }
+                                  return null;
+                                },
+                              ),
+                            ],
+                          )
+                        : Row(
+                            children: [
+                              Expanded(
+                                child: _buildDropdownField(
+                                  'Room Type',
+                                  _selectedRoomType,
+                                  widget.roomTypes,
+                                  (value) {
+                                    setState(() {
+                                      _selectedRoomType = value!;
+                                    });
+                                  },
+                                ),
+                              ),
+                              const SizedBox(width: AppConstants.spaceM),
+                              Expanded(
+                                child: TextFormField(
+                                  controller: _rentController,
+                                  decoration: _buildInputDecoration('Monthly rent (\$)'),
+                                  keyboardType: TextInputType.number,
+                                  validator: (value) {
+                                    if (value == null || value.trim().isEmpty) {
+                                      return 'Please enter rent amount';
+                                    }
+                                    final rent = double.tryParse(value);
+                                    if (rent == null) {
+                                      return 'Please enter a valid number';
+                                    }
+                                    if (rent < 0) {
+                                      return 'Rent cannot be negative';
+                                    }
+                                    if (rent > 10000) {
+                                      return 'Rent cannot exceed \$10,000';
+                                    }
+                                    return null;
+                                  },
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(width: AppConstants.spaceM),
-                          SizedBox(
-                            width: 200,
-                            child: TextFormField(
-                              controller: _rentController,
-                              decoration: _buildInputDecoration('Monthly rent (\$)'),
-                              keyboardType: TextInputType.number,
-                              validator: (value) {
-                                if (value == null || value.trim().isEmpty) {
-                                  return 'Please enter rent amount';
-                                }
-                                final rent = double.tryParse(value);
-                                if (rent == null) {
-                                  return 'Please enter a valid number';
-                                }
-                                if (rent < 0) {
-                                  return 'Rent cannot be negative';
-                                }
-                                if (rent > 10000) {
-                                  return 'Rent cannot exceed \$10,000';
-                                }
-                                return null;
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
                       
                       const SizedBox(height: AppConstants.spaceL),
                       
                       // Availability Section
                       _buildSectionTitle('Availability'),
-                      Row(
-                        children: [
-                          SizedBox(
-                            width: 200,
-                            child: _buildDateField(
-                              'Available From',
-                              _availableFrom,
-                              (date) => setState(() => _availableFrom = date),
-                            ),
+                      // Availability Section - Responsive Layout
+                      isMobile 
+                        ? Column(
+                            children: [
+                              _buildDateField(
+                                'Available From',
+                                _availableFrom,
+                                (date) => setState(() => _availableFrom = date),
+                              ),
+                              const SizedBox(height: AppConstants.spaceM),
+                              _buildDateField(
+                                'Available Until',
+                                _availableTo,
+                                (date) => setState(() => _availableTo = date),
+                              ),
+                            ],
+                          )
+                        : Row(
+                            children: [
+                              Expanded(
+                                child: _buildDateField(
+                                  'Available From',
+                                  _availableFrom,
+                                  (date) => setState(() => _availableFrom = date),
+                                ),
+                              ),
+                              const SizedBox(width: AppConstants.spaceM),
+                              Expanded(
+                                child: _buildDateField(
+                                  'Available Until',
+                                  _availableTo,
+                                  (date) => setState(() => _availableTo = date),
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(width: AppConstants.spaceM),
-                          SizedBox(
-                            width: 200,
-                            child: _buildDateField(
-                              'Available Until',
-                              _availableTo,
-                              (date) => setState(() => _availableTo = date),
-                            ),
-                          ),
-                        ],
-                      ),
                       
                       const SizedBox(height: AppConstants.spaceL),
                       
                       // Contact Email Field
                       _buildSectionTitle('Contact Email *'),
-                      SizedBox(
-                        width: 416, // 200 + 16 + 200 to match the width of two fields above
-                        child: TextFormField(
-                          controller: _contactEmailController,
-                          decoration: _buildInputDecoration('e.g., john.doe@email.com'),
-                          keyboardType: TextInputType.emailAddress,
-                          autovalidateMode: AutovalidateMode.onUserInteraction,
-                          validator: (value) {
-                            if (value == null || value.trim().isEmpty) {
-                              return 'Please enter your contact email';
-                            }
-                            // Basic email validation
-                            if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
-                              return 'Please enter a valid email address';
-                            }
-                            return null;
-                          },
-                        ),
+                      TextFormField(
+                        controller: _contactEmailController,
+                        decoration: _buildInputDecoration('e.g., john.doe@email.com'),
+                        keyboardType: TextInputType.emailAddress,
+                        autovalidateMode: AutovalidateMode.onUserInteraction,
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Please enter your contact email';
+                          }
+                          // Basic email validation
+                          if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                            return 'Please enter a valid email address';
+                          }
+                          return null;
+                        },
                       ),
                       
                       const SizedBox(height: AppConstants.spaceL),
                       
                       // Gender Preference
                       _buildSectionTitle('Gender Preference'),
-                      SizedBox(
-                        width: 416, // Full width to match contact email
-                        child: _buildDropdownField(
-                          'Gender Preference',
-                          _selectedGender,
-                          widget.genderOptions,
-                          (value) {
-                            setState(() {
-                              _selectedGender = value!;
-                            });
-                          },
-                        ),
+                      _buildDropdownField(
+                        'Gender Preference',
+                        _selectedGender,
+                        widget.genderOptions,
+                        (value) {
+                          setState(() {
+                            _selectedGender = value!;
+                          });
+                        },
                       ),
                       
                       const SizedBox(height: AppConstants.spaceL),
@@ -2336,8 +2414,6 @@ class _PostAccommodationFormState extends State<_PostAccommodationForm> {
                         ),
                       ),
                     ],
-                  ),
-                ),
                   ),
                 ),
               ),
@@ -2683,11 +2759,14 @@ class _PostAccommodationFormState extends State<_PostAccommodationForm> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'Selected Photos:',
-                style: AppTextStyles.labelMedium.copyWith(
-                  color: AppColors.textSecondary,
-                  fontWeight: FontWeight.w600,
+              Expanded(
+                child: Text(
+                  'Selected Photos:',
+                  style: AppTextStyles.labelMedium.copyWith(
+                    color: AppColors.textSecondary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
               TextButton.icon(
@@ -3370,15 +3449,26 @@ class _AccommodationDetailsDialogState extends State<_AccommodationDetailsDialog
   @override
   Widget build(BuildContext context) {
     final screenSize = MediaQuery.of(context).size;
-    final isWideScreen = screenSize.width > 800;
-    final dialogWidth = isWideScreen ? 700.0 : screenSize.width * 0.95;
-    final dialogHeight = screenSize.height * (isWideScreen ? 0.85 : 0.9);
+    final isMobile = screenSize.width < 768;
+    final isTablet = screenSize.width >= 768 && screenSize.width < 1024;
+    
+    // Mobile: Full screen approach
+    // Tablet: Large dialog
+    // Desktop: Fixed width dialog
+    final dialogWidth = isMobile 
+        ? screenSize.width * 0.98 
+        : isTablet 
+            ? screenSize.width * 0.85 
+            : 700.0;
+    final dialogHeight = isMobile 
+        ? screenSize.height * 0.98 
+        : screenSize.height * 0.9;
 
     return Dialog(
       backgroundColor: Colors.transparent,
       insetPadding: EdgeInsets.symmetric(
-        horizontal: isWideScreen ? 40 : 10,
-        vertical: isWideScreen ? 30 : 20,
+        horizontal: isMobile ? 4 : isTablet ? 16 : 40,
+        vertical: isMobile ? 8 : 20,
       ),
       child: Container(
         width: dialogWidth,
@@ -3426,20 +3516,15 @@ class _AccommodationDetailsDialogState extends State<_AccommodationDetailsDialog
             // Scrollable content
             Expanded(
               child: SingleChildScrollView(
-                scrollDirection: Axis.vertical,
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Container(
-                    width: math.max(dialogWidth - 40, 600), // Ensure minimum width for horizontal scroll
-                    padding: const EdgeInsets.all(AppConstants.spaceL),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Photo Gallery Section
-                        if (_photos.isNotEmpty) _buildPhotoGallery(),
-                        if (_photos.isEmpty) _buildNoPhotosSection(),
-                        
-                        const SizedBox(height: AppConstants.spaceL),
+                padding: EdgeInsets.all(isMobile ? AppConstants.spaceM : AppConstants.spaceL),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Photo Gallery Section
+                    if (_photos.isNotEmpty) _buildPhotoGallery(),
+                    if (_photos.isEmpty) _buildNoPhotosSection(),
+                    
+                    const SizedBox(height: AppConstants.spaceL),
 
                         // Property Information
                         _buildPropertyInfo(),
@@ -3467,9 +3552,7 @@ class _AccommodationDetailsDialogState extends State<_AccommodationDetailsDialog
                         ],
                       ],
                     ),
-                  ),
                 ),
-              ),
             ),
           ],
         ),
@@ -4064,23 +4147,30 @@ class _AccommodationDetailsDialogState extends State<_AccommodationDetailsDialog
                 size: 20,
               ),
               const SizedBox(width: AppConstants.spaceS),
-              Text(
-                '👤 Posted by: ',
-                style: AppTextStyles.bodyMedium.copyWith(
-                  color: AppColors.textSecondary,
-                ),
-              ),
-              Text(
-                () {
-                  final userName = widget.listing['posted_by_name'] ?? widget.listing['postedByName'] ?? 'Anonymous User';
-                  print('🔍 USER NAME DEBUG: $userName');
-                  print('  posted_by_name: ${widget.listing['posted_by_name']}');
-                  print('  postedByName: ${widget.listing['postedByName']}');
-                  return userName;
-                }(),
-                style: AppTextStyles.bodyMedium.copyWith(
-                  color: AppColors.textPrimary,
-                  fontWeight: FontWeight.w500,
+              Expanded(
+                child: RichText(
+                  text: TextSpan(
+                    text: '👤 Posted by: ',
+                    style: AppTextStyles.bodyMedium.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                    children: [
+                      TextSpan(
+                        text: () {
+                          final userName = widget.listing['posted_by_name'] ?? widget.listing['postedByName'] ?? 'Anonymous User';
+                          print('🔍 USER NAME DEBUG: $userName');
+                          print('  posted_by_name: ${widget.listing['posted_by_name']}');
+                          print('  postedByName: ${widget.listing['postedByName']}');
+                          return userName;
+                        }(),
+                        style: AppTextStyles.bodyMedium.copyWith(
+                          color: AppColors.textPrimary,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
@@ -4096,17 +4186,24 @@ class _AccommodationDetailsDialogState extends State<_AccommodationDetailsDialog
                 size: 20,
               ),
               const SizedBox(width: AppConstants.spaceS),
-              Text(
-                '📆 Posted on: ',
-                style: AppTextStyles.bodyMedium.copyWith(
-                  color: AppColors.textSecondary,
-                ),
-              ),
-              Text(
-                formattedDate,
-                style: AppTextStyles.bodyMedium.copyWith(
-                  color: AppColors.textPrimary,
-                  fontWeight: FontWeight.w500,
+              Expanded(
+                child: RichText(
+                  text: TextSpan(
+                    text: '📆 Posted on: ',
+                    style: AppTextStyles.bodyMedium.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                    children: [
+                      TextSpan(
+                        text: formattedDate,
+                        style: AppTextStyles.bodyMedium.copyWith(
+                          color: AppColors.textPrimary,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
@@ -4429,13 +4526,27 @@ class _EditAccommodationDialogState extends State<EditAccommodationDialog> {
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 768;
+    final isTablet = screenWidth >= 768 && screenWidth < 1024;
     
-    // Reserve space for title, padding, and action buttons
-    final availableHeight = screenHeight * 0.75; // Use 75% instead of 85%
-    final dialogWidth = screenWidth > 600 ? 600.0 : screenWidth * 0.9;
+    // Mobile: Use most of the screen height
+    // Tablet: Use larger dialog
+    // Desktop: Fixed width dialog
+    final availableHeight = isMobile 
+        ? screenHeight * 0.95 
+        : screenHeight * 0.85;
+    final dialogWidth = isMobile 
+        ? screenWidth * 0.95 
+        : isTablet 
+            ? screenWidth * 0.8 
+            : 600.0;
     
     return Dialog(
       backgroundColor: Colors.transparent,
+      insetPadding: EdgeInsets.symmetric(
+        horizontal: isMobile ? 8 : isTablet ? 16 : 20,
+        vertical: isMobile ? 16 : 20,
+      ),
       child: Container(
         width: dialogWidth,
         constraints: BoxConstraints(
@@ -4488,7 +4599,7 @@ class _EditAccommodationDialogState extends State<EditAccommodationDialog> {
                   maxHeight: availableHeight,
                 ),
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(AppConstants.spaceL),
+                  padding: EdgeInsets.all(isMobile ? AppConstants.spaceM : AppConstants.spaceL),
                   child: Form(
                     key: _formKey,
                     child: Column(
