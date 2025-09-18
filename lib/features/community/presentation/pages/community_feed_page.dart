@@ -16,6 +16,7 @@ import '../widgets/comments_dialog.dart';
 import '../../domain/models/post.dart';
 import 'package:http/http.dart' as http;
 import '../../../../core/constants/api_constants.dart';
+import '../../../../MainNavigationPage.dart';
 
 class CommunityFeedPage extends StatefulWidget {
   const CommunityFeedPage({super.key});
@@ -269,15 +270,18 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
                 radius: 20,
                 backgroundColor: AppColors.primary.withOpacity(0.1),
                 backgroundImage: _getProfileImageProvider(),
-                child: _getProfileImageProvider() == null
-                    ? Text(
-                        _userName.isNotEmpty ? _userName[0].toUpperCase() : 'U',
-                        style: AppTextStyles.bodyLarge.copyWith(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      )
-                    : null,
+                child:
+                    _getProfileImageProvider() == null
+                        ? Text(
+                          _userName.isNotEmpty
+                              ? _userName[0].toUpperCase()
+                              : 'U',
+                          style: AppTextStyles.bodyLarge.copyWith(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        )
+                        : null,
               ),
             ),
           ),
@@ -336,6 +340,19 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
     );
   }
 
+  void _handleBackNavigation() {
+    // Check if we can pop (go back to previous page)
+    if (Navigator.of(context).canPop()) {
+      Navigator.of(context).pop();
+    } else {
+      // If no previous page (accessed from main nav tabs), go to home tab
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => const MainNavigationPage()),
+        (route) => false,
+      );
+    }
+  }
+
   Widget _buildFeedList() {
     return ListView.separated(
       padding: const EdgeInsets.symmetric(vertical: AppConstants.spaceS),
@@ -387,7 +404,7 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
                     color: AppColors.textOnPrimary,
                     size: 20,
                   ),
-                  onPressed: () => Navigator.pop(context),
+                  onPressed: () => _handleBackNavigation(),
                 ),
               ),
               Expanded(
@@ -459,16 +476,18 @@ class _CommunityFeedPageState extends State<CommunityFeedPage>
       builder: (context, constraints) {
         return SingleChildScrollView(
           child: ConstrainedBox(
-            constraints: BoxConstraints(
-              minHeight: constraints.maxHeight,
-            ),
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
             child: IntrinsicHeight(
               child: Padding(
                 padding: const EdgeInsets.all(AppConstants.spaceXL),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.search_off, size: 64, color: AppColors.textTertiary),
+                    Icon(
+                      Icons.search_off,
+                      size: 64,
+                      color: AppColors.textTertiary,
+                    ),
                     const SizedBox(height: AppConstants.spaceL),
                     Text(
                       'No posts found',
