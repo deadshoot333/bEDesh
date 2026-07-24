@@ -1,11 +1,18 @@
 # bEDesh — Study Abroad Guide & Community App
 
-<div style="display:flex; column-gap:2em; width:50%;height:auto;">
-<img src="screenshots/landing_page.png" alt="Landing Page" >
-<img src="screenshots/home_page.png" alt="Landing Page">
-</div>
+<!-- <div style="display:flex; column-gap:2em; width:50%;height:auto;"> -->
+<table>
+  <tr>
+    <td>
+      <img src="https://raw.githubusercontent.com/deadshoot333/bEDesh/refs/heads/main/screenshots/landing_page.png" alt="Landing Page" width=30% height=30%>
+    </td>
+    <td>
+      <img src="https://raw.githubusercontent.com/deadshoot333/bEDesh/refs/heads/main/screenshots/home_page.png" alt="Home Page" width=30% height=30%>
+    </td>
+  </tr>
+</table>
+<!-- </div> -->
 
-#
 
 **bEDesh** is a cross-platform mobile application that helps Bangladeshi students navigate the entire study-abroad journey — from discovering universities, courses, and scholarships, to finding verified accommodation and connecting with peers heading to the same city or campus.
 
