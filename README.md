@@ -1,5 +1,12 @@
 # bEDesh — Study Abroad Guide & Community App
 
+<div style="display:flex; column-gap:2em; width:50%;height:auto;">
+<img src="screenshots/landing_page.png" alt="Landing Page" >
+<img src="screenshots/home_page.png" alt="Landing Page">
+</div>
+
+#
+
 **bEDesh** is a cross-platform mobile application that helps Bangladeshi students navigate the entire study-abroad journey — from discovering universities, courses, and scholarships, to finding verified accommodation and connecting with peers heading to the same city or campus.
 
 Built as a final-year Software Development Project (CSE 464) at the Military Institute of Science and Technology (MIST).
